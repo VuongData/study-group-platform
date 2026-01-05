@@ -30,17 +30,20 @@ const EMOJI_LIST = ['❤️', '😆', '😮', '😢', '😡', '👍', '👎', '�
 
 const ChatRoom = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   
+  // --- REFS ---
   const dummyDiv = useRef(null);
   const chatContainerRef = useRef(null);
   const imageInputRef = useRef(null);
   const fileInputRef = useRef(null);
-  const prevScrollHeight = useRef(0);
-  const isLoadingMore = useRef(false);
+  
+  // 👇 QUAN TRỌNG: Ref để kiểm soát vị trí cuộn
+  const prevScrollHeight = useRef(null); 
+  const isLoadingHistory = useRef(false); // Cờ đánh dấu đang tải lịch sử
   
   const audioRef = useRef(new Audio(messageSoundFile));
 
+  // --- STATES ---
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -52,10 +55,10 @@ const ChatRoom = () => {
 
   const [activeBoardId, setActiveBoardId] = useState(null); 
   const [boardTitle, setBoardTitle] = useState("");
-  const [msgLimit, setMsgLimit] = useState(20);
   
-  // 👇 Đã sửa tên biến state này
-  const [isFetching, setIsFetching] = useState(false);
+  // 👇 State limit tin nhắn
+  const [msgLimit, setMsgLimit] = useState(20);
+  const [showLoadingSpinner, setShowLoadingSpinner] = useState(false);
 
   const [newMessage, setNewMessage] = useState("");
   const [activeReactionId, setActiveReactionId] = useState(null);
@@ -71,7 +74,7 @@ const ChatRoom = () => {
   const [inputTarget, setInputTarget] = useState(""); 
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // --- LOGIC NOTIFICATION & FETCH ---
+  // --- LOGIC NOTIFICATION ---
   useEffect(() => {
     const originalTitle = document.title; 
     const handleVisibilityChange = () => { if (!document.hidden) document.title = originalTitle; };
@@ -79,6 +82,7 @@ const ChatRoom = () => {
     return () => { document.removeEventListener("visibilitychange", handleVisibilityChange); document.title = originalTitle; };
   }, []);
 
+  // --- 1. DATA FETCHING (User, Rooms, Friends) ---
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "chat_rooms"), where("members", "array-contains", user.uid), orderBy("updatedAt", "desc"));
@@ -125,36 +129,48 @@ const ChatRoom = () => {
     return () => unsubscribe();
   }, [user]);
 
-  // --- MESSAGE FETCHING ---
+  // =========================================================================================
+  // 👇 2. LOGIC LẤY TIN NHẮN (ĐÃ FIX SCROLL)
+  // =========================================================================================
+
+  // Reset khi đổi phòng
   useEffect(() => {
-    if (!selectedRoom?.id) { setMessages([]); return; }
-    // Reset limit khi đổi phòng
-    if (msgLimit !== 20) { 
-      setMsgLimit(20); 
-      return; 
+    if (selectedRoom?.id) {
+      setMsgLimit(20);
+      setMessages([]);
+      setShowLoadingSpinner(false);
+      prevScrollHeight.current = null;
+      isLoadingHistory.current = false;
     }
+  }, [selectedRoom?.id]);
 
-    setIsFetching(false);
-    setShowResources(false); 
-    setReplyingTo(null); 
-    setMemberDetails([]);
-    isLoadingMore.current = false;
-    prevScrollHeight.current = 0;
+  // Fetch tin nhắn
+  useEffect(() => {
+    if (!selectedRoom?.id) return;
 
+    const q = query(
+      collection(db, "messages"), 
+      where("roomId", "==", selectedRoom.id), 
+      orderBy("createdAt", "desc"), 
+      limit(msgLimit)
+    );
+    
     let isInitialLoad = true;
 
-    const q = query(collection(db, "messages"), where("roomId", "==", selectedRoom.id), orderBy("createdAt", "desc"), limit(msgLimit));
-    
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      // Đảo ngược mảng để tin nhắn mới nhất nằm dưới cùng
       const newMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).reverse();
+      
       setMessages(newMessages);
-      setIsFetching(false);
+      setShowLoadingSpinner(false); // Tắt spinner khi có dữ liệu
 
+      // Logic Âm thanh & Title (Chỉ chạy khi không phải load lần đầu)
       if (!isInitialLoad) { 
         snapshot.docChanges().forEach((change) => {
           if (change.type === "added") {
             const newMsg = change.doc.data();
-            if (newMsg.uid !== user.uid) {
+            // Nếu tin nhắn mới (không phải của mình) VÀ không phải do đang load history
+            if (newMsg.uid !== user.uid && !isLoadingHistory.current) {
               audioRef.current.currentTime = 0; 
               audioRef.current.play().catch(e => console.log("Audio block:", e));
               if (document.hidden) document.title = "🔔 Bạn có thông báo mới!";
@@ -168,29 +184,60 @@ const ChatRoom = () => {
     return () => unsubscribe();
   }, [selectedRoom?.id, msgLimit]);
 
+  // 👇 HÀM XỬ LÝ SỰ KIỆN CUỘN (FIX VÒNG LẶP)
   const handleScroll = (e) => {
     const container = e.target;
-    if (container.scrollTop === 0 && !isFetching && messages.length >= msgLimit) {
-      isLoadingMore.current = true;
+    
+    // Nếu lướt lên đỉnh (scrollTop = 0) VÀ chưa đang load
+    if (container.scrollTop === 0 && !showLoadingSpinner) {
+      
+      // Nếu số lượng tin nhắn hiện tại ít hơn limit thì có nghĩa là đã hết tin nhắn trong DB
+      // Không load thêm nữa để tránh lỗi
+      if (messages.length < msgLimit) return;
+
+      // 1. Bật cờ đang load history
+      isLoadingHistory.current = true;
+      
+      // 2. Lưu chiều cao hiện tại để lát nữa tính toán vị trí
       prevScrollHeight.current = container.scrollHeight;
-      setIsFetching(true);
-      setTimeout(() => { setMsgLimit(prev => prev + 20); }, 800); 
+      
+      // 3. Hiện spinner
+      setShowLoadingSpinner(true);
+
+      // 4. Tăng limit (Gọi API)
+      // Thêm delay nhỏ để UX mượt hơn và tránh spam
+      setTimeout(() => {
+        setMsgLimit(prev => prev + 20);
+      }, 500);
     }
   };
 
+  // 👇 HÀM ĐIỀU CHỈNH VỊ TRÍ CUỘN (SCROLL RESTORATION)
   useLayoutEffect(() => {
-    if (!chatContainerRef.current) return;
-    if (isLoadingMore.current && prevScrollHeight.current > 0) {
-      const newHeight = chatContainerRef.current.scrollHeight;
-      const diff = newHeight - prevScrollHeight.current;
-      chatContainerRef.current.scrollTop = diff;
-      isLoadingMore.current = false;
-      prevScrollHeight.current = 0;
-    } else if (!isLoadingMore.current) {
+    const container = chatContainerRef.current;
+    if (!container) return;
+
+    // TRƯỜNG HỢP 1: Vừa tải xong tin nhắn cũ (Restoration)
+    if (isLoadingHistory.current && prevScrollHeight.current !== null) {
+      const newScrollHeight = container.scrollHeight;
+      const diff = newScrollHeight - prevScrollHeight.current;
+      
+      // Nhảy ngay lập tức xuống vị trí cũ
+      container.scrollTop = diff;
+      
+      // Reset cờ
+      isLoadingHistory.current = false;
+      prevScrollHeight.current = null;
+    } 
+    // TRƯỜNG HỢP 2: Tin nhắn mới hoặc lần đầu vào phòng (Cuộn đáy)
+    else {
+      // Chỉ cuộn xuống đáy nếu KHÔNG PHẢI đang xem lại tin cũ
+      // (Hoặc nếu là tin nhắn do chính mình gửi)
       dummyDiv.current?.scrollIntoView({ behavior: "auto" });
     }
-  }, [messages]);
+  }, [messages]); // Chạy mỗi khi danh sách tin nhắn thay đổi
 
+  // ... (CÁC HÀM XỬ LÝ KHÁC GIỮ NGUYÊN) ...
   const handleScrollToMessage = (msgId) => {
     const element = document.getElementById(`msg-${msgId}`);
     if (element) {
@@ -202,7 +249,6 @@ const ChatRoom = () => {
     }
   };
 
-  // ... (ACTIONS & HELPERS) ...
   const fetchMemberDetails = async () => { if (!selectedRoom?.members) return; setIsProcessing(true); try { const details = await Promise.all(selectedRoom.members.map(async (uid) => { const snap = await getDoc(doc(db, "users", uid)); return { id: uid, ...(snap.data() || { displayName: "Unknown", email: "N/A" }) }; })); setMemberDetails(details); } catch (error) { console.error(error); } finally { setIsProcessing(false); } };
   const fetchFriendList = async () => { setIsProcessing(true); try { const directRooms = rooms.filter(r => r.type === 'direct'); const friendsData = await Promise.all(directRooms.map(async (room) => { const friendId = room.members.find(id => id !== user.uid); if(!friendId) return null; const snap = await getDoc(doc(db, "users", friendId)); return { roomId: room.id, friendId: friendId, ...(snap.data() || { displayName: "Unknown", email: "N/A" }) }; })); setFriendList(friendsData.filter(f => f !== null)); } catch (error) { console.error(error); } finally { setIsProcessing(false); } };
   const uploadToCloudinary = async (file) => { const formData = new FormData(); formData.append("file", file); formData.append("upload_preset", UPLOAD_PRESET); const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { method: "POST", body: formData }); return await res.json(); };
@@ -282,8 +328,8 @@ const ChatRoom = () => {
             </header>
 
             <div className="messages-list" ref={chatContainerRef} onScroll={handleScroll}>
-              {/* 👇 ĐÃ SỬA: Dùng isFetching thay vì isLoadingOldMessages */}
-              {isFetching && <div className="loading"><Loader2 className="spin"/> Tải tin cũ...</div>}
+              {/* Spinner báo đang tải */}
+              {showLoadingSpinner && <div className="loading"><Loader2 className="spin"/> Tải tin cũ...</div>}
               
               {messages.filter(m => !msgSearchTerm || (m.text||"").toLowerCase().includes(msgSearchTerm.toLowerCase())).map(msg => {
                 if (msg.isSystem) return <div key={msg.id} className="system-msg"><span>{msg.text}</span></div>;
@@ -359,6 +405,7 @@ const ChatRoom = () => {
                   </div>
                 );
               })}
+              {/* DUMMY DIV (Để cuộn xuống đáy) */}
               <div ref={dummyDiv}></div>
             </div>
 
