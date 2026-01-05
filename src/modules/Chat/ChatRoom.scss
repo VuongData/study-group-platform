@@ -2,14 +2,13 @@
 
 /* --- 1. BIẾN MÀU SẮC --- */
 $primary-color: #2563eb;       
-/* Gradient xanh hiện đại cho tin nhắn của mình */
 $primary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
 $bg-color: #f8fafc;           
 $white: #ffffff;
 $text-dark: #1e293b;           
 $text-gray: #64748b;          
 $border-color: #e2e8f0;
-$danger: #ef4444;
+$danger: #ef4444; /* 👈 Đảm bảo dòng này tồn tại */
 $sidebar-width: 280px; 
 
 * { box-sizing: border-box; }
@@ -47,7 +46,7 @@ $sidebar-width: 280px;
     .sidebar-actions { padding: 15px 20px 0 0; border-top: 1px solid rgba(255,255,255,0.1); .btn-add-new { background: rgba(255,255,255,0.1); border: 1px dashed rgba(255,255,255,0.3); color: white; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; &:hover { background: $primary-color; border-color: $primary-color; } } }
   }
 
-  /* ================= MAIN CHAT (ĐÃ TỐI ƯU) ================= */
+  /* ================= MAIN CHAT ================= */
   .chat-main {
     flex: 1; display: flex; flex-direction: column; background: #ffffff; position: relative;
     .no-room { flex: 1; display: flex; align-items: center; justify-content: center; color: $text-gray; font-size: 1.1rem; }
@@ -65,9 +64,9 @@ $sidebar-width: 280px;
 
     /* MESSAGES LIST */
     .messages-list {
-      flex: 1; padding: 20px 40px; /* Tăng padding 2 bên */
+      flex: 1; padding: 20px 40px; 
       overflow-y: auto; background-color: #f1f5f9;
-      display: flex; flex-direction: column; gap: 20px; /* Tăng khoảng cách tin nhắn */
+      display: flex; flex-direction: column; gap: 20px;
 
       .loading { text-align: center; color: $text-gray; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 5px; }
       .spin { animation: spin 1s linear infinite; }
@@ -87,9 +86,8 @@ $sidebar-width: 280px;
           .sender-name { font-size: 0.75rem; color: $text-gray; margin-bottom: 4px; margin-left: 5px; font-weight: 500; }
           .mine .sender-name { display: none; }
 
-          /* Wrapper để xếp nút Actions ngang hàng với Bubble */
           .message-wrapper-outer {
-            display: flex; align-items: flex-end; /* Canh đáy */
+            display: flex; align-items: flex-end; 
             gap: 8px; 
             .mine & { flex-direction: row-reverse; }
           }
@@ -121,17 +119,14 @@ $sidebar-width: 280px;
               &.highlight { background: #fde047; color: black; }
             }
 
-            /* REACTION ĐẬU LÊN MÉP BONG BÓNG */
+            /* REACTION */
             .reactions-display {
-              position: absolute; 
-              bottom: -10px; /* Thụt xuống một chút để đè lên */
-              right: 0;
+              position: absolute; bottom: -10px; right: 0;
               background: white; border-radius: 20px; padding: 2px 6px;
               box-shadow: 0 2px 5px rgba(0,0,0,0.1);
               display: flex; align-items: center; gap: 2px;
               font-size: 0.8rem; z-index: 5; border: 1px solid #f1f5f9;
               cursor: pointer;
-              
               .count { font-size: 0.7rem; color: $text-gray; margin-left: 2px; font-weight: 700; }
               .theirs & { right: auto; left: 0; }
             }
@@ -140,7 +135,7 @@ $sidebar-width: 280px;
           .timestamp { font-size: 0.65rem; color: #94a3b8; margin-top: 6px; text-align: right; opacity: 0.8; }
           .theirs .timestamp { text-align: left; margin-left: 5px; }
           
-          /* NÚT ACTION HIỆN KHI HOVER */
+          /* ACTIONS */
           .msg-actions-hover {
             display: flex; gap: 4px; opacity: 0; transition: opacity 0.2s ease;
             margin-bottom: 5px;
@@ -155,7 +150,7 @@ $sidebar-width: 280px;
           }
           &:hover .msg-actions-hover { opacity: 1; }
 
-          /* POPOVER EMOJI */
+          /* POPOVER */
           .reaction-picker-popover {
              position: absolute; bottom: 100%; right: 0; margin-bottom: 8px;
              background: white; padding: 6px 10px;
@@ -179,18 +174,15 @@ $sidebar-width: 280px;
           }
         } 
 
-        /* MÀU BONG BÓNG (QUAN TRỌNG) */
+        /* MÀU BONG BÓNG */
         &.mine .bubble { 
-          background: $primary-gradient; /* Xanh gradient */
-          color: white !important; 
-          border-bottom-right-radius: 4px; /* Góc nhọn style hiện đại */
+          background: $primary-gradient; color: white !important; 
+          border-bottom-right-radius: 4px; 
           box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
         }
         &.theirs .bubble { 
-          background-color: white !important; 
-          color: $text-dark !important; 
-          border: 1px solid $border-color; 
-          border-bottom-left-radius: 4px;
+          background-color: white !important; color: $text-dark !important; 
+          border: 1px solid $border-color; border-bottom-left-radius: 4px;
         }
       } 
     }
