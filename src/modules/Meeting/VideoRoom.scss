@@ -1,0 +1,61 @@
+/* src/modules/Meeting/VideoRoom.scss */
+.video-lobby {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+
+  .lobby-card {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+
+    h1 { margin-top: 0; color: #2c3e50; }
+    p { color: #7f8c8d; margin-bottom: 25px; }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      box-sizing: border-box; /* Fix lỗi tràn input */
+      &:focus { border-color: #3498db; }
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      background: #2c3e50;
+      color: white;
+      transition: background 0.2s;
+
+      &:disabled { background: #ccc; cursor: not-allowed; }
+      &:hover:not(:disabled) { background: #1a252f; }
+    }
+
+    .btn-back {
+      background: transparent;
+      color: #666;
+      border: 1px solid #ddd;
+      &:hover { background: #f8f9fa; }
+    }
+  }
+}

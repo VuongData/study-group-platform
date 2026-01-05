@@ -1,0 +1,155 @@
+/* src/modules/Plan/OPPMReal.scss */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+$bg-white: #ffffff;
+$border-color: #e5e7eb;
+$primary: #2563eb;
+
+.matrix-view-container {
+  background: $bg-white;
+  padding-bottom: 50px;
+  font-family: 'Inter', sans-serif;
+  color: #1f2937;
+
+  /* --- 1. CONFIG PANEL --- */
+  .config-panel {
+    background: #f8fafc; border: 1px solid $border-color; padding: 15px; border-radius: 8px; margin-bottom: 20px;
+    
+    .top-bar {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+      .date-group {
+        display: flex; align-items: center; gap: 10px;
+        input { padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; }
+        .icon { color: $primary; }
+      }
+      .btn-print {
+        background: #334155; color: white; border: none; padding: 8px 16px; border-radius: 6px; 
+        cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 600;
+        &:hover { background: #475569; }
+      }
+    }
+
+    .obj-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 5px;
+      input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; }
+    }
+  }
+
+  /* --- 2. PROGRESS BAR --- */
+  .progress-section {
+    background: #fff; border: 1px solid $border-color; padding: 15px; border-radius: 8px; margin-bottom: 20px;
+    .prog-header { display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: 600; color: #15803d; }
+    .prog-bar-bg { height: 12px; background: #dcfce7; border-radius: 6px; overflow: hidden; }
+    .prog-bar-fill { height: 100%; background: #22c55e; }
+    .note { font-size: 0.75rem; color: #64748b; margin-top: 5px; font-style: italic; }
+  }
+
+  /* --- 3. THE TABLE --- */
+  .oppm-table {
+    width: 100%; border-collapse: collapse; 
+    
+    th, td { 
+      border: 1px solid #cbd5e1; padding: 8px; text-align: center; vertical-align: middle; font-size: 0.85rem; 
+    }
+
+    // Header Styles
+    thead th {
+      background: #f1f5f9; color: #334155; font-weight: 700;
+      &.col-task { text-align: left; width: 250px; padding-left: 10px; }
+      &.col-owner { width: 120px; }
+      &.col-time { width: 30px; font-size: 0.75rem; }
+      
+      &.vertical-header {
+        height: 140px; vertical-align: bottom; width: 40px; padding-bottom: 10px;
+        .vertical-text {
+          writing-mode: vertical-rl; transform: rotate(180deg); 
+          margin: 0 auto; white-space: nowrap; font-size: 0.75rem; letter-spacing: 0.5px;
+        }
+      }
+    }
+
+    // Body Styles
+    tbody tr:hover { background: #f8fafc; }
+    
+    .task-name { text-align: left; font-weight: 500; padding-left: 10px; display: flex; align-items: center; gap: 8px; }
+    .owner-name { font-weight: 600; color: #475569; }
+    
+    // DOTS STYLES
+    .cell-obj, .cell-dot { cursor: pointer; &:hover { background: #e0f2fe; } }
+    .square-dot { width: 14px; height: 14px; background: #1e293b; margin: 0 auto; } 
+    .circle-dot { width: 14px; height: 14px; background: #22c55e; border-radius: 50%; margin: 0 auto; }
+    
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .status-dot.pending { background: #eab308; }
+    .status-dot.done { background: #22c55e; }
+
+    .btn-delete { border: none; background: none; color: #ef4444; cursor: pointer; opacity: 0.6; &:hover { opacity: 1; } }
+  }
+  
+  // LEGEND
+  .legend-container {
+    margin-top: 15px; display: flex; gap: 20px; font-size: 0.8rem; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0;
+    .item { display: flex; align-items: center; gap: 6px; }
+    .sq { width: 12px; height: 12px; background: #1e293b; }
+    .ci { width: 12px; height: 12px; background: #22c55e; border-radius: 50%; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot.pending { background: #eab308; }
+    .dot.done { background: #22c55e; }
+  }
+}
+
+/* ==========================================================================
+   🖨️ PRINT RULES - CHỈ IN CÁI BẢNG (QUAN TRỌNG)
+   ========================================================================== */
+@media print {
+  // 1. ẨN TẤT CẢ
+  body * {
+    visibility: hidden;
+  }
+
+  // 2. ẨN CÁC THÀNH PHẦN KHÔNG CẦN THIẾT
+  .no-print, .sidebar, .header, .manager-header, .shared-form-container, .config-panel, .progress-section {
+    display: none !important;
+  }
+
+  // 3. HIỆN LẠI VÙNG BẢNG
+  .printable-area, .printable-area * {
+    visibility: visible;
+  }
+
+  // 4. ĐỊNH VỊ BẢNG LÊN GÓC TRÁI TRÊN
+  .printable-area {
+    position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0;
+    background: white;
+    
+    .legend-container { 
+      background: transparent !important; border: none !important; 
+    }
+  }
+
+  // 5. STYLE BẢNG ĐEN TRẮNG TRUYỀN THỐNG
+  .oppm-table {
+    border: 2px solid #000 !important; // Viền ngoài đậm
+    font-size: 10pt !important; // Chữ nhỏ lại xíu cho vừa giấy
+
+    th, td {
+      border: 1px solid #000 !important; // Viền ô đen
+      color: #000 !important; // Chữ đen
+    }
+    
+    thead th { 
+      background: #eee !important; // Nền header xám nhẹ
+      color: #000 !important; 
+    }
+
+    // Đảm bảo in được màu của các chấm
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  // 6. XOAY NGANG GIẤY
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+}

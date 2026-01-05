@@ -1,0 +1,51 @@
+/* src/modules/Dashboard/Dashboard.scss */
+.dashboard-container {
+  max-width: 1200px; margin: 0 auto; padding: 40px 20px;
+  font-family: 'Segoe UI', sans-serif;
+
+  .dashboard-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px;
+    h1 { margin: 0; color: #2c3e50; font-size: 2rem; }
+    p { margin: 5px 0 0; color: #7f8c8d; }
+    .btn-logout {
+      background: #e74c3c; color: white; border: none; padding: 10px 20px;
+      border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: bold;
+      &:hover { background: #c0392b; }
+    }
+  }
+
+  .modules-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;
+
+    .module-card {
+      background: white; padding: 30px; border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05); cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border: 1px solid #f0f0f0; display: flex; flex-direction: column; align-items: flex-start;
+
+      &:hover { transform: translateY(-8px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+
+      .icon-wrapper {
+        width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+        margin-bottom: 20px; color: white; font-weight: bold;
+      }
+
+      h3 { margin: 0 0 10px; color: #34495e; font-size: 1.4rem; }
+      p { margin: 0; color: #95a5a6; line-height: 1.5; }
+
+      /* MÀU SẮC TỪNG CARD */
+      &.chat .icon-wrapper { background: linear-gradient(135deg, #667eea, #764ba2); }
+      &.oppm .icon-wrapper { background: linear-gradient(135deg, #ff9966, #ff5e62); }
+      
+      /* Màu mới cho Kho tài liệu (Xanh lá / Teal) */
+      &.resources .icon-wrapper { background: linear-gradient(135deg, #11998e, #38ef7d); }
+
+      /* Card sắp ra mắt (Meeting) - Màu xám */
+      &.coming-soon {
+        opacity: 0.7; cursor: default;
+        &:hover { transform: none; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .icon-wrapper { background: #bdc3c7; }
+      }
+    }
+  }
+}

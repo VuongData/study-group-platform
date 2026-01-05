@@ -1,0 +1,119 @@
+/* src/modules/Resource/ResourceHub.scss */
+.resource-hub-container {
+  padding: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', sans-serif;
+  min-height: 80vh;
+
+  /* Header */
+  .hub-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    gap: 20px;
+
+    .title-section {
+      h1 { margin: 0 0 5px; color: #2c3e50; font-size: 2rem; }
+      p { margin: 0; color: #7f8c8d; }
+    }
+
+    .search-filter-bar {
+      display: flex; gap: 15px;
+
+      .search-box {
+        position: relative;
+        input {
+          padding: 10px 15px 10px 35px; border: 1px solid #ddd; border-radius: 8px; width: 250px; outline: none; transition: border 0.2s;
+          &:focus { border-color: #3498db; }
+        }
+        svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #95a5a6; }
+      }
+
+      .filter-box {
+        position: relative;
+        select {
+          padding: 10px 15px 10px 35px; border: 1px solid #ddd; border-radius: 8px; outline: none; background: white; cursor: pointer; min-width: 160px;
+        }
+        svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #95a5a6; }
+      }
+    }
+  }
+
+  /* Grid List */
+  .resource-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 25px;
+
+    .loading-text, .empty-state {
+      grid-column: 1 / -1; text-align: center; color: #95a5a6; padding: 40px;
+      h3 { margin-bottom: 5px; color: #2c3e50; }
+    }
+
+    /* Card Item */
+    .resource-card {
+      background: white;
+      border: 1px solid #eee;
+      border-radius: 16px;
+      padding: 20px;
+      transition: all 0.2s;
+      display: flex; flex-direction: column; gap: 15px;
+      position: relative;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+
+      &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+        border-color: #3498db;
+      }
+
+      .card-top {
+        display: flex; justify-content: space-between; align-items: flex-start;
+        .badge {
+          font-size: 0.7rem; padding: 4px 8px; border-radius: 4px; font-weight: 600;
+          &.chat-badge { background: #e3f2fd; color: #3498db; }
+          &.doc-badge { background: #fdf2e9; color: #e67e22; }
+        }
+        .btn-delete {
+          background: none; border: none; color: #e74c3c; cursor: pointer; opacity: 0; transition: opacity 0.2s;
+          &:hover { background: #fee; border-radius: 4px; }
+        }
+      }
+      
+      &:hover .btn-delete { opacity: 1; } /* Hiện nút xóa khi hover card */
+
+      .card-icon {
+        display: flex; justify-content: center; align-items: center; height: 60px;
+      }
+
+      .card-info {
+        text-align: center;
+        h3 {
+          margin: 0 0 8px; font-size: 1rem; color: #2c3e50;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; /* Cắt tên dài */
+        }
+        .meta-row {
+          display: flex; justify-content: center; gap: 15px; font-size: 0.75rem; color: #95a5a6;
+          span { display: flex; align-items: center; gap: 4px; }
+        }
+      }
+
+      .card-actions {
+        display: flex; gap: 10px; margin-top: auto; /* Đẩy xuống đáy */
+        .btn-download {
+          flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+          background: #3498db; color: white; text-decoration: none; padding: 8px; border-radius: 8px; font-size: 0.9rem; font-weight: 500; transition: background 0.2s;
+          &:hover { background: #2980b9; }
+        }
+        .btn-preview {
+          width: 36px; display: flex; align-items: center; justify-content: center;
+          background: #f1f2f6; color: #2c3e50; border-radius: 8px; transition: background 0.2s;
+          &:hover { background: #dfe4ea; }
+        }
+      }
+    }
+  }
+}

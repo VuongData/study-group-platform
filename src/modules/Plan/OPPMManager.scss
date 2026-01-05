@@ -1,0 +1,112 @@
+/* src/modules/Plan/OPPMManager.scss */
+
+// Import font
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+$primary: #2c3e50;
+$primary-light: #34495e;
+$accent: #2563eb;
+$bg-white: #ffffff;
+$bg-gray: #f8f9fa;
+$border: #e0e0e0;
+
+.oppm-manager {
+  font-family: 'Inter', sans-serif;
+  background-color: $bg-white; // 🔥 Ép nền trắng toàn trang
+  min-height: 100vh;
+  padding: 20px;
+  color: #333;
+
+  /* --- HEADER & TABS --- */
+  .manager-header {
+    display: flex;
+    margin-bottom: 20px;
+    background: $bg-white;
+    
+    .tab-buttons {
+      display: flex;
+      background: #f1f2f6;
+      padding: 5px;
+      border-radius: 8px;
+      gap: 5px;
+
+      button {
+        display: flex; align-items: center; gap: 8px;
+        padding: 10px 20px;
+        border: none;
+        background: transparent;
+        color: #64748b;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+
+        &:hover {
+          color: $primary;
+          background: rgba(255,255,255,0.5);
+        }
+
+        &.active {
+          background: $bg-white;
+          color: $accent;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+      }
+    }
+  }
+
+  /* --- FORM GIAO VIỆC CHUNG --- */
+  .shared-form-container {
+    background: $bg-white;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid $border;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+
+    .create-form {
+      display: flex;
+      gap: 15px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+
+      .input-group {
+        display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 200px;
+        
+        label { font-size: 0.85rem; font-weight: 600; color: #555; }
+        
+        input {
+          padding: 10px 12px;
+          border: 1px solid #ccc;
+          border-radius: 6px;
+          font-size: 0.9rem;
+          outline: none;
+          &:focus { border-color: $accent; }
+        }
+      }
+
+      .btn-submit {
+        height: 42px;
+        padding: 0 25px;
+        background: $primary;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex; align-items: center; gap: 8px;
+        transition: background 0.2s;
+        
+        &:hover { background: $primary-light; }
+        &:disabled { opacity: 0.7; cursor: not-allowed; }
+      }
+    }
+  }
+
+  /* --- CONTAINER CHO CÁC TAB CON --- */
+  .tab-content {
+    background: transparent;
+    // Các file con (OPPMMatrixView, v.v.) sẽ tự render bên trong này
+  }
+}

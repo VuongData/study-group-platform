@@ -1,0 +1,377 @@
+/* src/modules/Chat/ChatRoom.scss */
+
+// 1. Tải Font Inter từ Google Fonts
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+// 2. Biến màu sắc
+$primary: #2563eb;
+$primary-dark: #1d4ed8; // Màu đậm hơn dùng cho hover (thay cho darken)
+$bg-light: #f3f4f6;
+$text-dark: #1f2937;
+$border: #e5e7eb;
+
+.chat-room-container {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  background: #fff;
+  font-family: 'Inter', system-ui, sans-serif; // Sử dụng font đã import
+
+  // --- 1. SIDEBAR (Danh sách phòng) ---
+  .chat-sidebar {
+    width: 300px;
+    border-right: 1px solid $border;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid $border;
+
+      h3 { margin: 0 0 15px 0; color: $text-dark; font-weight: 600; }
+
+      .my-id-box {
+        background: #f0f9ff;
+        color: #0369a1;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        display: flex; justify-content: space-between; align-items: center;
+        cursor: pointer;
+        margin-bottom: 10px;
+        transition: background 0.2s;
+        &:hover { background: #e0f2fe; }
+      }
+
+      .search-room-box {
+        display: flex; align-items: center; gap: 8px;
+        background: $bg-light;
+        padding: 8px 12px;
+        border-radius: 20px;
+        input { border: none; background: transparent; outline: none; flex: 1; font-size: 0.9rem; font-family: inherit; }
+      }
+    }
+
+    .room-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+
+      .room-item {
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.2s;
+
+        &:hover { background: $bg-light; }
+        &.active { background: #eff6ff; }
+
+        .room-avatar {
+          width: 40px; height: 40px;
+          background: #e0e7ff; color: $primary;
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0; // Tránh bị méo hình
+        }
+
+        .room-info {
+          h4 { margin: 0; font-size: 0.95rem; color: $text-dark; font-weight: 600; }
+          p { margin: 2px 0 0; font-size: 0.8rem; color: #6b7280; }
+        }
+      }
+
+      .btn-add-new {
+        width: 100%;
+        margin-top: 10px;
+        padding: 10px;
+        border: 1px dashed #cbd5e1;
+        background: #fff;
+        color: $primary;
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: inherit;
+        display: flex; align-items: center; justify-content: center; gap: 5px;
+        transition: all 0.2s;
+        &:hover { background: #f8fafc; border-color: $primary; }
+      }
+    }
+  }
+
+  // --- 2. MAIN CHAT AREA ---
+  .chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: #fff;
+
+    .no-room-selected {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 100%; color: #9ca3af; gap: 10px;
+    }
+
+    .chat-header {
+      padding: 15px 20px;
+      border-bottom: 1px solid $border;
+      display: flex; justify-content: space-between; align-items: center;
+      background: #fff;
+      z-index: 10;
+
+      .header-left {
+        display: flex; align-items: center; gap: 12px;
+        .avatar-group {
+          width: 40px; height: 40px; background: $primary; color: white;
+          border-radius: 12px; display: flex; align-items: center; justify-content: center;
+          font-weight: bold; font-size: 1.2rem; flex-shrink: 0;
+        }
+        .info-wrapper {
+          .title-row { 
+            display: flex; align-items: center; gap: 8px;
+            h3 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+            .btn-edit { border: none; background: none; cursor: pointer; color: #6b7280; &:hover { color: $primary; } }
+          }
+          .status { font-size: 0.8rem; color: #16a34a; }
+        }
+      }
+
+      .header-actions {
+        display: flex; align-items: center; gap: 10px;
+        .btn-icon {
+          width: 36px; height: 36px;
+          border: none; background: transparent;
+          border-radius: 50%;
+          color: #64748b;
+          cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          transition: background 0.2s;
+          &:hover { background: $bg-light; color: $text-dark; }
+          &.active { background: #dbeafe; color: $primary; }
+        }
+        
+        .msg-search {
+           display: flex; align-items: center; gap: 5px; 
+           background: $bg-light; padding: 5px 12px; border-radius: 20px;
+           input { border: none; background: transparent; outline: none; font-size: 0.9rem; width: 150px; }
+           svg { cursor: pointer; color: #666; &:hover { color: #333; } }
+        }
+      }
+    }
+
+    // DANH SÁCH TIN NHẮN
+    .messages-list {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+
+      .empty-chat { text-align: center; color: #94a3b8; margin-top: 50px; font-style: italic; }
+      
+      .loading, .loading-history { 
+        text-align: center; color: #64748b; font-size: 0.8rem; padding: 10px;
+        display: flex; align-items: center; justify-content: center; gap: 5px;
+        .spin { animation: spin 1s linear infinite; }
+      }
+
+      .system-message-row, .system-msg {
+        text-align: center; margin: 10px 0;
+        span, .system-bubble {
+          display: inline-block; background: #e2e8f0; color: #475569;
+          padding: 5px 12px; border-radius: 20px; font-size: 0.75rem;
+        }
+      }
+
+      .message-row {
+        display: flex; gap: 10px;
+        max-width: 75%;
+        
+        &.mine { 
+          align-self: flex-end; 
+          flex-direction: row-reverse; 
+          .message-bubble-wrapper { align-items: flex-end; }
+        }
+        &.theirs { 
+          align-self: flex-start; 
+          .message-bubble-wrapper { align-items: flex-start; }
+        }
+
+        .msg-avatar {
+          width: 32px; height: 32px; background: #cbd5e1; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 0.8rem; color: #fff; font-weight: bold; flex-shrink: 0;
+        }
+
+        .msg-content {
+          display: flex; flex-direction: column; gap: 2px;
+          .sender-name { font-size: 0.75rem; color: #64748b; margin-left: 5px; }
+          
+          .message-bubble-wrapper {
+             position: relative;
+             display: flex; flex-direction: column; gap: 4px;
+             
+             // 1. Reply Quote
+             .reply-quote {
+               background: rgba(0,0,0,0.04); 
+               border-left: 3px solid #cbd5e1; 
+               padding: 6px 10px;
+               border-radius: 6px; 
+               font-size: 0.8rem; 
+               cursor: pointer;
+               margin-bottom: 2px;
+               .reply-name { font-weight: bold; display: block; color: #475569; font-size: 0.75rem; }
+               .reply-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; color: #64748b; }
+             }
+
+             // 2. Bong bóng chat
+             .bubble {
+               padding: 10px 14px;
+               border-radius: 16px;
+               font-size: 0.95rem;
+               line-height: 1.5;
+               word-break: break-word;
+               position: relative;
+               &.unsent { background: white; border: 1px solid #e5e7eb; color: #94a3b8; font-style: italic; }
+               &.highlight { background: #fef08a !important; color: #854d0e !important; }
+             }
+
+             // Ảnh
+             .msg-image img {
+               max-width: 250px; border-radius: 12px; cursor: pointer;
+               border: 1px solid #e5e7eb;
+               transition: transform 0.2s;
+               &:hover { transform: scale(1.02); }
+             }
+
+             // File
+             .msg-file {
+               display: flex; align-items: center; gap: 10px;
+               background: #fff; padding: 10px; border-radius: 12px;
+               border: 1px solid #e2e8f0; width: 220px;
+               .file-info {
+                 flex: 1; overflow: hidden; display: flex; flex-direction: column;
+                 span { font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                 a { font-size: 0.75rem; color: $primary; text-decoration: none; display: flex; align-items: center; gap: 4px; }
+               }
+             }
+
+             // 3. Actions (Hover)
+             .msg-actions {
+               position: absolute; top: 50%; transform: translateY(-50%);
+               display: none; background: white; padding: 4px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 5;
+               button { 
+                 border: none; background: transparent; padding: 6px; cursor: pointer; color: #64748b; border-radius: 50%; 
+                 &:hover { background: #f1f5f9; color: $primary; } 
+                 &.btn-delete:hover { color: #ef4444; background: #fee2e2; }
+               }
+             }
+             &:hover .msg-actions { display: flex; gap: 2px; }
+             
+             // Reaction Picker
+             .reaction-picker {
+                position: absolute; bottom: 100%; left: 0; background: white; padding: 5px 8px; border-radius: 20px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; gap: 8px; z-index: 20; cursor: pointer;
+                span { font-size: 1.2rem; transition: transform 0.1s; &:hover { transform: scale(1.3); } }
+             }
+          }
+
+          .timestamp { font-size: 0.7rem; color: #94a3b8; margin-top: 2px; text-align: right; }
+          
+          .reactions-display {
+            display: flex; gap: 4px; margin-top: -5px; padding-left: 5px; z-index: 2;
+            span { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 2px 6px; font-size: 0.7rem; }
+          }
+        }
+
+        // Màu sắc riêng cho Mine / Theirs
+        &.mine {
+          .bubble:not(.unsent) { background: $primary; color: white; border-bottom-right-radius: 4px; }
+          .msg-file { background: #eff6ff; border-color: #dbeafe; }
+          .msg-actions { right: auto; left: -90px; }
+          .reply-quote { 
+             background: rgba(255,255,255,0.2); border-left-color: rgba(255,255,255,0.5); 
+             .reply-name { color: #e0f2fe; } 
+             .reply-text { color: #f0f9ff; }
+          }
+        }
+        &.theirs {
+          .bubble:not(.unsent) { background: #fff; color: $text-dark; border: 1px solid #e2e8f0; border-bottom-left-radius: 4px; }
+          .msg-actions { right: -90px; left: auto; }
+        }
+      }
+    }
+
+    // THANH INPUT
+    .chat-input-wrapper {
+      background: #fff;
+      border-top: 1px solid $border;
+      position: relative;
+
+      .replying-banner {
+        position: absolute; bottom: 100%; left: 0; right: 0;
+        background: #f8fafc; padding: 8px 15px; border-top: 1px solid #e2e8f0;
+        display: flex; justify-content: space-between; align-items: center;
+        animation: slideUp 0.2s ease-out;
+        .reply-content {
+          border-left: 3px solid $primary; padding-left: 10px; display: flex; flex-direction: column; font-size: 0.85rem;
+          .reply-label { color: #64748b; font-size: 0.75rem; }
+          .reply-preview { font-weight: 600; color: $text-dark; max-width: 80vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        }
+        button { border: none; background: none; cursor: pointer; color: #64748b; &:hover { color: #ef4444; } }
+      }
+
+      .chat-input-area {
+        padding: 15px; display: flex; align-items: center; gap: 10px;
+        input {
+          flex: 1; padding: 12px 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 24px; outline: none; font-family: inherit;
+          transition: border-color 0.2s;
+          &:focus { border-color: $primary; background: #fff; }
+        }
+        .btn-icon {
+          background: none; border: none; color: #64748b; cursor: pointer; padding: 5px;
+          &:hover { color: $primary; background: #f1f5f9; border-radius: 50%; }
+        }
+        .btn-send {
+          width: 42px; height: 42px; background: $primary; color: white; border: none; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s;
+          &:hover { background: $primary-dark; } // Dùng biến màu thay vì darken()
+          &:active { transform: scale(0.95); }
+        }
+      }
+    }
+  }
+}
+
+// Modal Styles
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center; z-index: 1000;
+  
+  .modal-content {
+    background: #fff; width: 400px; padding: 25px; border-radius: 12px;
+    h3 { margin-top: 0; text-align: center; color: $text-dark; }
+    
+    .modal-tabs {
+      display: flex; margin-bottom: 20px; background: #f1f5f9; padding: 3px; border-radius: 8px;
+      button { 
+        flex: 1; padding: 8px; border: none; background: transparent; cursor: pointer; border-radius: 6px; 
+        &.active { background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-weight: 600; color: $primary; }
+      }
+    }
+    
+    .modal-body {
+      display: flex; flex-direction: column; gap: 15px;
+      input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; font-family: inherit; }
+      button { 
+        padding: 10px; background: $primary; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
+        &:hover { background: $primary-dark; }
+      }
+    }
+  }
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+@keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

@@ -1,0 +1,195 @@
+/* src/modules/Plan/OPPMScoreView.scss */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.score-view-container {
+  padding: 20px;
+  background: #fff;
+  font-family: 'Inter', sans-serif;
+  color: #333;
+
+  /* --- HEADER --- */
+  .score-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;
+    
+    .formula-box {
+      background: #f0f9ff; padding: 15px; border-radius: 8px; border: 1px solid #bae6fd;
+      h4 { margin: 0 0 5px 0; color: #0369a1; font-size: 1.1rem; }
+      p { margin: 0; color: #334155; }
+      .math { 
+        font-family: 'Courier New', monospace; background: #fff; padding: 2px 5px; 
+        border-radius: 4px; border: 1px solid #e2e8f0; margin: 0 3px; font-weight: 600; 
+      }
+    }
+    
+    .btn-print {
+      display: flex; align-items: center; gap: 8px; padding: 10px 20px;
+      background: #2c3e50; color: white; border: none; border-radius: 6px; 
+      cursor: pointer; font-weight: 600; transition: background 0.2s;
+      &:hover { background: #34495e; }
+    }
+  }
+
+  /* --- TABLE STYLES --- */
+  .score-table {
+    width: 100%; border-collapse: separate; border-spacing: 0; 
+    border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;
+    
+    thead th {
+      background: #f8fafc; padding: 15px; text-align: center; color: #475569; font-weight: 700; 
+      border-bottom: 2px solid #e2e8f0;
+      &.col-name { text-align: left; }
+    }
+
+    tbody tr.main-row {
+      cursor: pointer; transition: background 0.1s;
+      &:hover { background: #f1f5f9; }
+      
+      td { 
+        padding: 12px 15px; border-bottom: 1px solid #e2e8f0; 
+        text-align: center; vertical-align: middle; color: #333; 
+      }
+      
+      .cell-name { text-align: left; }
+      .user-info {
+        display: flex; gap: 10px; align-items: center;
+        .avatar { 
+          width: 36px; height: 36px; background: #e0e7ff; color: #4338ca; 
+          border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; 
+        }
+        div { 
+          display: flex; flex-direction: column; 
+          .role { font-size: 0.75rem; color: #64748b; } 
+        }
+      }
+      .cell-score { font-weight: 600; &.highlight { color: #2563eb; } }
+      .cell-total { font-weight: 700; color: #16a34a; font-size: 1.1rem; }
+      .cell-action { color: #94a3b8; }
+    }
+
+    /* DETAIL ROW (Phần nhận xét ẩn/hiện) */
+    tbody tr.detail-row {
+      display: none; // Mặc định ẩn
+      &.expanded { display: table-row; } // Hiện khi click mở rộng
+      
+      td { 
+        background: #f8fafc; padding: 20px; border-bottom: 1px solid #e2e8f0; 
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); 
+      }
+
+      .review-container { display: flex; flex-direction: column; gap: 15px; }
+
+      .review-list {
+        h5 { margin: 0 0 10px 0; color: #334155; }
+        .review-grid {
+          display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;
+          .review-item {
+            background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;
+            .rev-header { 
+              display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; 
+              .score-badge { background: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; } 
+            }
+            p { margin: 0; font-size: 0.85rem; color: #64748b; font-style: italic; }
+          }
+        }
+      }
+
+      .review-form {
+        padding-top: 15px; border-top: 1px dashed #cbd5e1;
+        .input-row { 
+          display: flex; gap: 10px; 
+          input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; outline: none; &:focus { border-color: #2563eb; } } 
+          input[type="number"] { width: 80px; } 
+          input[type="text"] { flex: 1; } 
+          button { 
+            background: #2563eb; color: white; border: none; padding: 0 15px; border-radius: 4px; 
+            cursor: pointer; display: flex; align-items: center; gap: 5px; 
+            &:hover { background: #1d4ed8; } 
+          } 
+        }
+      }
+    }
+  }
+  
+  .only-print { display: none; } // Ẩn footer in ấn trên màn hình web
+}
+
+/* ==========================================================================
+   🖨️ PRINT STYLES - XỬ LÝ IN ẤN (FULL & FIX LỖI)
+   ========================================================================== */
+@media print {
+  // 1. Ẩn rác
+  .no-print, .sidebar, .header, .chat-input, .review-form, .actions, .col-action, .cell-action {
+    display: none !important;
+  }
+  
+  // 2. Reset Body
+  body { 
+    background: white; 
+    color: black;
+    // 👇 FIX LỖI WARNING CỦA BẠN TẠI ĐÂY
+    -webkit-print-color-adjust: exact; 
+    print-color-adjust: exact; 
+  }
+
+  .score-view-container {
+    width: 100%; padding: 0; margin: 0; border: none;
+
+    // 3. ÉP BUNG DÒNG CHI TIẾT (EXPAND ALL)
+    tbody tr.detail-row.print-always-show {
+      display: table-row !important; // Luôn hiện
+      
+      td { 
+        padding: 5px 0 15px 0 !important; 
+        background: white !important; 
+        border-bottom: 1px solid #000 !important;
+        box-shadow: none !important;
+      }
+      
+      .review-grid {
+        display: block !important; // Xếp dọc
+        .review-item {
+          border: none !important; 
+          border-bottom: 1px dotted #999 !important;
+          margin-bottom: 5px; padding: 5px 0;
+          background: transparent !important;
+          p { color: #000 !important; font-style: normal !important; }
+        }
+      }
+    }
+
+    // 4. STYLE BẢNG ĐEN TRẮNG (TRUYỀN THỐNG)
+    .score-table {
+      border: 2px solid #000;
+      border-radius: 0;
+      
+      // 👇 FIX LỖI WARNING TẠI ĐÂY NỮA CHO CHẮC
+      -webkit-print-color-adjust: exact; 
+      print-color-adjust: exact; 
+
+      thead th { 
+        background: #eee !important; color: #000 !important; 
+        border: 1px solid #000 !important; font-weight: bold;
+      }
+      
+      tbody tr.main-row {
+        td { border: 1px solid #000 !important; color: #000 !important; }
+        .cell-total { color: #000 !important; }
+      }
+    }
+
+    // 5. FOOTER CHỮ KÝ
+    .only-print {
+      display: block !important;
+      margin-top: 40px;
+      page-break-inside: avoid;
+      
+      .signatures {
+        display: flex; justify-content: space-between; margin-top: 50px; padding: 0 50px;
+        div { 
+          font-weight: bold; border-top: 1px solid #000; 
+          padding-top: 5px; width: 200px; text-align: center; 
+        }
+      }
+    }
+  }
+}

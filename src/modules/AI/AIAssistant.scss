@@ -1,0 +1,198 @@
+// src/modules/AI/AIAssistant.scss
+
+// 1. Cấu hình biến màu (Dùng mã màu trực tiếp, không dùng hàm tính toán)
+$primary-color: #2563eb;
+$primary-hover: #1d4ed8; // Màu đậm hơn cho lúc hover
+$bg-user: #e0f2fe;
+$bg-ai: #f3f4f6;
+$text-color: #1f2937;
+$border-radius: 12px;
+
+// 2. Reset box-sizing để tránh vỡ khung
+.ai-assistant-container * {
+  box-sizing: border-box;
+}
+
+.ai-assistant-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+  // Nút bật tắt (Tròn)
+  .ai-toggle-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+
+    &:hover {
+      transform: scale(1.1);
+    }
+  }
+
+  // Cửa sổ Chat
+  .ai-window {
+    position: absolute;
+    bottom: 80px;
+    right: 0;
+    width: 380px;
+    height: 500px;        // Chiều cao cố định
+    background: white;
+    border-radius: $border-radius;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+    
+    // 🔥 QUAN TRỌNG: Flexbox để chia bố cục Header - Body - Input
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    // --- 1. HEADER ---
+    .ai-header {
+      height: 60px;       // Chiều cao cố định cho Header
+      background: linear-gradient(to right, #6366f1, #8b5cf6);
+      color: white;
+      padding: 0 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;     // Không cho phép co lại
+
+      .ai-title {
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+      }
+
+      button {
+        background: transparent;
+        border: none;
+        color: white;
+        cursor: pointer;
+        padding: 5px;
+        &:hover { opacity: 0.8; }
+      }
+    }
+
+    // --- 2. BODY (Tin nhắn) ---
+    .ai-body {
+      flex-grow: 1;       // Tự động giãn ra chiếm hết khoảng trống
+      padding: 15px;
+      overflow-y: auto;   // Cuộn dọc khi tin nhắn dài
+      background-color: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;      // Fix lỗi scroll trên Firefox/một số trình duyệt
+
+      .ai-msg {
+        display: flex;
+        gap: 10px;
+        max-width: 85%;
+        font-size: 14px;
+        line-height: 1.5;
+
+        .ai-avatar {
+          width: 30px;
+          height: 30px;
+          background: #f0f0f0;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .msg-bubble {
+          padding: 10px 14px;
+          border-radius: 12px;
+          word-wrap: break-word;
+        }
+
+        &.assistant {
+          align-self: flex-start;
+          .msg-bubble {
+            background-color: $bg-ai;
+            color: $text-color;
+            border-top-left-radius: 2px;
+          }
+        }
+
+        &.user {
+          align-self: flex-end;
+          flex-direction: row-reverse;
+          .msg-bubble {
+            background-color: $primary-color;
+            color: white;
+            border-top-right-radius: 2px;
+          }
+        }
+      }
+      
+      .ai-loading {
+        font-size: 13px;
+        color: #888;
+        font-style: italic;
+        padding-left: 10px;
+      }
+    }
+
+    // --- 3. INPUT ---
+    .ai-input {
+      height: 70px;       // Chiều cao cho vùng nhập liệu
+      border-top: 1px solid #eee;
+      padding: 15px;
+      display: flex;
+      gap: 10px;
+      background: white;
+      flex-shrink: 0;     // Không cho phép co lại
+
+      input {
+        flex: 1;
+        padding: 0 15px;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        outline: none;
+        
+        &:focus { border-color: $primary-color; }
+      }
+
+      button {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: $primary-color;
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:disabled { background: #ccc; }
+        &:hover:not(:disabled) { background: $primary-hover; } // Dùng màu tĩnh
+      }
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 480px) {
+  .ai-assistant-container .ai-window {
+    width: 90vw;
+    height: 70vh;
+    bottom: 80px;
+    right: 5vw;
+  }
+}
