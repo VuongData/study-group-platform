@@ -12,7 +12,7 @@ import {
   Send, Image as ImageIcon, Search, Plus, Users, MessageCircle, 
   Copy, Check, Smile, Loader2, Edit2, X, Paperclip, FileText, Download, 
   FolderOpen, Reply, Trash2, XCircle, Video, Settings, LogOut, ShieldAlert,
-  Bell, UserCheck, UserX, BookUser, UserMinus, PenTool, Easel
+  Bell, UserCheck, UserX, BookUser, UserMinus, PenTool, Presentation
 } from "lucide-react"; 
 
 // Sub-modules
