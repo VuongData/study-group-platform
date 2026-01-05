@@ -1,8 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 /* ================= 1. KHAI BÁO BIẾN (FULL) ================= */
+/* Giữ nguyên khối này ở đầu file để tránh lỗi build */
 $primary-color: #2563eb;
-$primary-light: #eff6ff; 
+$primary-light: #eff6ff; /* 👈 Biến này quan trọng, đừng xóa */
 $primary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
 $bg-color: #f8fafc;
 $white: #ffffff;
@@ -75,7 +76,8 @@ $sidebar-width: 280px;
 
     /* MESSAGES LIST */
     .messages-list {
-      flex: 1; padding: 20px 20px;
+      flex: 1; 
+      padding: 20px 20px; /* Padding vừa phải */
       overflow-y: auto; background-color: #f1f5f9;
       display: flex; flex-direction: column; gap: 20px;
 
@@ -187,7 +189,12 @@ $sidebar-width: 280px;
           &:hover .msg-actions-hover { opacity: 1; }
 
           .reaction-picker-popover {
-             position: absolute; bottom: 100%; right: 0; margin-bottom: 8px;
+             position: absolute; bottom: 100%; 
+             /* Mặc định bên phải */
+             right: 0; 
+             left: auto;
+
+             margin-bottom: 8px;
              background: white; padding: 6px 10px;
              border-radius: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.15); 
              display: flex; gap: 6px; align-items: center; z-index: 20;
@@ -198,7 +205,13 @@ $sidebar-width: 280px;
                width: 0; height: 0; 
                border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid white;
              }
-             .theirs & { right: auto; left: 0; &::after { right: auto; left: 20px; } }
+             
+             /* 👇 FIX LỖI: Căn sát trái cho tin nhắn người khác để không bị che */
+             .theirs & { 
+               right: auto; 
+               left: 0; 
+               &::after { right: auto; left: 20px; } 
+             }
 
              span { 
                font-size: 1.3rem; cursor: pointer; transition: 0.2s; padding: 4px; border-radius: 50%;
@@ -217,12 +230,11 @@ $sidebar-width: 280px;
           }
           /* 👇 Fix màu Reply cho tin nhắn của mình: Nền trắng mờ, chữ đen */
           .reply-quote {
-            background-color: rgba(255, 255, 255, 0.8); /* Nền sáng hơn */
-            border-left-color: #2563eb; /* Border xanh đậm */
-            .reply-name { color: #1e293b; } /* Tên màu đen */
-            .reply-text { color: #334155; } /* Text màu xám đậm */
+            background-color: rgba(255, 255, 255, 0.8); 
+            border-left-color: #2563eb; 
+            .reply-name { color: #1e293b; } 
+            .reply-text { color: #334155; } 
           }
-          /* Timestamp bên phải */
           .timestamp { align-self: flex-end; }
         }
 
@@ -237,7 +249,6 @@ $sidebar-width: 280px;
             .reply-name { color: $text-dark; }
             .reply-text { color: $text-gray; }
           }
-          /* Timestamp bên trái */
           .timestamp { align-self: flex-start; }
         }
       } 

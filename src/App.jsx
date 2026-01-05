@@ -4,9 +4,9 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 
-/* --- IMPORT MODULES --- */
+/* --- 1. IMPORT MODULES --- */
 import Login from './modules/Auth/Login';
-import Register from './modules/Auth/Register'; // 👈 Import trang Đăng ký
+import Register from './modules/Auth/Register'; // 👈 BẮT BUỘC PHẢI CÓ DÒNG NÀY
 import Dashboard from './modules/Dashboard/Dashboard';
 import ChatRoom from './modules/Chat/ChatRoom';
 import OPPMManager from './modules/Plan/OPPMManager';
@@ -17,18 +17,14 @@ import AIAssistant from './modules/AI/AIAssistant';
 // Component bảo vệ Route (Chưa đăng nhập -> Đá về Login)
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
-  // Lưu ý: Nếu AuthContext có state 'loading', bạn nên check loading ở đây trước
-  // if (loading) return <div>Loading...</div>; 
   
   if (!user) return <Navigate to="/login" />;
   return children;
 };
 
 // Component con để xử lý Logic hiển thị AI
-// (Giúp ẩn AI khi đang ở trong phòng Chat để tránh vướng víu)
 const LayoutWithAI = () => {
   const location = useLocation();
-  // Nếu đường dẫn bắt đầu bằng /chat thì coi là trang chat -> Ẩn AI
   const isChatPage = location.pathname.startsWith("/chat");
 
   return (
@@ -44,11 +40,13 @@ function App() {
       <ToastContainer theme="colored" autoClose={2000} />
       
       <Routes>
-        {/* --- PUBLIC ROUTES (Ai cũng vào được) --- */}
+        {/* --- 2. PUBLIC ROUTES (Ai cũng vào được) --- */}
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} /> {/* 👈 QUAN TRỌNG: Để ở đây để không bị chặn */}
         
-        {/* --- PROTECTED ROUTES (Phải đăng nhập mới vào được) --- */}
+        {/* 👇 QUAN TRỌNG: Thêm dòng này để bấm nút Đăng Ký nó biết đường chạy */}
+        <Route path="/register" element={<Register />} /> 
+        
+        {/* --- 3. PROTECTED ROUTES (Phải đăng nhập) --- */}
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/chat" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
         <Route path="/oppm" element={<ProtectedRoute><OPPMManager /></ProtectedRoute>} />
@@ -58,11 +56,11 @@ function App() {
         <Route path="/video-call" element={<ProtectedRoute><VideoRoom /></ProtectedRoute>} />
         <Route path="/video-call/:roomId" element={<ProtectedRoute><VideoRoom /></ProtectedRoute>} />
         
-        {/* Route không tồn tại -> Về Login */}
+        {/* 4. Route mặc định: Nếu link sai -> Đá về Login */}
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
 
-      {/* AI Trợ giảng toàn cục (Chỉ hiển thị khi đã đăng nhập & không ở trang Chat) */}
+      {/* AI Trợ giảng */}
       <ProtectedRoute>
          <LayoutWithAI /> 
       </ProtectedRoute>
