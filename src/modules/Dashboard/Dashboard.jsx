@@ -2,20 +2,23 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { LogOut, ArrowRight, Edit2, Check, X, User } from "lucide-react"; 
-// 👇 Thay đổi import: thêm setDoc
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDocFromServer, setDoc } from "firebase/firestore"; // 👇 Dùng getDocFromServer để tránh cache
 import { updateProfile } from "firebase/auth";
 import { db, auth } from "../../services/firebase"; 
 import { toast } from "react-toastify";
+
+// Import ảnh (Đảm bảo bạn đã có ảnh trong assets)
 import imgChat from "../../assets/dashboard-chat.png";
 import imgOppm from "../../assets/dashboard-oppm.png";
 import imgDoc from "../../assets/dashboard-doc.png";
+
 import "./Dashboard.scss";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   
+  // --- STATE QUẢN LÝ ---
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState("");
@@ -23,21 +26,25 @@ const Dashboard = () => {
 
   const nameInputRef = useRef(null);
 
-  // 1. KIỂM TRA LẦN ĐẦU (Fix logic: Chưa có doc cũng phải hiện Onboarding)
+  // 1. KIỂM TRA USER & HIỆN ONBOARDING (Đã fix lỗi Cache)
   useEffect(() => {
     if (!user) return;
     
     const checkUserSetup = async () => {
       try {
         const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
         
-        // Trường hợp 1: User chưa có trong Firestore (Vừa login Google xong)
+        // 👉 QUAN TRỌNG: Dùng getDocFromServer để bắt buộc lấy dữ liệu mới nhất từ Firebase
+        // Bỏ qua cache cũ của trình duyệt -> Giúp test tính năng User mới chuẩn xác hơn
+        const userSnap = await getDocFromServer(userRef);
+        
+        // Trường hợp 1: User chưa có trong Firestore (Vừa login Google xong hoặc Database bị xóa)
         if (!userSnap.exists()) {
+          console.log("User mới tinh -> Kích hoạt Onboarding");
           setTempName(user.displayName || ""); 
           setShowOnboarding(true); 
         } 
-        // Trường hợp 2: User đã có trong Firestore nhưng chưa setup xong
+        // Trường hợp 2: User đã có nhưng chưa setup xong (isSetup = false)
         else {
           const data = userSnap.data();
           if (!data.isSetup) {
@@ -57,18 +64,18 @@ const Dashboard = () => {
     navigate("/login");
   };
 
-  // 2. HÀM CẬP NHẬT TÊN (Fix logic: Dùng setDoc merge thay vì updateDoc)
+  // 2. HÀM CẬP NHẬT TÊN (Đã fix lỗi "No document")
   const handleUpdateName = async (isOnboardingFlow = false) => {
     if (!tempName.trim()) return toast.warning("Tên không được để trống!");
     
     setIsLoading(true);
     try {
-      // A. Cập nhật Auth (Để hiện trên Chat ngay)
+      // A. Cập nhật Auth (Để hiện tên mới ngay trên Chat Header/Tin nhắn)
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, { displayName: tempName });
       }
       
-      // B. Cập nhật Firestore (Dùng setDoc + merge để tránh lỗi "No document")
+      // B. Cập nhật Firestore (Dùng setDoc + merge để tránh lỗi nếu doc chưa tồn tại)
       const userRef = doc(db, "users", user.uid);
       
       const updateData = { 
@@ -76,11 +83,11 @@ const Dashboard = () => {
         email: user.email,
         displayName: tempName,
         photoURL: user.photoURL || null,
-        // Nếu là luồng Onboarding thì đánh dấu đã setup
+        // Nếu là luồng Onboarding -> Đánh dấu đã setup & lưu ngày tạo
         ...(isOnboardingFlow && { isSetup: true, createdAt: new Date() }) 
       };
 
-      // ✅ FIX QUAN TRỌNG: merge: true (Tạo nếu chưa có, Sửa nếu đã có)
+      // 👉 QUAN TRỌNG: merge: true (Tự tạo nếu chưa có, chỉ update trường thay đổi nếu đã có)
       await setDoc(userRef, updateData, { merge: true });
       
       // C. Update UI
@@ -92,8 +99,8 @@ const Dashboard = () => {
         toast.success("Đã đổi tên thành công!");
       }
 
-      // Reload nhẹ để đồng bộ lại context nếu cần
-      setTimeout(() => window.location.reload(), 1000);
+      // Reload nhẹ để đồng bộ Context (đảm bảo tên mới hiện khắp nơi)
+      setTimeout(() => window.location.reload(), 500);
 
     } catch (error) {
       console.error("Lỗi update:", error);
@@ -103,6 +110,7 @@ const Dashboard = () => {
     }
   };
 
+  // Danh sách Module
   const modules = [
     { id: 'chat', title: "THẢO LUẬN", sub: "Chat Room", desc: "Trao đổi nhanh, chém gió dự án.", path: "/chat", bgImage: imgChat },
     { id: 'oppm', title: "KẾ HOẠCH", sub: "OPPM Board", desc: "Theo dõi tiến độ & deadline.", path: "/oppm", bgImage: imgOppm },
@@ -111,6 +119,7 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-cinematic">
+      {/* Background mờ */}
       <div className="bg-overlay"></div>
 
       <div className="content-wrapper">
@@ -118,6 +127,7 @@ const Dashboard = () => {
           <div className="welcome-block">
             <span className="sub-greeting">WELCOME BACK</span>
             
+            {/* --- KHU VỰC TÊN NGƯỜI DÙNG & EDIT --- */}
             <div className="user-name-wrapper">
               {isEditingName ? (
                 <div className="edit-name-box">
@@ -127,6 +137,7 @@ const Dashboard = () => {
                     onChange={(e) => setTempName(e.target.value)}
                     placeholder="Nhập tên mới..."
                     autoFocus
+                    onKeyDown={(e) => e.key === 'Enter' && handleUpdateName(false)}
                   />
                   <div className="edit-actions">
                     <button onClick={() => handleUpdateName(false)} className="btn-save"><Check size={20}/></button>
@@ -147,7 +158,7 @@ const Dashboard = () => {
               )}
             </div>
             
-            <p className="quote">"Sẵn sàng bứt phá cho đồ án này chưa?"</p>
+            <p className="quote">"Sẵn sàng bứt phá cho đồ án mới chưa?"</p>
           </div>
           
           <button onClick={handleLogout} className="btn-logout-minimal">
@@ -155,9 +166,15 @@ const Dashboard = () => {
           </button>
         </header>
 
+        {/* --- CARDS SECTION --- */}
         <div className="cards-section">
           {modules.map((item) => (
-            <div key={item.id} className="cinematic-card" onClick={() => navigate(item.path)} style={{ backgroundImage: `url(${item.bgImage})` }}>
+            <div 
+              key={item.id} 
+              className="cinematic-card" 
+              onClick={() => navigate(item.path)}
+              style={{ backgroundImage: `url(${item.bgImage})` }}
+            >
               <div className="card-overlay">
                 <div className="card-content">
                   <span className="card-sub">{item.sub}</span>
@@ -173,7 +190,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* --- LAYER ONBOARDING --- */}
+      {/* --- LAYER ONBOARDING (CHO USER MỚI) --- */}
       {showOnboarding && (
         <div className="onboarding-overlay">
           <div className="onboarding-content">
@@ -181,7 +198,7 @@ const Dashboard = () => {
               <User size={40} />
             </div>
             <h2>Chào bạn mới! 👋</h2>
-            <p>Chúng mình nên gọi bạn là gì nhỉ?</p>
+            <p>Chúng mình nên gọi bạn là gì?</p>
             
             <input 
               className="onboarding-input"
