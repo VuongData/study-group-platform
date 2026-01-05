@@ -1,22 +1,25 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-import { AuthProvider, useAuth } from './context/AuthContext'
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 /* --- IMPORT MODULES --- */
-import Login from './modules/Auth/Login'
-import Register from './modules/Auth/Register' // 👈 Import trang Đăng ký mới
-import Dashboard from './modules/Dashboard/Dashboard'
-import ChatRoom from './modules/Chat/ChatRoom'
-import OPPMManager from './modules/Plan/OPPMManager'
-import ResourceHub from './modules/Resource/ResourceHub'
-import VideoRoom from './modules/Meeting/VideoRoom'
-import AIAssistant from './modules/AI/AIAssistant'
+import Login from './modules/Auth/Login';
+import Register from './modules/Auth/Register'; // 👈 Import trang Đăng ký
+import Dashboard from './modules/Dashboard/Dashboard';
+import ChatRoom from './modules/Chat/ChatRoom';
+import OPPMManager from './modules/Plan/OPPMManager';
+import ResourceHub from './modules/Resource/ResourceHub';
+import VideoRoom from './modules/Meeting/VideoRoom';
+import AIAssistant from './modules/AI/AIAssistant';
 
 // Component bảo vệ Route (Chưa đăng nhập -> Đá về Login)
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
+  // Lưu ý: Nếu AuthContext có state 'loading', bạn nên check loading ở đây trước
+  // if (loading) return <div>Loading...</div>; 
+  
   if (!user) return <Navigate to="/login" />;
   return children;
 };
@@ -25,7 +28,7 @@ const ProtectedRoute = ({ children }) => {
 // (Giúp ẩn AI khi đang ở trong phòng Chat để tránh vướng víu)
 const LayoutWithAI = () => {
   const location = useLocation();
-  // Nếu đường dẫn bắt đầu bằng /chat thì coi là trang chat
+  // Nếu đường dẫn bắt đầu bằng /chat thì coi là trang chat -> Ẩn AI
   const isChatPage = location.pathname.startsWith("/chat");
 
   return (
@@ -41,11 +44,11 @@ function App() {
       <ToastContainer theme="colored" autoClose={2000} />
       
       <Routes>
-        {/* --- PUBLIC ROUTES (Không cần đăng nhập) --- */}
+        {/* --- PUBLIC ROUTES (Ai cũng vào được) --- */}
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} /> {/* 👈 Route Đăng ký */}
+        <Route path="/register" element={<Register />} /> {/* 👈 QUAN TRỌNG: Để ở đây để không bị chặn */}
         
-        {/* --- PROTECTED ROUTES (Phải đăng nhập) --- */}
+        {/* --- PROTECTED ROUTES (Phải đăng nhập mới vào được) --- */}
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/chat" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
         <Route path="/oppm" element={<ProtectedRoute><OPPMManager /></ProtectedRoute>} />
@@ -59,7 +62,7 @@ function App() {
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
 
-      {/* AI Trợ giảng toàn cục (Chỉ hiển thị khi đã đăng nhập) */}
+      {/* AI Trợ giảng toàn cục (Chỉ hiển thị khi đã đăng nhập & không ở trang Chat) */}
       <ProtectedRoute>
          <LayoutWithAI /> 
       </ProtectedRoute>
@@ -68,4 +71,4 @@ function App() {
   )
 }
 
-export default App
+export default App;
