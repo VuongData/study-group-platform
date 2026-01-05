@@ -11,30 +11,30 @@ const OPPMScoreView = ({ currentRoom }) => {
   
   const [tasks, setTasks] = useState([]);
   const [members, setMembers] = useState([]);
-  const [reviews, setReviews] = useState([]); // Lưu mảng tất cả review để filter
+  const [reviews, setReviews] = useState([]); 
   const [expandedUser, setExpandedUser] = useState(null);
 
-  // State form đánh giá (cho từng user)
-  const [inputScore, setInputScore] = useState(""); // Để trống mặc định
+  // State form nhập liệu
+  const [inputScore, setInputScore] = useState(""); 
   const [inputComment, setInputComment] = useState("");
 
   // 1. Fetch Data
   useEffect(() => {
     if (!currentRoom) return;
 
-    // Fetch Tasks (Để tính điểm hệ thống)
+    // Fetch Tasks
     const qTasks = query(collection(db, "oppm_tasks"), where("roomId", "==", currentRoom.id));
     const unsubTasks = onSnapshot(qTasks, (snap) => {
       setTasks(snap.docs.map(d => d.data()));
     });
 
-    // Fetch Reviews (Lấy tất cả đánh giá trong phòng này)
+    // Fetch Reviews
     const qReviews = query(collection(db, "oppm_reviews"), where("roomId", "==", currentRoom.id));
     const unsubReviews = onSnapshot(qReviews, (snap) => {
       setReviews(snap.docs.map(d => d.data()));
     });
 
-    // Fetch Member Info
+    // Fetch Members
     const fetchMembers = async () => {
       const promises = currentRoom.members.map(uid => getDoc(doc(db, "users", uid)));
       const snaps = await Promise.all(promises);
@@ -54,32 +54,33 @@ const OPPMScoreView = ({ currentRoom }) => {
   };
 
   const calculatePeerScore = (targetUid) => {
-    // Lọc tất cả phiếu đánh giá DÀNH CHO targetUid
     const userReviews = reviews.filter(r => r.targetUid === targetUid);
     if (userReviews.length === 0) return 0;
-
-    // Tính trung bình cộng
     const total = userReviews.reduce((sum, r) => sum + Number(r.score), 0);
     return (total / userReviews.length).toFixed(1);
   };
 
-  // 3. Xử lý Lưu đánh giá (Member chấm Member)
+  // 3. Xử lý Lưu đánh giá (FIX LỖI 9,1 Ở ĐÂY)
   const handleSaveReview = async (targetUid) => {
-    if (!inputScore || Number(inputScore) < 0 || Number(inputScore) > 10) {
+    // 👇 Bước 1: Thay dấu phẩy thành dấu chấm
+    let formattedScore = inputScore.toString().replace(',', '.');
+    const scoreNum = Number(formattedScore);
+
+    // 👇 Bước 2: Kiểm tra hợp lệ
+    if (inputScore === "" || isNaN(scoreNum) || scoreNum < 0 || scoreNum > 10) {
       return toast.warning("Vui lòng nhập điểm hợp lệ (0-10)!");
     }
 
     try {
-      // ID unique cho mỗi cặp (Người chấm - Người được chấm)
       const reviewId = `${currentRoom.id}_${targetUid}_${user.uid}`;
       
       await setDoc(doc(db, "oppm_reviews", reviewId), {
         roomId: currentRoom.id,
-        targetUid: targetUid,       // Người được chấm
-        reviewerUid: user.uid,      // Người chấm
+        targetUid: targetUid,
+        reviewerUid: user.uid,
         reviewerName: user.displayName,
-        score: Number(inputScore),
-        comment: inputComment,      // Không bắt buộc
+        score: scoreNum, // Lưu số đã convert (ví dụ 9.1)
+        comment: inputComment,
         updatedAt: new Date()
       });
       
@@ -90,15 +91,14 @@ const OPPMScoreView = ({ currentRoom }) => {
     }
   };
 
-  // 4. Mở rộng row để chấm điểm
   const handleExpand = (uid) => {
     if (expandedUser === uid) {
       setExpandedUser(null);
     } else {
       setExpandedUser(uid);
-      // Tìm xem MÌNH đã chấm người này chưa để fill vào input
       const myReview = reviews.find(r => r.targetUid === uid && r.reviewerUid === user.uid);
-      setInputScore(myReview?.score || "");
+      // Hiển thị lại điểm cũ (chuyển dấu chấm thành phẩy cho thân thiện nếu thích)
+      setInputScore(myReview?.score?.toString() || "");
       setInputComment(myReview?.comment || "");
     }
   };
@@ -126,13 +126,10 @@ const OPPMScoreView = ({ currentRoom }) => {
           const peerScore = Number(calculatePeerScore(mem.uid));
           const totalScore = (sysScore * 0.5 + peerScore * 0.5).toFixed(1);
           const isExpanded = expandedUser === mem.uid;
-          
-          // Lấy danh sách comment người này nhận được (để hiển thị nếu thích)
           const receivedComments = reviews.filter(r => r.targetUid === mem.uid && r.comment);
 
           return (
             <div key={mem.uid} className={`table-row-group ${isExpanded ? 'active' : ''}`}>
-              {/* Dòng tóm tắt */}
               <div className="table-row-summary" onClick={() => handleExpand(mem.uid)}>
                 <div className="col-name">
                    <div className="avatar">{mem.displayName?.charAt(0)}</div>
@@ -142,16 +139,11 @@ const OPPMScoreView = ({ currentRoom }) => {
                    </div>
                 </div>
                 <div className="col-sys highlight-blue">{sysScore}</div>
-                <div className="col-manual">
-                  {peerScore} <span className="sub-text">/10</span>
-                </div>
+                <div className="col-manual">{peerScore} <span className="sub-text">/10</span></div>
                 <div className="col-total highlight-green">{totalScore}</div>
-                <div className="col-action">
-                  {isExpanded ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
-                </div>
+                <div className="col-action">{isExpanded ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}</div>
               </div>
 
-              {/* Form chấm điểm (Chỉ hiện khi mở rộng) */}
               {isExpanded && (
                 <div className="row-detail-panel">
                   {mem.uid === user.uid ? (
@@ -166,8 +158,8 @@ const OPPMScoreView = ({ currentRoom }) => {
                         <div className="input-wrap">
                           <label className="required"><Star size={14}/> Điểm (0-10)</label>
                           <input 
-                            type="number" min="0" max="10" 
-                            placeholder="vd: 8.5"
+                            type="text" // Chuyển type="number" thành "text" để nhập dấu phẩy thoải mái
+                            placeholder="vd: 8,5"
                             value={inputScore}
                             onChange={e => setInputScore(e.target.value)}
                           />
@@ -188,7 +180,6 @@ const OPPMScoreView = ({ currentRoom }) => {
                     </div>
                   )}
 
-                  {/* Hiển thị các nhận xét đã nhận (Optional - Tùy bạn muốn hiện hay không) */}
                   {receivedComments.length > 0 && (
                     <div className="comments-received">
                       <h6>💬 Nhận xét từ thành viên:</h6>
