@@ -13,7 +13,7 @@ import OPPMScoreView from "./OPPMScoreView";
 
 import "./OPPMManager.scss";
 
-// 👇 IMPORT ÂM THANH DEADLINE
+// IMPORT ÂM THANH DEADLINE
 import deadlineSoundFile from "../../assets/sounds/deadline_tone.mp3";
 
 const OPPMManager = () => {
@@ -24,15 +24,34 @@ const OPPMManager = () => {
   const [selectedRoom, setSelectedRoom] = useState(null); 
   const [roomMembers, setRoomMembers] = useState([]); 
 
-  // State form giao việc
   const [taskTitle, setTaskTitle] = useState("");
   const [assignee, setAssignee] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 👇 REF AUDIO DEADLINE
+  // Ref Audio
   const deadlineAudio = useRef(new Audio(deadlineSoundFile));
+
+  // =========================================================================================
+  // 👇 0. LOGIC TAB TITLE NOTIFICATION (MỚI)
+  // =========================================================================================
+  useEffect(() => {
+    const originalTitle = document.title; 
+
+    const handleVisibilityChange = () => {
+      // Khi quay lại tab -> Reset title
+      if (!document.hidden) {
+        document.title = originalTitle;
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.title = originalTitle;
+    };
+  }, []);
 
   // 1. Fetch Rooms
   useEffect(() => {
@@ -46,7 +65,6 @@ const OPPMManager = () => {
     return () => unsubscribe();
   }, [user]);
 
-  // 2. Fetch Members của Room được chọn
   useEffect(() => {
     const fetchMembers = async () => {
       if (!selectedRoom?.members) { setRoomMembers([]); return; }
@@ -59,14 +77,13 @@ const OPPMManager = () => {
     fetchMembers(); setAssignee(""); 
   }, [selectedRoom]);
 
-  // 👇 3. LOGIC LẮNG NGHE DEADLINE MỚI & PHÁT ÂM THANH
+  // 👇 3. LOGIC DEADLINE NOTIFICATION
   useEffect(() => {
     if (!user?.displayName) return;
 
     let isInitialLoad = true;
 
-    // Lắng nghe tất cả task được giao cho mình (theo displayName)
-    // Lưu ý: Cần Index cho query này trong Firestore (nếu console báo lỗi)
+    // Lắng nghe task được giao cho mình
     const q = query(
       collection(db, "oppm_tasks"), 
       where("owner", "==", user.displayName), 
@@ -76,18 +93,19 @@ const OPPMManager = () => {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       if (!isInitialLoad) {
         snapshot.docChanges().forEach((change) => {
-          // Nếu có task mới thêm vào
           if (change.type === "added") {
-            // Phát âm thanh
+            // 1. Phát âm thanh
             deadlineAudio.current.currentTime = 0;
             deadlineAudio.current.play().catch(e => console.log(e));
             
-            // Hiện thông báo
+            // 2. 👇 Đổi Title nếu đang ở tab khác
+            if (document.hidden) {
+              document.title = "🔔 Bạn có thông báo mới!";
+            }
+
+            // Hiện Toast
             const task = change.doc.data();
-            toast.info(`📅 Bạn có deadline mới: "${task.title}"`, {
-              autoClose: 5000,
-              icon: "⏰"
-            });
+            toast.info(`📅 Deadline mới: "${task.title}"`, { autoClose: 5000, icon: "⏰" });
           }
         });
       }
@@ -97,7 +115,6 @@ const OPPMManager = () => {
     return () => unsubscribe();
   }, [user.displayName]);
 
-  // Hàm Giao Việc Mới
   const handleCreateTask = async (e) => {
     e.preventDefault();
     if (!selectedRoom) return toast.warning("Vui lòng chọn nhóm!");
@@ -118,12 +135,9 @@ const OPPMManager = () => {
         createdAt: serverTimestamp(),
         createdBy: user.uid
       });
-      
       toast.success("Đã tạo công việc!");
       setTaskTitle(""); setAssignee(""); setStartDate(""); setEndDate("");
-    } catch (error) {
-      console.error(error); toast.error("Lỗi tạo việc");
-    } finally { setLoading(false); }
+    } catch (error) { console.error(error); toast.error("Lỗi tạo việc"); } finally { setLoading(false); }
   };
 
   return (
@@ -156,7 +170,6 @@ const OPPMManager = () => {
               {roomMembers.map(m => <option key={m.uid} value={m.displayName}>{m.displayName}</option>)}
             </select>
           </div>
-          
           <div className="input-group">
             <label>Bắt đầu</label>
             <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}/>
@@ -165,7 +178,6 @@ const OPPMManager = () => {
             <label>Kết thúc</label>
             <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)}/>
           </div>
-
           <button type="submit" className="btn-submit" disabled={loading}>
             {loading ? "..." : <><Plus size={18}/> Thêm</>}
           </button>

@@ -22,7 +22,6 @@ import Whiteboard from "../Whiteboard/Whiteboard";
 import { toast } from "react-toastify";
 import "./ChatRoom.scss";
 
-// 👇 IMPORT ÂM THANH TIN NHẮN
 import messageSoundFile from "../../assets/sounds/message_tone.mp3"; 
 
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
@@ -40,7 +39,7 @@ const ChatRoom = () => {
   const imageInputRef = useRef(null);
   const fileInputRef = useRef(null);
   
-  // 👇 REF AUDIO
+  // Ref Audio
   const audioRef = useRef(new Audio(messageSoundFile));
 
   // --- DATA STATES ---
@@ -74,10 +73,29 @@ const ChatRoom = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   // =========================================================================================
+  // 👇 0. LOGIC TAB TITLE NOTIFICATION (MỚI)
+  // =========================================================================================
+  useEffect(() => {
+    const originalTitle = document.title; // Lưu tiêu đề gốc
+
+    const handleVisibilityChange = () => {
+      // Khi người dùng quay lại tab (visible), reset về tiêu đề gốc
+      if (!document.hidden) {
+        document.title = originalTitle;
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.title = originalTitle; // Reset khi unmount
+    };
+  }, []);
+
+  // =========================================================================================
   // DATA FETCHING
   // =========================================================================================
 
-  // Lấy danh sách phòng
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "chat_rooms"), where("members", "array-contains", user.uid), orderBy("updatedAt", "desc"));
@@ -87,7 +105,6 @@ const ChatRoom = () => {
     return () => unsubscribe();
   }, [user]);
 
-  // Lấy biệt danh riêng tư
   useEffect(() => {
     if (!user?.uid) return;
     const unsub = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
@@ -99,7 +116,6 @@ const ChatRoom = () => {
     return () => unsub();
   }, [user]);
 
-  // Lấy tên hiển thị gốc
   useEffect(() => {
     if (!user || rooms.length === 0) return;
     const fetchUserNames = async () => {
@@ -123,7 +139,6 @@ const ChatRoom = () => {
     fetchUserNames();
   }, [rooms, user]);
 
-  // Lấy lời mời kết bạn
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "friend_requests"), where("toUid", "==", user.uid));
@@ -133,7 +148,7 @@ const ChatRoom = () => {
     return () => unsubscribe();
   }, [user]);
 
-  // 👇 LẤY TIN NHẮN & PHÁT ÂM THANH
+  // 👇 LẤY TIN NHẮN & XỬ LÝ THÔNG BÁO (ÂM THANH + TITLE)
   useEffect(() => {
     if (!selectedRoom?.id) { setMessages([]); return; }
     
@@ -143,7 +158,6 @@ const ChatRoom = () => {
     setReplyingTo(null); 
     setMemberDetails([]);
 
-    // Cờ để chặn âm thanh lúc mới vào
     let isInitialLoad = true;
 
     const q = query(collection(db, "messages"), where("roomId", "==", selectedRoom.id), orderBy("createdAt", "desc"), limit(msgLimit));
@@ -154,12 +168,18 @@ const ChatRoom = () => {
 
       if (!isInitialLoad) { 
         snapshot.docChanges().forEach((change) => {
-          // Chỉ phát khi có tin nhắn MỚI (added) và KHÔNG PHẢI CỦA MÌNH
+          // Khi có tin nhắn mới & không phải của mình
           if (change.type === "added") {
             const newMsg = change.doc.data();
             if (newMsg.uid !== user.uid) {
+              // 1. Phát âm thanh
               audioRef.current.currentTime = 0; 
               audioRef.current.play().catch(e => console.log("Audio block:", e));
+
+              // 2. 👇 Đổi Title nếu đang ở tab khác
+              if (document.hidden) {
+                document.title = "🔔 Bạn có thông báo mới!";
+              }
             }
           }
         });
@@ -170,14 +190,13 @@ const ChatRoom = () => {
     return () => unsubscribe();
   }, [selectedRoom?.id, msgLimit]);
 
-  // Helpers
+  // Helpers & Actions
   const fetchMemberDetails = async () => { if (!selectedRoom?.members) return; setIsProcessing(true); try { const details = await Promise.all(selectedRoom.members.map(async (uid) => { const snap = await getDoc(doc(db, "users", uid)); return { id: uid, ...(snap.data() || { displayName: "Unknown", email: "N/A" }) }; })); setMemberDetails(details); } catch (error) { console.error(error); } finally { setIsProcessing(false); } };
   const fetchFriendList = async () => { setIsProcessing(true); try { const directRooms = rooms.filter(r => r.type === 'direct'); const friendsData = await Promise.all(directRooms.map(async (room) => { const friendId = room.members.find(id => id !== user.uid); if(!friendId) return null; const snap = await getDoc(doc(db, "users", friendId)); return { roomId: room.id, friendId: friendId, ...(snap.data() || { displayName: "Unknown", email: "N/A" }) }; })); setFriendList(friendsData.filter(f => f !== null)); } catch (error) { console.error(error); } finally { setIsProcessing(false); } };
   
   useLayoutEffect(() => { if (messages.length > 0 && messages.length <= 20) dummyDiv.current?.scrollIntoView({ behavior: "auto" }); }, [messages, msgSearchTerm]);
   const handleScroll = (e) => { if (e.target.scrollTop === 0 && !isLoadingOldMessages && messages.length >= msgLimit) { setIsLoadingOldMessages(true); setTimeout(() => setMsgLimit(prev => prev + 20), 500); } };
 
-  // Actions
   const uploadToCloudinary = async (file) => { const formData = new FormData(); formData.append("file", file); formData.append("upload_preset", UPLOAD_PRESET); const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { method: "POST", body: formData }); return await res.json(); };
   const handleFileUpload = async (e) => { const file = e.target.files[0]; if(!file) return; try { toast.info("Đang tải file..."); const data = await uploadToCloudinary(file); await addDoc(collection(db, "messages"), { fileUrl: data.secure_url, fileName: file.name, fileType: "document", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp() }); updateDoc(doc(db, "chat_rooms", selectedRoom.id), { updatedAt: serverTimestamp() }); } catch (err) { toast.error("Lỗi upload"); } };
   const handleImageUpload = async (e) => { const file = e.target.files[0]; if(!file) return; try { const data = await uploadToCloudinary(file); await addDoc(collection(db, "messages"), { fileUrl: data.secure_url, fileType: "image", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp() }); updateDoc(doc(db, "chat_rooms", selectedRoom.id), { updatedAt: serverTimestamp() }); } catch (err) { toast.error("Lỗi upload"); } };
@@ -189,7 +208,7 @@ const ChatRoom = () => {
   const openGroupWhiteboard = () => { if (!selectedRoom) return; setActiveBoardId(selectedRoom.id); setBoardTitle(`Bảng nhóm: ${selectedRoom.name || "Chưa đặt tên"}`); };
   const openPersonalWhiteboard = () => { if (!user) return; setActiveBoardId(`${user.uid}_personal`); setBoardTitle("🎨 Bảng nháp cá nhân"); };
 
-  // Management functions
+  // Management & Modal Logic (Giữ nguyên)
   const handleKickMember = async (memberId, memberName) => { if (!confirm(`Mời ${memberName} ra khỏi nhóm?`)) return; try { await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { members: arrayRemove(memberId), updatedAt: serverTimestamp() }); await addDoc(collection(db, "messages"), { text: `🚫 ${user.displayName} đã mời ${memberName} ra khỏi nhóm.`, fileType: "system", uid: "SYSTEM", displayName: "Hệ thống", roomId: selectedRoom.id, createdAt: serverTimestamp() }); setMemberDetails(prev => prev.filter(m => m.id !== memberId)); setSelectedRoom(prev => ({...prev, members: prev.members.filter(id => id !== memberId)})); toast.success(`Đã xóa ${memberName}`); } catch (error) { toast.error("Lỗi khi xóa"); } };
   const handleLeaveGroup = async () => { if (!confirm("Rời khỏi nhóm?")) return; try { await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { members: arrayRemove(user.uid), updatedAt: serverTimestamp() }); await addDoc(collection(db, "messages"), { text: `👋 ${user.displayName} đã rời nhóm.`, fileType: "system", uid: "SYSTEM", displayName: "Hệ thống", roomId: selectedRoom.id, createdAt: serverTimestamp() }); setSelectedRoom(null); setShowModal(false); toast.info("Đã rời nhóm"); } catch (error) { toast.error("Lỗi rời nhóm"); } };
   const handleDisbandGroup = async () => { if (!confirm("CẢNH BÁO: Xóa vĩnh viễn nhóm và toàn bộ tin nhắn?")) return; setIsProcessing(true); try { const batch = writeBatch(db); const msgSnap = await getDocs(query(collection(db, "messages"), where("roomId", "==", selectedRoom.id))); msgSnap.forEach(doc => batch.delete(doc.ref)); const taskSnap = await getDocs(query(collection(db, "oppm_tasks"), where("roomId", "==", selectedRoom.id))); taskSnap.forEach(doc => batch.delete(doc.ref)); const wbSnap = await getDocs(query(collection(db, "whiteboards", selectedRoom.id, "elements"))); wbSnap.forEach(doc => batch.delete(doc.ref)); batch.delete(doc(db, "chat_rooms", selectedRoom.id)); await batch.commit(); setSelectedRoom(null); setShowModal(false); toast.success("Đã giải tán nhóm!"); } catch (error) { console.error(error); toast.error("Lỗi giải tán: " + error.message); } finally { setIsProcessing(false); } };
