@@ -7,18 +7,19 @@ import { db } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-// Icons
+// ✅ IMPORT ĐẦY ĐỦ ICON (Đã thêm UserPlus và thay Easel bằng Presentation)
 import { 
   Send, Image as ImageIcon, Search, Plus, Users, MessageCircle, 
   Copy, Check, Smile, Loader2, Edit2, X, Paperclip, FileText, Download, 
   FolderOpen, Reply, Trash2, XCircle, Video, Settings, LogOut, ShieldAlert,
-  Bell, UserCheck, UserX, BookUser, UserMinus, PenTool, Presentation
+  Bell, UserCheck, UserX, BookUser, UserMinus, PenTool, 
+  Presentation, // Thay cho Easel
+  UserPlus      // Đã bổ sung lại
 } from "lucide-react"; 
 
-// Sub-modules
 import AIAssistant from "../AI/AIAssistant";
 import ChatResources from "./ChatResources"; 
-import Whiteboard from "../Whiteboard/Whiteboard"; // Đảm bảo bạn đã có file này theo code mới nhất
+import Whiteboard from "../Whiteboard/Whiteboard"; 
 import { toast } from "react-toastify";
 import "./ChatRoom.scss";
 
@@ -42,7 +43,7 @@ const ChatRoom = () => {
   const [friendRequests, setFriendRequests] = useState([]); 
   const [memberDetails, setMemberDetails] = useState([]);   
   const [friendList, setFriendList] = useState([]); 
-  const [userNames, setUserNames] = useState({}); // Cache Tên người dùng
+  const [userNames, setUserNames] = useState({});
 
   // --- WHITEBOARD STATE ---
   const [activeBoardId, setActiveBoardId] = useState(null); 
@@ -64,7 +65,6 @@ const ChatRoom = () => {
   
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState("create_group"); 
-  // Modes: 'create_group', 'add_friend', 'add_member', 'rename_group', 'manage_members', 'view_requests', 'manage_friends'
   const [inputTarget, setInputTarget] = useState(""); 
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -82,21 +82,17 @@ const ChatRoom = () => {
     return () => unsubscribe();
   }, [user]);
 
-  // Tự động lấy tên hiển thị cho các phòng Chat Riêng (Direct)
+  // Lấy tên hiển thị cho Chat Riêng
   useEffect(() => {
     if (!user || rooms.length === 0) return;
-
     const fetchUserNames = async () => {
       const missingIds = new Set();
       rooms.forEach(room => {
         if (room.type === 'direct') {
           const otherId = room.members.find(id => id !== user.uid);
-          if (otherId && !userNames[otherId]) {
-            missingIds.add(otherId);
-          }
+          if (otherId && !userNames[otherId]) missingIds.add(otherId);
         }
       });
-
       if (missingIds.size === 0) return;
 
       const newNames = {};
@@ -104,18 +100,14 @@ const ChatRoom = () => {
         try {
           const docSnap = await getDoc(doc(db, "users", uid));
           newNames[uid] = docSnap.exists() ? docSnap.data().displayName : "Người dùng ẩn";
-        } catch (e) {
-          newNames[uid] = "Lỗi tải tên";
-        }
+        } catch (e) { newNames[uid] = "Lỗi tải tên"; }
       }));
-
       setUserNames(prev => ({ ...prev, ...newNames }));
     };
-
     fetchUserNames();
   }, [rooms, user]);
 
-  // Lấy danh sách lời mời kết bạn
+  // Lấy lời mời kết bạn
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "friend_requests"), where("toUid", "==", user.uid));
@@ -129,7 +121,6 @@ const ChatRoom = () => {
   useEffect(() => {
     if (!selectedRoom?.id) { setMessages([]); return; }
     setMsgLimit(20); setIsLoadingOldMessages(false); setShowResources(false); setReplyingTo(null); setMemberDetails([]);
-
     const q = query(collection(db, "messages"), where("roomId", "==", selectedRoom.id), orderBy("createdAt", "desc"), limit(msgLimit));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).reverse());
@@ -138,44 +129,15 @@ const ChatRoom = () => {
     return () => unsubscribe();
   }, [selectedRoom?.id, msgLimit]);
 
-  // --- HELPERS FETCH DATA CHO MODAL ---
-  const fetchMemberDetails = async () => {
-    if (!selectedRoom?.members) return;
-    setIsProcessing(true);
-    try {
-      const details = await Promise.all(selectedRoom.members.map(async (uid) => {
-        const snap = await getDoc(doc(db, "users", uid));
-        return { id: uid, ...(snap.data() || { displayName: "Unknown", email: "N/A" }) };
-      }));
-      setMemberDetails(details);
-    } catch (error) { console.error(error); } finally { setIsProcessing(false); }
-  };
-
-  const fetchFriendList = async () => {
-    setIsProcessing(true);
-    try {
-      const directRooms = rooms.filter(r => r.type === 'direct');
-      const friendsData = await Promise.all(directRooms.map(async (room) => {
-        const friendId = room.members.find(id => id !== user.uid);
-        if(!friendId) return null;
-        const snap = await getDoc(doc(db, "users", friendId));
-        return {
-          roomId: room.id, 
-          friendId: friendId,
-          ...(snap.data() || { displayName: "Unknown", email: "N/A" })
-        };
-      }));
-      setFriendList(friendsData.filter(f => f !== null));
-    } catch (error) { console.error(error); toast.error("Lỗi tải danh bạ"); }
-    finally { setIsProcessing(false); }
-  };
-
-  // Scroll
+  // Helpers Modal
+  const fetchMemberDetails = async () => { if (!selectedRoom?.members) return; setIsProcessing(true); try { const details = await Promise.all(selectedRoom.members.map(async (uid) => { const snap = await getDoc(doc(db, "users", uid)); return { id: uid, ...(snap.data() || { displayName: "Unknown", email: "N/A" }) }; })); setMemberDetails(details); } catch (error) { console.error(error); } finally { setIsProcessing(false); } };
+  const fetchFriendList = async () => { setIsProcessing(true); try { const directRooms = rooms.filter(r => r.type === 'direct'); const friendsData = await Promise.all(directRooms.map(async (room) => { const friendId = room.members.find(id => id !== user.uid); if(!friendId) return null; const snap = await getDoc(doc(db, "users", friendId)); return { roomId: room.id, friendId: friendId, ...(snap.data() || { displayName: "Unknown", email: "N/A" }) }; })); setFriendList(friendsData.filter(f => f !== null)); } catch (error) { console.error(error); } finally { setIsProcessing(false); } };
+  
   useLayoutEffect(() => { if (messages.length > 0 && messages.length <= 20) dummyDiv.current?.scrollIntoView({ behavior: "auto" }); }, [messages, msgSearchTerm]);
   const handleScroll = (e) => { if (e.target.scrollTop === 0 && !isLoadingOldMessages && messages.length >= msgLimit) { setIsLoadingOldMessages(true); setTimeout(() => setMsgLimit(prev => prev + 20), 500); } };
 
   // =========================================================================================
-  // 2. ACTIONS (CHAT, UPLOAD, CALL, WHITEBOARD)
+  // 2. ACTIONS
   // =========================================================================================
   const uploadToCloudinary = async (file) => { const formData = new FormData(); formData.append("file", file); formData.append("upload_preset", UPLOAD_PRESET); const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { method: "POST", body: formData }); return await res.json(); };
   
@@ -188,13 +150,8 @@ const ChatRoom = () => {
   const handleVideoCall = async () => { 
     if (!selectedRoom) return; 
     const callUrl = `/video-call/${selectedRoom.id}`; 
-    window.open(callUrl, '_blank'); // Mở tab mới
-    try { 
-      await addDoc(collection(db, "messages"), { 
-        text: `📞 Đã bắt đầu cuộc gọi video.`, 
-        fileType: "system", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp(), reactions: {} 
-      }); 
-    } catch (error) { console.error(error); } 
+    window.open(callUrl, '_blank'); 
+    try { await addDoc(collection(db, "messages"), { text: `📞 Đã bắt đầu cuộc gọi video.`, fileType: "system", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp(), reactions: {} }); } catch (error) { console.error(error); } 
   };
 
   // --- WHITEBOARD FUNCTIONS ---
@@ -216,12 +173,7 @@ const ChatRoom = () => {
   
   const handleKickMember = async (memberId, memberName) => { 
     if (!confirm(`Mời ${memberName} ra khỏi nhóm?`)) return; 
-    try { 
-      await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { members: arrayRemove(memberId), updatedAt: serverTimestamp() }); 
-      await addDoc(collection(db, "messages"), { text: `🚫 ${user.displayName} đã mời ${memberName} ra khỏi nhóm.`, fileType: "system", uid: "SYSTEM", displayName: "Hệ thống", roomId: selectedRoom.id, createdAt: serverTimestamp() }); 
-      setMemberDetails(prev => prev.filter(m => m.id !== memberId)); setSelectedRoom(prev => ({...prev, members: prev.members.filter(id => id !== memberId)})); 
-      toast.success(`Đã xóa ${memberName}`); 
-    } catch (error) { toast.error("Lỗi khi xóa"); } 
+    try { await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { members: arrayRemove(memberId), updatedAt: serverTimestamp() }); await addDoc(collection(db, "messages"), { text: `🚫 ${user.displayName} đã mời ${memberName} ra khỏi nhóm.`, fileType: "system", uid: "SYSTEM", displayName: "Hệ thống", roomId: selectedRoom.id, createdAt: serverTimestamp() }); setMemberDetails(prev => prev.filter(m => m.id !== memberId)); setSelectedRoom(prev => ({...prev, members: prev.members.filter(id => id !== memberId)})); toast.success(`Đã xóa ${memberName}`); } catch (error) { toast.error("Lỗi khi xóa"); } 
   };
   
   const handleLeaveGroup = async () => { 
@@ -236,8 +188,7 @@ const ChatRoom = () => {
       const batch = writeBatch(db);
       const msgSnap = await getDocs(query(collection(db, "messages"), where("roomId", "==", selectedRoom.id))); msgSnap.forEach(doc => batch.delete(doc.ref));
       const taskSnap = await getDocs(query(collection(db, "oppm_tasks"), where("roomId", "==", selectedRoom.id))); taskSnap.forEach(doc => batch.delete(doc.ref));
-      const wbSnap = await getDocs(query(collection(db, "whiteboards", selectedRoom.id, "elements"))); wbSnap.forEach(doc => batch.delete(doc.ref)); // Xóa luôn bảng trắng nhóm
-      
+      const wbSnap = await getDocs(query(collection(db, "whiteboards", selectedRoom.id, "elements"))); wbSnap.forEach(doc => batch.delete(doc.ref));
       batch.delete(doc(db, "chat_rooms", selectedRoom.id));
       await batch.commit(); 
       setSelectedRoom(null); setShowModal(false); toast.success("Đã giải tán nhóm!");
@@ -245,7 +196,7 @@ const ChatRoom = () => {
   };
 
   const handleUnfriend = async (roomId, friendName) => {
-    if (!confirm(`Bạn muốn hủy kết bạn với ${friendName}?\n\n⚠️ Hành động này sẽ xóa vĩnh viễn đoạn chat riêng tư.`)) return;
+    if (!confirm(`Bạn muốn hủy kết bạn với ${friendName}?`)) return;
     setFriendList(prev => prev.filter(f => f.roomId !== roomId)); 
     try {
       const batch = writeBatch(db);
@@ -258,9 +209,6 @@ const ChatRoom = () => {
     } catch (error) { toast.error("Lỗi hủy kết bạn"); console.error(error); fetchFriendList(); }
   };
 
-  // =========================================================================================
-  // 4. FRIEND REQUEST
-  // =========================================================================================
   const handleAcceptRequest = async (req) => {
     setIsProcessing(true);
     try {
@@ -329,7 +277,7 @@ const ChatRoom = () => {
            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 10}}>
              <h3 style={{margin:0}}>💬 Chat Nhóm</h3>
              <div style={{display:'flex', gap: 8}}>
-               {/* Nút Bảng Cá Nhân */}
+               {/* Nút Bảng Cá Nhân - Đã sửa icon thành Presentation */}
                <div title="Bảng nháp cá nhân" style={{cursor:'pointer'}} onClick={openPersonalWhiteboard}>
                  <Presentation size={20} color="#059669"/>
                </div>
@@ -361,6 +309,7 @@ const ChatRoom = () => {
            ))}
            <div className="sidebar-actions" style={{marginTop: 10, display: 'flex', gap: 5}}>
              <button className="btn-add-new" onClick={()=>{setModalMode('create_group'); setInputTarget(""); setShowModal(true)}} style={{flex: 1}}><Plus size={16}/> Tạo Nhóm</button>
+             {/* ✅ Đã sửa: UserPlus được sử dụng ở đây */}
              <button className="btn-add-new" onClick={()=>{setModalMode('add_friend'); setInputTarget(""); setShowModal(true)}} style={{flex: 1, borderColor: '#22c55e', color: '#22c55e'}}><UserPlus size={16}/> Kết bạn</button>
            </div>
         </div>
@@ -384,7 +333,6 @@ const ChatRoom = () => {
                <div className="header-actions">
                  <button className="btn-icon" onClick={handleVideoCall} title="Video Call"><Video size={22} color="#2563eb" /></button>
                  
-                 {/* Nút Bảng Trắng Nhóm (Chỉ hiện trong nhóm) */}
                  <button className="btn-icon" onClick={openGroupWhiteboard} title="Bảng trắng nhóm">
                     <PenTool size={22} color="#9333ea" />
                  </button>
@@ -444,7 +392,7 @@ const ChatRoom = () => {
 
       {showResources && selectedRoom && <div style={{width:320, borderLeft:'1px solid #ddd'}}><ChatResources roomId={selectedRoom.id}/></div>}
 
-      {/* --- RENDER WHITEBOARD (NẾU ĐANG MỞ) --- */}
+      {/* --- RENDER WHITEBOARD --- */}
       {activeBoardId && (
         <Whiteboard 
           boardId={activeBoardId} 
