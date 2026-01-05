@@ -3,6 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { LogOut, ArrowRight } from "lucide-react"; 
 import "./Dashboard.scss";
 
+// 👇 1. IMPORT ẢNH TỪ MÁY CỦA BẠN (Đảm bảo đường dẫn đúng nhé)
+// Bạn nhớ đổi tên file trong thư mục assets cho khớp với tên dưới đây
+import imgChat from "../../assets/dashboard-chat.png";
+import imgOppm from "../../assets/dashboard-oppm.png";
+import imgDoc from "../../assets/dashboard-doc.png";
+
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -12,16 +18,15 @@ const Dashboard = () => {
     navigate("/login");
   };
 
-  // Cấu hình danh sách module để dễ quản lý & render
   const modules = [
     {
       id: 'chat',
       title: "THẢO LUẬN",
       sub: "Chat Room",
-      desc: "Trao đổi nhanh, chém gió dự án.",
+      desc: "Trao đổi nhanh dự án.",
       path: "/chat",
-      // Ảnh nền cho card Chat (Vibe công nghệ/kết nối)
-      bgImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=600&auto=format&fit=crop"
+      // 👇 2. Gán biến ảnh đã import vào đây
+      bgImage: imgChat 
     },
     {
       id: 'oppm',
@@ -29,8 +34,7 @@ const Dashboard = () => {
       sub: "OPPM Board",
       desc: "Theo dõi tiến độ & deadline.",
       path: "/oppm",
-      // Ảnh nền cho card OPPM (Vibe làm việc/giấy tờ)
-      bgImage: "https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?q=80&w=600&auto=format&fit=crop"
+      bgImage: imgOppm
     },
     {
       id: 'resources',
@@ -38,8 +42,7 @@ const Dashboard = () => {
       sub: "Documents",
       desc: "Kho lưu trữ tài liệu chung.",
       path: "/resources",
-      // Ảnh nền cho card Tài liệu (Vibe thư viện/sách)
-      bgImage: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=600&auto=format&fit=crop"
+      bgImage: imgDoc
     }
   ];
 
@@ -49,12 +52,11 @@ const Dashboard = () => {
       <div className="bg-overlay"></div>
 
       <div className="content-wrapper">
-        {/* Header */}
         <header className="hero-header">
           <div className="welcome-block">
             <span className="sub-greeting">WELCOME BACK</span>
             <h1 className="user-name">{user?.displayName || "Member"}</h1>
-            <p className="quote">"Sẵn sàng bứt phá cho đồ án này chưa?"</p>
+            <p className="quote">"Sẵn sàng bứt phá cho đồ án mới chưa?"</p>
           </div>
           
           <button onClick={handleLogout} className="btn-logout-minimal">
@@ -63,13 +65,13 @@ const Dashboard = () => {
           </button>
         </header>
 
-        {/* Card Slider Section */}
         <div className="cards-section">
           {modules.map((item) => (
             <div 
               key={item.id} 
               className="cinematic-card" 
               onClick={() => navigate(item.path)}
+              // 👇 Style này vẫn giữ nguyên, nó sẽ tự nhận ảnh từ biến import
               style={{ backgroundImage: `url(${item.bgImage})` }}
             >
               <div className="card-overlay">
