@@ -5,17 +5,18 @@
 
 // 2. Biến màu sắc
 $primary: #2563eb;
-$primary-dark: #1d4ed8; // Màu đậm hơn dùng cho hover (thay cho darken)
+$primary-dark: #1d4ed8; 
 $bg-light: #f3f4f6;
 $text-dark: #1f2937;
 $border: #e5e7eb;
+$danger: #ef4444;
 
 .chat-room-container {
   display: flex;
   width: 100%;
   height: 100vh;
   background: #fff;
-  font-family: 'Inter', system-ui, sans-serif; // Sử dụng font đã import
+  font-family: 'Inter', system-ui, sans-serif;
 
   // --- 1. SIDEBAR (Danh sách phòng) ---
   .chat-sidebar {
@@ -73,7 +74,7 @@ $border: #e5e7eb;
           background: #e0e7ff; color: $primary;
           border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0; // Tránh bị méo hình
+          flex-shrink: 0;
         }
 
         .room-info {
@@ -320,7 +321,7 @@ $border: #e5e7eb;
           .reply-label { color: #64748b; font-size: 0.75rem; }
           .reply-preview { font-weight: 600; color: $text-dark; max-width: 80vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         }
-        button { border: none; background: none; cursor: pointer; color: #64748b; &:hover { color: #ef4444; } }
+        button { border: none; background: none; cursor: pointer; color: #64748b; &:hover { color: $danger; } }
       }
 
       .chat-input-area {
@@ -337,7 +338,7 @@ $border: #e5e7eb;
         .btn-send {
           width: 42px; height: 42px; background: $primary; color: white; border: none; border-radius: 50%;
           display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s;
-          &:hover { background: $primary-dark; } // Dùng biến màu thay vì darken()
+          &:hover { background: $primary-dark; }
           &:active { transform: scale(0.95); }
         }
       }
@@ -345,29 +346,80 @@ $border: #e5e7eb;
   }
 }
 
-// Modal Styles
+// --- MODAL STYLES (Đã bổ sung phần Member Management) ---
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.5);
   display: flex; align-items: center; justify-content: center; z-index: 1000;
   
   .modal-content {
-    background: #fff; width: 400px; padding: 25px; border-radius: 12px;
-    h3 { margin-top: 0; text-align: center; color: $text-dark; }
+    background: #fff; width: 450px; padding: 25px; border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     
-    .modal-tabs {
-      display: flex; margin-bottom: 20px; background: #f1f5f9; padding: 3px; border-radius: 8px;
-      button { 
-        flex: 1; padding: 8px; border: none; background: transparent; cursor: pointer; border-radius: 6px; 
-        &.active { background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-weight: 600; color: $primary; }
-      }
-    }
+    h3 { margin-top: 0; text-align: center; color: $text-dark; margin-bottom: 20px; }
     
     .modal-body {
       display: flex; flex-direction: column; gap: 15px;
-      input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; font-family: inherit; }
-      button { 
-        padding: 10px; background: $primary; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
-        &:hover { background: $primary-dark; }
+      
+      .input-group {
+        display: flex; flex-direction: column; gap: 8px;
+        label { font-size: 0.9rem; font-weight: 600; color: #475569; }
+        input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; font-family: inherit; }
+      }
+
+      // 🔥 PHẦN STYLE QUẢN LÝ THÀNH VIÊN (MỚI)
+      .member-list-container {
+        max-height: 400px;
+        overflow-y: auto;
+      
+        .btn-add-member-in-modal {
+          width: 100%; padding: 10px; margin-bottom: 15px;
+          background: #f0f9ff; color: #0284c7; border: 1px dashed #0284c7; border-radius: 6px;
+          display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-weight: 600;
+          &:hover { background: #e0f2fe; }
+        }
+      
+        .member-list-ul {
+          list-style: none; padding: 0; margin: 0;
+          
+          .member-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0; border-bottom: 1px solid #eee;
+            
+            .mem-info {
+              display: flex; align-items: center; gap: 10px;
+              .mem-avatar { width: 36px; height: 36px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #475569; }
+              .mem-text { 
+                 display: flex; flex-direction: column; font-size: 0.9rem; 
+                 span { font-size: 0.75rem; color: #64748b; } 
+              }
+            }
+      
+            .mem-actions {
+              .badge-admin { background: #dcfce7; color: #166534; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+              .btn-kick { background: none; border: none; color: $danger; cursor: pointer; padding: 5px; border-radius: 4px; &:hover { background: #fee2e2; } }
+            }
+          }
+        }
+      
+        .modal-danger-zone {
+          margin-top: 20px; padding-top: 15px; border-top: 2px solid #fecaca;
+          display: flex; justify-content: center;
+          
+          button {
+            display: flex; align-items: center; gap: 8px; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
+            &.btn-leave { background: #f1f5f9; color: #334155; &:hover { background: #e2e8f0; } }
+            &.btn-disband { background: $danger; color: white; &:hover { background: #dc2626; } }
+          }
+        }
+      }
+      
+      // Các nút Action chung
+      .modal-actions {
+        display: flex; gap: 10px; margin-top: 10px;
+        button { 
+          padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: inherit;
+          &:hover { opacity: 0.9; }
+        }
       }
     }
   }
