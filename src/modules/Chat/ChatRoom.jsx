@@ -53,7 +53,10 @@ const ChatRoom = () => {
   const [activeBoardId, setActiveBoardId] = useState(null); 
   const [boardTitle, setBoardTitle] = useState("");
   const [msgLimit, setMsgLimit] = useState(20);
+  
+  // 👇 Đã sửa tên biến state này
   const [isFetching, setIsFetching] = useState(false);
+
   const [newMessage, setNewMessage] = useState("");
   const [activeReactionId, setActiveReactionId] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -125,7 +128,11 @@ const ChatRoom = () => {
   // --- MESSAGE FETCHING ---
   useEffect(() => {
     if (!selectedRoom?.id) { setMessages([]); return; }
-    if (msgLimit !== 20) { setMsgLimit(20); return; }
+    // Reset limit khi đổi phòng
+    if (msgLimit !== 20) { 
+      setMsgLimit(20); 
+      return; 
+    }
 
     setIsFetching(false);
     setShowResources(false); 
@@ -195,7 +202,7 @@ const ChatRoom = () => {
     }
   };
 
-  // ... (ACTIONS & HELPERS GIỮ NGUYÊN) ...
+  // ... (ACTIONS & HELPERS) ...
   const fetchMemberDetails = async () => { if (!selectedRoom?.members) return; setIsProcessing(true); try { const details = await Promise.all(selectedRoom.members.map(async (uid) => { const snap = await getDoc(doc(db, "users", uid)); return { id: uid, ...(snap.data() || { displayName: "Unknown", email: "N/A" }) }; })); setMemberDetails(details); } catch (error) { console.error(error); } finally { setIsProcessing(false); } };
   const fetchFriendList = async () => { setIsProcessing(true); try { const directRooms = rooms.filter(r => r.type === 'direct'); const friendsData = await Promise.all(directRooms.map(async (room) => { const friendId = room.members.find(id => id !== user.uid); if(!friendId) return null; const snap = await getDoc(doc(db, "users", friendId)); return { roomId: room.id, friendId: friendId, ...(snap.data() || { displayName: "Unknown", email: "N/A" }) }; })); setFriendList(friendsData.filter(f => f !== null)); } catch (error) { console.error(error); } finally { setIsProcessing(false); } };
   const uploadToCloudinary = async (file) => { const formData = new FormData(); formData.append("file", file); formData.append("upload_preset", UPLOAD_PRESET); const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { method: "POST", body: formData }); return await res.json(); };
@@ -275,7 +282,9 @@ const ChatRoom = () => {
             </header>
 
             <div className="messages-list" ref={chatContainerRef} onScroll={handleScroll}>
-              {isLoadingOldMessages && <div className="loading"><Loader2 className="spin"/> Tải tin cũ...</div>}
+              {/* 👇 ĐÃ SỬA: Dùng isFetching thay vì isLoadingOldMessages */}
+              {isFetching && <div className="loading"><Loader2 className="spin"/> Tải tin cũ...</div>}
+              
               {messages.filter(m => !msgSearchTerm || (m.text||"").toLowerCase().includes(msgSearchTerm.toLowerCase())).map(msg => {
                 if (msg.isSystem) return <div key={msg.id} className="system-msg"><span>{msg.text}</span></div>;
                 const isMe = msg.uid === user.uid;
@@ -321,7 +330,7 @@ const ChatRoom = () => {
                             </div>
                           )}
 
-                          {/* 👇 TIMESTAMP (ĐÃ ĐƯA VÀO TRONG BONG BÓNG) */}
+                          {/* TIMESTAMP */}
                           <div className="timestamp">
                             {msg.createdAt?.seconds ? new Date(msg.createdAt.seconds*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '...'}
                           </div>
