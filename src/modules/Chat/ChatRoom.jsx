@@ -39,7 +39,7 @@ const ChatRoom = () => {
   const [memberDetails, setMemberDetails] = useState([]);   
   const [friendList, setFriendList] = useState([]); 
   
-  // 👇 STATE MỚI: Lưu tên người dùng để hiển thị (Cache ID -> Name)
+  // Cache tên người dùng để hiển thị
   const [userNames, setUserNames] = useState({});
 
   // --- UI STATES ---
@@ -75,27 +75,24 @@ const ChatRoom = () => {
     return () => unsubscribe();
   }, [user]);
 
-  // 👇 LOGIC MỚI: Tự động lấy tên hiển thị cho các phòng Chat Riêng (Direct)
+  // Tự động lấy tên hiển thị cho các phòng Chat Riêng (Direct)
   useEffect(() => {
     if (!user || rooms.length === 0) return;
 
     const fetchUserNames = async () => {
       const missingIds = new Set();
       
-      // 1. Duyệt qua tất cả phòng, tìm các ID chưa có tên
       rooms.forEach(room => {
         if (room.type === 'direct') {
           const otherId = room.members.find(id => id !== user.uid);
-          // Nếu có ID và chưa có trong cache userNames thì thêm vào danh sách cần lấy
           if (otherId && !userNames[otherId]) {
             missingIds.add(otherId);
           }
         }
       });
 
-      if (missingIds.size === 0) return; // Đã có đủ tên, không cần tải lại
+      if (missingIds.size === 0) return;
 
-      // 2. Tải thông tin từ Firestore
       const newNames = {};
       await Promise.all(Array.from(missingIds).map(async (uid) => {
         try {
@@ -110,12 +107,11 @@ const ChatRoom = () => {
         }
       }));
 
-      // 3. Cập nhật state
       setUserNames(prev => ({ ...prev, ...newNames }));
     };
 
     fetchUserNames();
-  }, [rooms, user]); // Chạy lại khi danh sách phòng thay đổi
+  }, [rooms, user]);
 
   // Lấy danh sách lời mời kết bạn
   useEffect(() => {
@@ -186,6 +182,31 @@ const ChatRoom = () => {
   const handleSendMessage = async (e) => { e.preventDefault(); if ((!newMessage.trim()) || !selectedRoom) return; const payload = { text: newMessage, fileType: "text", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp() }; if (replyingTo) payload.replyTo = { id: replyingTo.id, text: replyingTo.text || "[File]", displayName: replyingTo.displayName }; await addDoc(collection(db, "messages"), payload); updateDoc(doc(db, "chat_rooms", selectedRoom.id), { updatedAt: serverTimestamp() }); setNewMessage(""); setReplyingTo(null); dummyDiv.current?.scrollIntoView({ behavior: "smooth" }); };
   const handleUnsend = async (msgId) => { if(!confirm("Thu hồi tin nhắn?")) return; try { await updateDoc(doc(db, "messages", msgId), { isUnsent: true, text: "Tin nhắn đã thu hồi", fileUrl: null }); } catch (e) { toast.error("Lỗi thu hồi"); } };
   const handleReaction = async (msgId, emoji) => { const msgRef = doc(db, "messages", msgId); const msg = messages.find(m => m.id === msgId); const newReactions = { ...(msg.reactions || {}) }; if (newReactions[user.uid] === emoji) delete newReactions[user.uid]; else newReactions[user.uid] = emoji; await updateDoc(msgRef, { reactions: newReactions }); setActiveReactionId(null); };
+
+  // 🔥 HANDLE VIDEO CALL (MỞ TAB MỚI)
+  const handleVideoCall = async () => {
+    if (!selectedRoom) return;
+    
+    // 1. Mở tab mới ngay lập tức để tránh trình duyệt chặn popup
+    const callUrl = `/video-call/${selectedRoom.id}`;
+    window.open(callUrl, '_blank');
+
+    // 2. Gửi thông báo vào nhóm (chạy ngầm)
+    try {
+      await addDoc(collection(db, "messages"), { 
+        text: `📞 Đã bắt đầu cuộc gọi video.`, 
+        fileType: "system", 
+        uid: user.uid, 
+        displayName: user.displayName, 
+        photoURL: user.photoURL, 
+        roomId: selectedRoom.id, 
+        createdAt: serverTimestamp(), 
+        reactions: {} 
+      });
+    } catch (error) {
+      console.error("Lỗi gửi thông báo video:", error);
+    }
+  };
 
   // =========================================================================================
   // 3. MANAGEMENT
@@ -287,11 +308,10 @@ const ChatRoom = () => {
     } catch (error) { console.error(error); toast.error("Lỗi xử lý."); } finally { setIsProcessing(false); }
   };
 
-  // 👇 UI HELPERS: CẬP NHẬT ĐỂ HIỆN TÊN
+  // UI HELPERS
   const getRoomName = (room) => { 
     if (room.type === 'group') return room.name; 
     const otherId = room.members.find(id => id !== user.uid); 
-    // Nếu có tên trong Cache thì lấy, không thì hiện "Đang tải..." hoặc fallback
     return userNames[otherId] || "Đang tải..."; 
   };
   
@@ -351,7 +371,11 @@ const ChatRoom = () => {
                  </div>
                </div>
                <div className="header-actions">
-                 <button className="btn-icon" onClick={()=>navigate(`/video-call/${selectedRoom.id}`)}><Video size={22} color="#2563eb" /></button>
+                 {/* 👇 Nút Video Call đã được gắn hàm handleVideoCall */}
+                 <button className="btn-icon" onClick={handleVideoCall} title="Video Call">
+                    <Video size={22} color="#2563eb" />
+                 </button>
+                 
                  {selectedRoom.type === 'group' && <button className="btn-icon" onClick={() => { fetchMemberDetails(); setModalMode('manage_members'); setShowModal(true); }}><Settings size={22} /></button>}
                  <div className="divider"></div>
                  {isSearchMsgOpen ? <div className="msg-search"><input autoFocus placeholder="Tìm tin..." value={msgSearchTerm} onChange={e=>setMsgSearchTerm(e.target.value)}/><X size={16} onClick={()=>setIsSearchMsgOpen(false)}/></div> : <button className="btn-icon" onClick={()=>setIsSearchMsgOpen(true)}><Search size={20}/></button>}
@@ -421,6 +445,7 @@ const ChatRoom = () => {
             </h3>
             
             <div className="modal-body">
+              {/* === UI XEM LỜI MỜI === */}
               {modalMode === 'view_requests' ? (
                 <div className="requests-list" style={{maxHeight: 300, overflowY:'auto'}}>
                    {friendRequests.length === 0 ? <p style={{textAlign:'center', color:'#888'}}>Không có lời mời nào.</p> : 
