@@ -1,59 +1,227 @@
-/* src/modules/Auth/Login.scss */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
-.login-container {
-  height: 100vh;
+/* --- CẤU HÌNH MÀU SẮC --- */
+$bg-dark: #1a1b26;        /* Nền tối chủ đạo */
+$neon-green: #00f7ff;     /* Màu Neon xanh ngọc */
+$lamp-color: #4fd1c5;     /* Màu vỏ đèn */
+$wire-color: #2d3748;     /* Dây đèn */
+$text-white: #ffffff;
+$text-gray: #a0aec0;
+
+.login-lamp-container {
+  min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #f8fafc;
-  font-family: 'Inter', sans-serif;
+  background-color: $bg-dark;
+  font-family: 'Poppins', sans-serif;
+  position: relative;
+  overflow: hidden;
 
-  .login-card {
-    background: white;
-    padding: 40px;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    width: 100%;
-    max-width: 400px;
+  /* Hiệu ứng nền mờ */
+  &::before {
+    content: ''; position: absolute; width: 100%; height: 100%;
+    background: radial-gradient(circle at 50% 10%, rgba(0, 247, 255, 0.1), transparent 60%);
+    pointer-events: none;
+  }
 
-    h2 {
-      color: #333;
-      margin-bottom: 10px;
-      font-weight: 700;
+  /* =========================================
+     💡 CSS ART: CHIẾC ĐÈN CUTE
+     ========================================= */
+  .lamp-wrapper {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 10;
+    transition: all 0.5s ease;
+
+    /* Dây đèn */
+    .wire {
+      width: 4px;
+      height: 120px;
+      background: $wire-color;
+      position: relative;
+      z-index: 1;
     }
 
-    p {
-      color: #666;
-      margin-bottom: 30px;
-    }
-
-    button {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 12px 24px;
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: 500;
-      transition: all 0.2s;
-      color: #374151;
-
-      &:hover {
-        background: #f1f5f9;
-        border-color: #cbd5e1;
-      }
+    /* Đầu đèn (Chao đèn) */
+    .lamp-head {
+      width: 120px;
+      height: 90px;
+      background: $lamp-color;
+      border-radius: 40px 40px 10px 10px; // Hình thang bo tròn
+      position: relative;
+      z-index: 2;
+      box-shadow: 
+        0 0 20px rgba(79, 209, 197, 0.4),
+        inset -10px -10px 20px rgba(0,0,0,0.2); // Tạo khối 3D
       
-      img {
-        width: 20px;
-        height: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      /* Khuôn mặt Cute */
+      .lamp-face {
+        position: relative;
+        width: 100%; height: 100%;
+        
+        .eye {
+          position: absolute; top: 40px; width: 12px; height: 12px;
+          background: #1a202c; border-radius: 50%;
+          animation: blink 4s infinite;
+          &.left { left: 35px; }
+          &.right { right: 35px; }
+        }
+        
+        .mouth {
+          position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
+          width: 20px; height: 10px;
+          background: #1a202c;
+          border-radius: 0 0 20px 20px; /* Miệng cười */
+          transition: 0.3s;
+        }
+      }
+
+      /* Chùm sáng (Light Beam) */
+      .light-beam {
+        position: absolute;
+        top: 80px; /* Nằm dưới chao đèn */
+        left: 50%;
+        transform: translateX(-50%);
+        width: 300px; /* Rộng ra */
+        height: 600px;
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), transparent 80%);
+        clip-path: polygon(40% 0, 60% 0, 100% 100%, 0% 100%); /* Hình nón ánh sáng */
+        pointer-events: none;
+        opacity: 1;
+        transition: opacity 0.3s ease;
+        z-index: 0;
+      }
+    }
+
+    /* --- TRẠNG THÁI: KHI NHẬP PASS (Đèn Tắt/Sợ hãi) --- */
+    &.focus-password {
+      .lamp-head {
+        .light-beam { opacity: 0.1; } // Tắt đèn
+        .lamp-face {
+          .eye { height: 4px; border-radius: 0; } // Mắt nhắm
+          .mouth { width: 10px; height: 10px; border-radius: 50%; bottom: 20px; } // Miệng 😮
+        }
       }
     }
   }
+
+  /* =========================================
+     📝 LOGIN FORM (GLASSMORPHISM)
+     ========================================= */
+  .login-box {
+    margin-top: 150px; /* Để chừa chỗ cho đèn */
+    width: 400px;
+    padding: 40px;
+    background: rgba(30, 41, 59, 0.7); /* Kính mờ tối */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    z-index: 5;
+    animation: slideUp 0.8s ease-out;
+
+    .header {
+      text-align: center; margin-bottom: 30px;
+      h2 { margin: 0; color: $text-white; font-size: 2rem; font-weight: 700; letter-spacing: 1px; }
+      p { margin: 10px 0 0; color: $text-gray; font-size: 0.9rem; }
+    }
+
+    form {
+      display: flex; flex-direction: column; gap: 20px;
+
+      .input-group {
+        position: relative;
+        
+        .icon {
+          position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+          color: $text-gray; pointer-events: none; transition: 0.3s;
+        }
+
+        input {
+          width: 100%;
+          padding: 14px 14px 14px 45px; /* Padding trái né icon */
+          background: rgba(0, 0, 0, 0.3);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+          color: $text-white;
+          font-size: 0.95rem;
+          outline: none;
+          transition: all 0.3s;
+
+          &::placeholder { color: rgba(255,255,255,0.3); }
+
+          /* Focus Effect */
+          &:focus {
+            border-color: $neon-green;
+            box-shadow: 0 0 10px rgba(0, 247, 255, 0.3);
+            background: rgba(0, 0, 0, 0.5);
+            
+            & + .icon { color: $neon-green; } /* Icon sáng theo input */
+          }
+        }
+      }
+
+      .forgot-pass {
+        text-align: right;
+        a { color: $text-gray; font-size: 0.85rem; text-decoration: none; transition: 0.3s; &:hover { color: $neon-green; } }
+      }
+
+      .btn-login {
+        background: linear-gradient(135deg, #00f7ff, #0099ff);
+        color: #000;
+        font-weight: 700;
+        padding: 14px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 1rem;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        transition: 0.3s;
+        margin-top: 10px;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 5px 15px rgba(0, 247, 255, 0.4);
+        }
+        
+        &:disabled { opacity: 0.7; cursor: not-allowed; }
+        .spin { animation: spin 1s linear infinite; }
+      }
+    }
+
+    .footer {
+      text-align: center; margin-top: 25px; color: $text-gray; font-size: 0.9rem;
+      a { color: $neon-green; font-weight: 600; text-decoration: none; margin-left: 5px; &:hover { text-decoration: underline; } }
+    }
+  }
+}
+
+/* --- ANIMATIONS --- */
+@keyframes blink {
+  0%, 96%, 100% { height: 12px; }
+  98% { height: 2px; } /* Chớp mắt */
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(50px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* Responsive Mobile */
+@media (max-width: 480px) {
+  .login-box { width: 90%; padding: 25px; }
+  .lamp-wrapper { transform: translateX(-50%) scale(0.8); top: -20px; }
 }
