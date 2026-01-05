@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* --- 1. BIẾN MÀU SẮC --- */
+/* ================= 1. KHAI BÁO BIẾN (QUAN TRỌNG) ================= */
+/* Phải đặt ở đầu file để không bị lỗi "Undefined variable" */
 $primary-color: #2563eb;       
 $primary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
 $bg-color: #f8fafc;           
@@ -8,7 +9,8 @@ $white: #ffffff;
 $text-dark: #1e293b;           
 $text-gray: #64748b;          
 $border-color: #e2e8f0;
-$danger: #ef4444; /* 👈 Đảm bảo dòng này tồn tại */
+$danger: #ef4444; /* 👈 Biến màu đỏ cho nút xóa/thoát */
+$success: #22c55e;
 $sidebar-width: 280px; 
 
 * { box-sizing: border-box; }
@@ -16,7 +18,7 @@ $sidebar-width: 280px;
 .chat-room-container {
   display: flex; height: 100vh; width: 100%; background-color: $bg-color; font-family: 'Inter', sans-serif; overflow: hidden;
 
-  /* ================= SIDEBAR ================= */
+  /* ================= 2. SIDEBAR ================= */
   .chat-sidebar {
     width: $sidebar-width; background: #1e293b; border-right: none; display: flex; flex-direction: column; padding: 20px 0 20px 10px; overflow: hidden;
     
@@ -46,7 +48,7 @@ $sidebar-width: 280px;
     .sidebar-actions { padding: 15px 20px 0 0; border-top: 1px solid rgba(255,255,255,0.1); .btn-add-new { background: rgba(255,255,255,0.1); border: 1px dashed rgba(255,255,255,0.3); color: white; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; &:hover { background: $primary-color; border-color: $primary-color; } } }
   }
 
-  /* ================= MAIN CHAT ================= */
+  /* ================= 3. MAIN CHAT ================= */
   .chat-main {
     flex: 1; display: flex; flex-direction: column; background: #ffffff; position: relative;
     .no-room { flex: 1; display: flex; align-items: center; justify-content: center; color: $text-gray; font-size: 1.1rem; }
@@ -59,7 +61,16 @@ $sidebar-width: 280px;
         .avatar-group { width: 42px; height: 42px; background: linear-gradient(135deg, $primary-color, #60a5fa); color: white; font-weight: 700; font-size: 1.2rem; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
         .info-wrapper { .title-row { display: flex; align-items: center; gap: 8px; h3 { margin: 0; font-size: 1rem; color: $text-dark; } .btn-edit { background: none; border: none; cursor: pointer; color: $text-gray; &:hover { color: $primary-color; } } } .status { font-size: 0.8rem; color: $text-gray; font-weight: 500; } .btn-set-nickname { background: none; border: none; padding: 0; margin-top: 2px; font-size: 0.8rem; color: $text-gray; cursor: pointer; display: flex; align-items: center; transition: all 0.2s; font-weight: 500; &:hover { color: $primary-color; text-decoration: underline; } } }
       }
-      .header-actions { display: flex; align-items: center; gap: 10px; .btn-icon { width: 38px; height: 38px; border-radius: 8px; border: none; background: transparent; cursor: pointer; color: $text-gray; display: flex; align-items: center; justify-content: center; transition: 0.2s; &:hover { background: $bg-color; color: $primary-color; } &.active { background: $primary-light; color: $primary-color; } } .divider { width: 1px; height: 24px; background: $border-color; margin: 0 5px; } .msg-search { display: flex; align-items: center; background: $bg-color; padding: 5px 10px; border-radius: 20px; input { border: none; background: transparent; outline: none; width: 120px; font-size: 0.85rem; } svg { cursor: pointer; color: $text-gray; &:hover { color: $danger; } } } }
+      .header-actions { 
+        display: flex; align-items: center; gap: 10px; 
+        .btn-icon { width: 38px; height: 38px; border-radius: 8px; border: none; background: transparent; cursor: pointer; color: $text-gray; display: flex; align-items: center; justify-content: center; transition: 0.2s; &:hover { background: $bg-color; color: $primary-color; } &.active { background: $primary-light; color: $primary-color; } } 
+        .divider { width: 1px; height: 24px; background: $border-color; margin: 0 5px; } 
+        .msg-search { 
+          display: flex; align-items: center; background: $bg-color; padding: 5px 10px; border-radius: 20px; 
+          input { border: none; background: transparent; outline: none; width: 120px; font-size: 0.85rem; } 
+          svg { cursor: pointer; color: $text-gray; &:hover { color: $danger; } } /* Biến $danger đã được khai báo ở trên */
+        } 
+      }
     }
 
     /* MESSAGES LIST */
@@ -109,7 +120,6 @@ $sidebar-width: 280px;
               .file-info { display: flex; flex-direction: column; font-size: 0.85rem; font-weight: 500; a { color: $primary-color; text-decoration: none; &:hover{text-decoration: underline;} } }
             }
 
-            /* BONG BÓNG CHAT */
             .bubble {
               padding: 10px 16px; border-radius: 18px; font-size: 0.95rem;
               line-height: 1.5; word-wrap: break-word; position: relative;
@@ -119,7 +129,6 @@ $sidebar-width: 280px;
               &.highlight { background: #fde047; color: black; }
             }
 
-            /* REACTION */
             .reactions-display {
               position: absolute; bottom: -10px; right: 0;
               background: white; border-radius: 20px; padding: 2px 6px;
@@ -135,7 +144,6 @@ $sidebar-width: 280px;
           .timestamp { font-size: 0.65rem; color: #94a3b8; margin-top: 6px; text-align: right; opacity: 0.8; }
           .theirs .timestamp { text-align: left; margin-left: 5px; }
           
-          /* ACTIONS */
           .msg-actions-hover {
             display: flex; gap: 4px; opacity: 0; transition: opacity 0.2s ease;
             margin-bottom: 5px;
@@ -150,7 +158,6 @@ $sidebar-width: 280px;
           }
           &:hover .msg-actions-hover { opacity: 1; }
 
-          /* POPOVER */
           .reaction-picker-popover {
              position: absolute; bottom: 100%; right: 0; margin-bottom: 8px;
              background: white; padding: 6px 10px;
@@ -174,7 +181,6 @@ $sidebar-width: 280px;
           }
         } 
 
-        /* MÀU BONG BÓNG */
         &.mine .bubble { 
           background: $primary-gradient; color: white !important; 
           border-bottom-right-radius: 4px; 
