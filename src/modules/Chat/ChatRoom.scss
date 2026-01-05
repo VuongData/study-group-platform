@@ -1,429 +1,386 @@
-/* src/modules/Chat/ChatRoom.scss */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-// 1. Tải Font Inter từ Google Fonts
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-
-// 2. Biến màu sắc
-$primary: #2563eb;
-$primary-dark: #1d4ed8; 
-$bg-light: #f3f4f6;
-$text-dark: #1f2937;
-$border: #e5e7eb;
+/* --- BIẾN MÀU SẮC & CẤU HÌNH --- */
+$primary-color: #2563eb;
+$primary-light: #eff6ff;
+$bg-color: #f8fafc;
+$white: #ffffff;
+$text-dark: #1e293b;
+$text-gray: #64748b;
+$border-color: #e2e8f0;
 $danger: #ef4444;
+$success: #22c55e;
+$sidebar-width: 320px;
+
+* { box-sizing: border-box; }
 
 .chat-room-container {
   display: flex;
+  height: 100vh; /* Full màn hình */
   width: 100%;
-  height: 100vh;
-  background: #fff;
-  font-family: 'Inter', system-ui, sans-serif;
+  background-color: $bg-color;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
 
-  // --- 1. SIDEBAR (Danh sách phòng) ---
+  /* ================= SIDEBAR ================= */
   .chat-sidebar {
-    width: 300px;
-    border-right: 1px solid $border;
+    width: $sidebar-width;
+    background: $white;
+    border-right: 1px solid $border-color;
     display: flex;
     flex-direction: column;
-    background: #fff;
+    padding: 20px;
 
     .sidebar-header {
-      padding: 20px;
-      border-bottom: 1px solid $border;
+      margin-bottom: 20px;
 
-      h3 { margin: 0 0 15px 0; color: $text-dark; font-weight: 600; }
+      h3 {
+        font-size: 1.25rem;
+        color: $text-dark;
+        font-weight: 700;
+      }
+
+      .notification-bell {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        transition: 0.2s;
+        &:hover { background: $bg-color; }
+      }
 
       .my-id-box {
-        background: #f0f9ff;
-        color: #0369a1;
+        margin: 10px 0;
+        background: $primary-light;
+        color: $primary-color;
         padding: 8px 12px;
         border-radius: 8px;
         font-size: 0.85rem;
+        font-weight: 600;
         display: flex; justify-content: space-between; align-items: center;
         cursor: pointer;
-        margin-bottom: 10px;
-        transition: background 0.2s;
-        &:hover { background: #e0f2fe; }
+        border: 1px dashed rgba($primary-color, 0.3);
+        transition: 0.2s;
+
+        &:hover { background: darken($primary-light, 2%); }
+        svg { opacity: 0.7; }
       }
 
       .search-room-box {
         display: flex; align-items: center; gap: 8px;
-        background: $bg-light;
+        background: $bg-color;
         padding: 8px 12px;
-        border-radius: 20px;
-        input { border: none; background: transparent; outline: none; flex: 1; font-size: 0.9rem; font-family: inherit; }
+        border-radius: 8px;
+        border: 1px solid transparent;
+        transition: 0.2s;
+        
+        &:focus-within { border-color: $primary-color; background: $white; }
+        input { border: none; background: transparent; outline: none; width: 100%; font-size: 0.9rem; }
+        svg { color: $text-gray; }
       }
     }
 
     .room-list {
       flex: 1;
       overflow-y: auto;
-      padding: 10px;
+      display: flex; flex-direction: column; gap: 5px;
 
       .room-item {
         display: flex; align-items: center; gap: 12px;
-        padding: 12px;
+        padding: 10px;
         border-radius: 10px;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: 0.2s;
 
-        &:hover { background: $bg-light; }
-        &.active { background: #eff6ff; }
+        &:hover { background-color: $bg-color; }
+        &.active { background-color: $primary-light; }
 
         .room-avatar {
           width: 40px; height: 40px;
-          background: #e0e7ff; color: $primary;
+          background-color: #e0e7ff;
+          color: $primary-color;
           border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
           flex-shrink: 0;
         }
 
         .room-info {
-          h4 { margin: 0; font-size: 0.95rem; color: $text-dark; font-weight: 600; }
-          p { margin: 2px 0 0; font-size: 0.8rem; color: #6b7280; }
+          overflow: hidden;
+          h4 { margin: 0; font-size: 0.95rem; color: $text-dark; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+          p { margin: 2px 0 0 0; font-size: 0.8rem; color: $text-gray; }
         }
       }
+    }
 
+    .sidebar-actions {
+      padding-top: 15px; border-top: 1px solid $border-color;
+      
       .btn-add-new {
-        width: 100%;
-        margin-top: 10px;
+        background: $white;
+        border: 1px dashed $border-color;
+        color: $text-gray;
         padding: 10px;
-        border: 1px dashed #cbd5e1;
-        background: #fff;
-        color: $primary;
         border-radius: 8px;
         cursor: pointer;
-        font-family: inherit;
-        display: flex; align-items: center; justify-content: center; gap: 5px;
-        transition: all 0.2s;
-        &:hover { background: #f8fafc; border-color: $primary; }
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: flex; align-items: center; justify-content: center; gap: 6px;
+        transition: 0.2s;
+
+        &:hover { border-color: $primary-color; color: $primary-color; background: $primary-light; }
       }
     }
   }
 
-  // --- 2. MAIN CHAT AREA ---
+  /* ================= MAIN CHAT ================= */
   .chat-main {
     flex: 1;
     display: flex;
     flex-direction: column;
+    background: #ffffff;
     position: relative;
-    background: #fff;
 
-    .no-room-selected {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      height: 100%; color: #9ca3af; gap: 10px;
+    .no-room {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      color: $text-gray; font-size: 1.1rem;
     }
 
+    /* --- HEADER --- */
     .chat-header {
-      padding: 15px 20px;
-      border-bottom: 1px solid $border;
-      display: flex; justify-content: space-between; align-items: center;
-      background: #fff;
-      z-index: 10;
+      height: 70px;
+      padding: 0 20px;
+      border-bottom: 1px solid $border-color;
+      display: flex; align-items: center; justify-content: space-between;
 
       .header-left {
         display: flex; align-items: center; gap: 12px;
+        
         .avatar-group {
-          width: 40px; height: 40px; background: $primary; color: white;
-          border-radius: 12px; display: flex; align-items: center; justify-content: center;
-          font-weight: bold; font-size: 1.2rem; flex-shrink: 0;
+          width: 42px; height: 42px;
+          background: linear-gradient(135deg, $primary-color, #60a5fa);
+          color: white; font-weight: 700; font-size: 1.2rem;
+          border-radius: 12px;
+          display: flex; align-items: center; justify-content: center;
         }
+
         .info-wrapper {
-          .title-row { 
+          .title-row {
             display: flex; align-items: center; gap: 8px;
-            h3 { margin: 0; font-size: 1.1rem; font-weight: 600; }
-            .btn-edit { border: none; background: none; cursor: pointer; color: #6b7280; &:hover { color: $primary; } }
+            h3 { margin: 0; font-size: 1rem; color: $text-dark; }
+            .btn-edit { background: none; border: none; cursor: pointer; color: $text-gray; &:hover { color: $primary-color; } }
           }
-          .status { font-size: 0.8rem; color: #16a34a; }
+          .status { font-size: 0.8rem; color: $success; font-weight: 500; }
         }
       }
 
       .header-actions {
         display: flex; align-items: center; gap: 10px;
+        
         .btn-icon {
-          width: 36px; height: 36px;
+          width: 38px; height: 38px;
+          border-radius: 8px;
           border: none; background: transparent;
-          border-radius: 50%;
-          color: #64748b;
-          cursor: pointer;
+          cursor: pointer; color: $text-gray;
           display: flex; align-items: center; justify-content: center;
-          transition: background 0.2s;
-          &:hover { background: $bg-light; color: $text-dark; }
-          &.active { background: #dbeafe; color: $primary; }
+          transition: 0.2s;
+          
+          &:hover { background: $bg-color; color: $primary-color; }
+          &.active { background: $primary-light; color: $primary-color; }
         }
+
+        .divider { width: 1px; height: 24px; background: $border-color; margin: 0 5px; }
         
         .msg-search {
-           display: flex; align-items: center; gap: 5px; 
-           background: $bg-light; padding: 5px 12px; border-radius: 20px;
-           input { border: none; background: transparent; outline: none; font-size: 0.9rem; width: 150px; }
-           svg { cursor: pointer; color: #666; &:hover { color: #333; } }
+          display: flex; align-items: center; background: $bg-color; padding: 5px 10px; border-radius: 20px;
+          input { border: none; background: transparent; outline: none; width: 120px; font-size: 0.85rem; }
+          svg { cursor: pointer; color: $text-gray; &:hover { color: $danger; } }
         }
       }
     }
 
-    // DANH SÁCH TIN NHẮN
+    /* --- MESSAGES LIST --- */
     .messages-list {
       flex: 1;
       padding: 20px;
       overflow-y: auto;
-      background: #f8fafc;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
+      background-color: #f1f5f9; /* Màu nền nhẹ cho khung chat */
+      display: flex; flex-direction: column; gap: 15px;
 
-      .empty-chat { text-align: center; color: #94a3b8; margin-top: 50px; font-style: italic; }
-      
-      .loading, .loading-history { 
-        text-align: center; color: #64748b; font-size: 0.8rem; padding: 10px;
-        display: flex; align-items: center; justify-content: center; gap: 5px;
-        .spin { animation: spin 1s linear infinite; }
-      }
+      .loading { text-align: center; color: $text-gray; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 5px; }
+      .spin { animation: spin 1s linear infinite; }
 
-      .system-message-row, .system-msg {
-        text-align: center; margin: 10px 0;
-        span, .system-bubble {
-          display: inline-block; background: #e2e8f0; color: #475569;
-          padding: 5px 12px; border-radius: 20px; font-size: 0.75rem;
-        }
+      .system-msg {
+        align-self: center;
+        background: rgba(0,0,0,0.05);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        color: $text-gray;
       }
 
       .message-row {
         display: flex; gap: 10px;
-        max-width: 75%;
+        max-width: 70%;
         
-        &.mine { 
-          align-self: flex-end; 
-          flex-direction: row-reverse; 
-          .message-bubble-wrapper { align-items: flex-end; }
-        }
-        &.theirs { 
-          align-self: flex-start; 
-          .message-bubble-wrapper { align-items: flex-start; }
-        }
+        &.mine { align-self: flex-end; flex-direction: row-reverse; }
+        &.theirs { align-self: flex-start; }
 
         .msg-avatar {
           width: 32px; height: 32px; background: #cbd5e1; border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
-          font-size: 0.8rem; color: #fff; font-weight: bold; flex-shrink: 0;
+          font-size: 0.8rem; font-weight: 600; color: #475569;
         }
 
         .msg-content {
-          display: flex; flex-direction: column; gap: 2px;
-          .sender-name { font-size: 0.75rem; color: #64748b; margin-left: 5px; }
+          display: flex; flex-direction: column;
           
+          .sender-name { font-size: 0.75rem; color: $text-gray; margin-bottom: 2px; margin-left: 5px; }
+          .mine .sender-name { display: none; } /* Ẩn tên mình */
+
           .message-bubble-wrapper {
-             position: relative;
-             display: flex; flex-direction: column; gap: 4px;
-             
-             // 1. Reply Quote
-             .reply-quote {
-               background: rgba(0,0,0,0.04); 
-               border-left: 3px solid #cbd5e1; 
-               padding: 6px 10px;
-               border-radius: 6px; 
-               font-size: 0.8rem; 
-               cursor: pointer;
-               margin-bottom: 2px;
-               .reply-name { font-weight: bold; display: block; color: #475569; font-size: 0.75rem; }
-               .reply-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; color: #64748b; }
-             }
+            position: relative;
+            
+            /* Reply Quote */
+            .reply-quote {
+              font-size: 0.8rem; background: rgba(0,0,0,0.05); padding: 5px 10px; 
+              border-left: 3px solid $primary-color; border-radius: 4px; margin-bottom: 4px;
+              .reply-name { font-weight: 600; display: block; }
+            }
 
-             // 2. Bong bóng chat
-             .bubble {
-               padding: 10px 14px;
-               border-radius: 16px;
-               font-size: 0.95rem;
-               line-height: 1.5;
-               word-break: break-word;
-               position: relative;
-               &.unsent { background: white; border: 1px solid #e5e7eb; color: #94a3b8; font-style: italic; }
-               &.highlight { background: #fef08a !important; color: #854d0e !important; }
-             }
+            /* Image/File */
+            .msg-image img { max-width: 200px; border-radius: 8px; cursor: pointer; border: 1px solid $border-color; }
+            .msg-file {
+              display: flex; align-items: center; gap: 10px; background: white; padding: 10px; border-radius: 8px; border: 1px solid $border-color;
+              .file-info { display: flex; flex-direction: column; font-size: 0.85rem; font-weight: 500; a { color: $primary-color; } }
+            }
 
-             // Ảnh
-             .msg-image img {
-               max-width: 250px; border-radius: 12px; cursor: pointer;
-               border: 1px solid #e5e7eb;
-               transition: transform 0.2s;
-               &:hover { transform: scale(1.02); }
-             }
+            /* Text Bubble */
+            .bubble {
+              padding: 10px 14px;
+              border-radius: 12px;
+              font-size: 0.95rem;
+              line-height: 1.4;
+              word-wrap: break-word;
+              position: relative;
 
-             // File
-             .msg-file {
-               display: flex; align-items: center; gap: 10px;
-               background: #fff; padding: 10px; border-radius: 12px;
-               border: 1px solid #e2e8f0; width: 220px;
-               .file-info {
-                 flex: 1; overflow: hidden; display: flex; flex-direction: column;
-                 span { font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                 a { font-size: 0.75rem; color: $primary; text-decoration: none; display: flex; align-items: center; gap: 4px; }
-               }
-             }
-
-             // 3. Actions (Hover)
-             .msg-actions {
-               position: absolute; top: 50%; transform: translateY(-50%);
-               display: none; background: white; padding: 4px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 5;
-               button { 
-                 border: none; background: transparent; padding: 6px; cursor: pointer; color: #64748b; border-radius: 50%; 
-                 &:hover { background: #f1f5f9; color: $primary; } 
-                 &.btn-delete:hover { color: #ef4444; background: #fee2e2; }
-               }
-             }
-             &:hover .msg-actions { display: flex; gap: 2px; }
-             
-             // Reaction Picker
-             .reaction-picker {
-                position: absolute; bottom: 100%; left: 0; background: white; padding: 5px 8px; border-radius: 20px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; gap: 8px; z-index: 20; cursor: pointer;
-                span { font-size: 1.2rem; transition: transform 0.1s; &:hover { transform: scale(1.3); } }
-             }
+              &.unsent { background: white; border: 1px solid $border-color; color: $text-gray; font-style: italic; }
+              &.highlight { background: #fde047; color: black; }
+            }
           }
-
-          .timestamp { font-size: 0.7rem; color: #94a3b8; margin-top: 2px; text-align: right; }
           
-          .reactions-display {
-            display: flex; gap: 4px; margin-top: -5px; padding-left: 5px; z-index: 2;
-            span { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 2px 6px; font-size: 0.7rem; }
-          }
-        }
+          /* Colors */
+          .mine .bubble { background: $primary-color; color: white; border-bottom-right-radius: 2px; }
+          .theirs .bubble { background: white; color: $text-dark; border: 1px solid $border-color; border-bottom-left-radius: 2px; }
 
-        // Màu sắc riêng cho Mine / Theirs
-        &.mine {
-          .bubble:not(.unsent) { background: $primary; color: white; border-bottom-right-radius: 4px; }
-          .msg-file { background: #eff6ff; border-color: #dbeafe; }
-          .msg-actions { right: auto; left: -90px; }
-          .reply-quote { 
-             background: rgba(255,255,255,0.2); border-left-color: rgba(255,255,255,0.5); 
-             .reply-name { color: #e0f2fe; } 
-             .reply-text { color: #f0f9ff; }
+          .timestamp { font-size: 0.7rem; color: #94a3b8; margin-top: 4px; text-align: right; }
+
+          /* Actions (Hover mới hiện) */
+          .msg-actions {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            display: none; gap: 5px;
+            background: white; padding: 2px 5px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            button { border: none; background: none; cursor: pointer; color: $text-gray; &:hover { color: $primary-color; } }
           }
-        }
-        &.theirs {
-          .bubble:not(.unsent) { background: #fff; color: $text-dark; border: 1px solid #e2e8f0; border-bottom-left-radius: 4px; }
-          .msg-actions { right: -90px; left: auto; }
+          .message-bubble-wrapper:hover .msg-actions { display: flex; }
+          .mine .msg-actions { right: 100%; margin-right: 10px; }
+          .theirs .msg-actions { left: 100%; margin-left: 10px; }
+          
+          /* Reaction Picker */
+          .reaction-picker {
+             position: absolute; bottom: 100%; left: 0; background: white; padding: 5px; 
+             border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex; gap: 5px; z-index: 10;
+             span { cursor: pointer; transition: 0.2s; &:hover { transform: scale(1.3); } }
+          }
         }
       }
     }
 
-    // THANH INPUT
+    /* --- INPUT AREA --- */
     .chat-input-wrapper {
-      background: #fff;
-      border-top: 1px solid $border;
-      position: relative;
+      padding: 15px 20px;
+      background: white;
+      border-top: 1px solid $border-color;
 
       .replying-banner {
-        position: absolute; bottom: 100%; left: 0; right: 0;
-        background: #f8fafc; padding: 8px 15px; border-top: 1px solid #e2e8f0;
         display: flex; justify-content: space-between; align-items: center;
-        animation: slideUp 0.2s ease-out;
-        .reply-content {
-          border-left: 3px solid $primary; padding-left: 10px; display: flex; flex-direction: column; font-size: 0.85rem;
-          .reply-label { color: #64748b; font-size: 0.75rem; }
-          .reply-preview { font-weight: 600; color: $text-dark; max-width: 80vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        }
-        button { border: none; background: none; cursor: pointer; color: #64748b; &:hover { color: $danger; } }
+        background: $bg-color; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid $primary-color;
+        .reply-content { font-size: 0.85rem; display: flex; flex-direction: column; b { color: $primary-color; } .reply-preview { color: $text-gray; } }
+        button { border: none; background: none; cursor: pointer; color: $text-gray; &:hover { color: $danger; } }
       }
 
       .chat-input-area {
-        padding: 15px; display: flex; align-items: center; gap: 10px;
-        input {
-          flex: 1; padding: 12px 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 24px; outline: none; font-family: inherit;
-          transition: border-color 0.2s;
-          &:focus { border-color: $primary; background: #fff; }
-        }
+        display: flex; align-items: center; gap: 10px;
+        background: $bg-color; padding: 8px 12px; border-radius: 24px; border: 1px solid transparent;
+        transition: 0.2s;
+        &:focus-within { border-color: $primary-color; background: white; box-shadow: 0 2px 10px rgba($primary-color, 0.1); }
+
+        input { flex: 1; border: none; background: transparent; outline: none; font-size: 0.95rem; }
+        
         .btn-icon {
-          background: none; border: none; color: #64748b; cursor: pointer; padding: 5px;
-          &:hover { color: $primary; background: #f1f5f9; border-radius: 50%; }
+          border: none; background: none; cursor: pointer; color: $text-gray; padding: 5px;
+          &:hover { color: $primary-color; }
         }
+        
         .btn-send {
-          width: 42px; height: 42px; background: $primary; color: white; border: none; border-radius: 50%;
-          display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s;
-          &:hover { background: $primary-dark; }
-          &:active { transform: scale(0.95); }
+          background: $primary-color; color: white; border: none;
+          width: 36px; height: 36px; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; transition: 0.2s;
+          &:hover { background: darken($primary-color, 10%); transform: scale(1.05); }
         }
       }
     }
   }
-}
 
-// --- MODAL STYLES (Đã bổ sung phần Member Management) ---
-.modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-  display: flex; align-items: center; justify-content: center; z-index: 1000;
-  
-  .modal-content {
-    background: #fff; width: 450px; padding: 25px; border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    
-    h3 { margin-top: 0; text-align: center; color: $text-dark; margin-bottom: 20px; }
-    
-    .modal-body {
-      display: flex; flex-direction: column; gap: 15px;
+  /* ================= MODAL ================= */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    animation: fadeIn 0.2s ease;
+
+    .modal-content {
+      background: white; padding: 25px; border-radius: 16px;
+      width: 400px; max-width: 90%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
       
+      h3 { margin-top: 0; color: $text-dark; text-align: center; margin-bottom: 20px; }
+
       .input-group {
-        display: flex; flex-direction: column; gap: 8px;
-        label { font-size: 0.9rem; font-weight: 600; color: #475569; }
-        input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; font-family: inherit; }
+        margin-bottom: 15px;
+        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
+        input { 
+          width: 100%; padding: 10px; border: 1px solid $border-color; border-radius: 8px; outline: none;
+          &:focus { border-color: $primary-color; }
+        }
       }
 
-      // 🔥 PHẦN STYLE QUẢN LÝ THÀNH VIÊN (MỚI)
-      .member-list-container {
-        max-height: 400px;
-        overflow-y: auto;
-      
-        .btn-add-member-in-modal {
-          width: 100%; padding: 10px; margin-bottom: 15px;
-          background: #f0f9ff; color: #0284c7; border: 1px dashed #0284c7; border-radius: 6px;
-          display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-weight: 600;
-          &:hover { background: #e0f2fe; }
-        }
-      
-        .member-list-ul {
-          list-style: none; padding: 0; margin: 0;
-          
-          .member-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 0; border-bottom: 1px solid #eee;
-            
-            .mem-info {
-              display: flex; align-items: center; gap: 10px;
-              .mem-avatar { width: 36px; height: 36px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #475569; }
-              .mem-text { 
-                 display: flex; flex-direction: column; font-size: 0.9rem; 
-                 span { font-size: 0.75rem; color: #64748b; } 
-              }
-            }
-      
-            .mem-actions {
-              .badge-admin { background: #dcfce7; color: #166534; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
-              .btn-kick { background: none; border: none; color: $danger; cursor: pointer; padding: 5px; border-radius: 4px; &:hover { background: #fee2e2; } }
-            }
-          }
-        }
-      
-        .modal-danger-zone {
-          margin-top: 20px; padding-top: 15px; border-top: 2px solid #fecaca;
-          display: flex; justify-content: center;
-          
-          button {
-            display: flex; align-items: center; gap: 8px; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
-            &.btn-leave { background: #f1f5f9; color: #334155; &:hover { background: #e2e8f0; } }
-            &.btn-disband { background: $danger; color: white; &:hover { background: #dc2626; } }
-          }
-        }
-      }
-      
-      // Các nút Action chung
       .modal-actions {
-        display: flex; gap: 10px; margin-top: 10px;
-        button { 
-          padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: inherit;
+        button {
+          border: none; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer;
           &:hover { opacity: 0.9; }
         }
+      }
+
+      /* List styles inside modal */
+      .requests-list, .friend-list, .mem-list, .member-list-container, .friend-list-container {
+        border: 1px solid $border-color; border-radius: 8px; padding: 5px;
+        
+        /* Custom scrollbar */
+        &::-webkit-scrollbar { width: 6px; }
+        &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+      }
+
+      .btn-add-member-in-modal {
+        width: 100%; padding: 8px; background: $primary-light; color: $primary-color;
+        border: 1px dashed $primary-color; border-radius: 6px; margin-bottom: 10px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 5px; font-weight: 600;
+        &:hover { background: #dbeafe; }
       }
     }
   }
 }
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
-@keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

@@ -6,16 +6,19 @@ import {
 import { db } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-// Icons: Thêm PenTool
+
+// Icons
 import { 
   Send, Image as ImageIcon, Search, Plus, Users, MessageCircle, 
   Copy, Check, Smile, Loader2, Edit2, X, Paperclip, FileText, Download, 
-  FolderOpen, Reply, Trash2, XCircle, Video, UserPlus, Settings, LogOut, ShieldAlert,
-  Bell, UserCheck, UserX, BookUser, UserMinus, PenTool
+  FolderOpen, Reply, Trash2, XCircle, Video, Settings, LogOut, ShieldAlert,
+  Bell, UserCheck, UserX, BookUser, UserMinus, PenTool, Easel
 } from "lucide-react"; 
+
+// Sub-modules
 import AIAssistant from "../AI/AIAssistant";
 import ChatResources from "./ChatResources"; 
-import Whiteboard from "../Whiteboard/Whiteboard"; // 👈 Import Whiteboard
+import Whiteboard from "../Whiteboard/Whiteboard"; // Đảm bảo bạn đã có file này theo code mới nhất
 import { toast } from "react-toastify";
 import "./ChatRoom.scss";
 
@@ -26,22 +29,26 @@ const ChatRoom = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  // Refs
+  // --- REFS ---
   const dummyDiv = useRef(null);
   const chatContainerRef = useRef(null);
   const imageInputRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Data States
+  // --- DATA STATES ---
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [messages, setMessages] = useState([]);
   const [friendRequests, setFriendRequests] = useState([]); 
   const [memberDetails, setMemberDetails] = useState([]);   
   const [friendList, setFriendList] = useState([]); 
-  const [userNames, setUserNames] = useState({});
+  const [userNames, setUserNames] = useState({}); // Cache Tên người dùng
 
-  // UI States
+  // --- WHITEBOARD STATE ---
+  const [activeBoardId, setActiveBoardId] = useState(null); 
+  const [boardTitle, setBoardTitle] = useState("");
+
+  // --- UI STATES ---
   const [msgLimit, setMsgLimit] = useState(20);
   const [isLoadingOldMessages, setIsLoadingOldMessages] = useState(false);
   const [newMessage, setNewMessage] = useState("");
@@ -49,105 +56,172 @@ const ChatRoom = () => {
   const [copied, setCopied] = useState(false);
   const [showResources, setShowResources] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
-  
-  // 👇 STATE MỚI: BẬT/TẮT BẢNG TRẮNG
-  const [showWhiteboard, setShowWhiteboard] = useState(false);
 
-  // Search & Modal
+  // --- SEARCH & MODAL STATES ---
   const [roomSearchTerm, setRoomSearchTerm] = useState("");
   const [msgSearchTerm, setMsgSearchTerm] = useState("");
   const [isSearchMsgOpen, setIsSearchMsgOpen] = useState(false);
+  
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState("create_group"); 
+  // Modes: 'create_group', 'add_friend', 'add_member', 'rename_group', 'manage_members', 'view_requests', 'manage_friends'
   const [inputTarget, setInputTarget] = useState(""); 
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // =========================================================================================
   // 1. DATA FETCHING
+  // =========================================================================================
+
+  // Lấy danh sách phòng chat
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "chat_rooms"), where("members", "array-contains", user.uid), orderBy("updatedAt", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => { setRooms(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))); });
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setRooms(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
     return () => unsubscribe();
   }, [user]);
 
+  // Tự động lấy tên hiển thị cho các phòng Chat Riêng (Direct)
   useEffect(() => {
     if (!user || rooms.length === 0) return;
+
     const fetchUserNames = async () => {
-       const missingIds = new Set();
-       rooms.forEach(room => { if (room.type === 'direct') { const otherId = room.members.find(id => id !== user.uid); if (otherId && !userNames[otherId]) missingIds.add(otherId); }});
-       if (missingIds.size === 0) return;
-       const newNames = {};
-       await Promise.all(Array.from(missingIds).map(async (uid) => { try { const docSnap = await getDoc(doc(db, "users", uid)); newNames[uid] = docSnap.exists() ? docSnap.data().displayName : "Ẩn"; } catch (e) { newNames[uid] = "Lỗi"; } }));
-       setUserNames(prev => ({ ...prev, ...newNames }));
+      const missingIds = new Set();
+      rooms.forEach(room => {
+        if (room.type === 'direct') {
+          const otherId = room.members.find(id => id !== user.uid);
+          if (otherId && !userNames[otherId]) {
+            missingIds.add(otherId);
+          }
+        }
+      });
+
+      if (missingIds.size === 0) return;
+
+      const newNames = {};
+      await Promise.all(Array.from(missingIds).map(async (uid) => {
+        try {
+          const docSnap = await getDoc(doc(db, "users", uid));
+          newNames[uid] = docSnap.exists() ? docSnap.data().displayName : "Người dùng ẩn";
+        } catch (e) {
+          newNames[uid] = "Lỗi tải tên";
+        }
+      }));
+
+      setUserNames(prev => ({ ...prev, ...newNames }));
     };
+
     fetchUserNames();
   }, [rooms, user]);
 
-  useEffect(() => { if (!user) return; const q = query(collection(db, "friend_requests"), where("toUid", "==", user.uid)); const unsubscribe = onSnapshot(q, (snapshot) => { setFriendRequests(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))); }); return () => unsubscribe(); }, [user]);
+  // Lấy danh sách lời mời kết bạn
+  useEffect(() => {
+    if (!user) return;
+    const q = query(collection(db, "friend_requests"), where("toUid", "==", user.uid));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setFriendRequests(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return () => unsubscribe();
+  }, [user]);
 
+  // Lấy tin nhắn
   useEffect(() => {
     if (!selectedRoom?.id) { setMessages([]); return; }
     setMsgLimit(20); setIsLoadingOldMessages(false); setShowResources(false); setReplyingTo(null); setMemberDetails([]);
+
     const q = query(collection(db, "messages"), where("roomId", "==", selectedRoom.id), orderBy("createdAt", "desc"), limit(msgLimit));
-    const unsubscribe = onSnapshot(q, (snapshot) => { setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).reverse()); setIsLoadingOldMessages(false); });
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).reverse());
+      setIsLoadingOldMessages(false);
+    });
     return () => unsubscribe();
   }, [selectedRoom?.id, msgLimit]);
 
-  // Helpers Modal
-  const fetchMemberDetails = async () => { if (!selectedRoom?.members) return; setIsProcessing(true); try { const details = await Promise.all(selectedRoom.members.map(async (uid) => { const snap = await getDoc(doc(db, "users", uid)); return { id: uid, ...(snap.data() || { displayName: "Unknown", email: "N/A" }) }; })); setMemberDetails(details); } catch (error) { console.error(error); } finally { setIsProcessing(false); } };
-  const fetchFriendList = async () => { setIsProcessing(true); try { const directRooms = rooms.filter(r => r.type === 'direct'); const friendsData = await Promise.all(directRooms.map(async (room) => { const friendId = room.members.find(id => id !== user.uid); if(!friendId) return null; const snap = await getDoc(doc(db, "users", friendId)); return { roomId: room.id, friendId: friendId, ...(snap.data() || { displayName: "Unknown", email: "N/A" }) }; })); setFriendList(friendsData.filter(f => f !== null)); } catch (error) { console.error(error); } finally { setIsProcessing(false); } };
-  
+  // --- HELPERS FETCH DATA CHO MODAL ---
+  const fetchMemberDetails = async () => {
+    if (!selectedRoom?.members) return;
+    setIsProcessing(true);
+    try {
+      const details = await Promise.all(selectedRoom.members.map(async (uid) => {
+        const snap = await getDoc(doc(db, "users", uid));
+        return { id: uid, ...(snap.data() || { displayName: "Unknown", email: "N/A" }) };
+      }));
+      setMemberDetails(details);
+    } catch (error) { console.error(error); } finally { setIsProcessing(false); }
+  };
+
+  const fetchFriendList = async () => {
+    setIsProcessing(true);
+    try {
+      const directRooms = rooms.filter(r => r.type === 'direct');
+      const friendsData = await Promise.all(directRooms.map(async (room) => {
+        const friendId = room.members.find(id => id !== user.uid);
+        if(!friendId) return null;
+        const snap = await getDoc(doc(db, "users", friendId));
+        return {
+          roomId: room.id, 
+          friendId: friendId,
+          ...(snap.data() || { displayName: "Unknown", email: "N/A" })
+        };
+      }));
+      setFriendList(friendsData.filter(f => f !== null));
+    } catch (error) { console.error(error); toast.error("Lỗi tải danh bạ"); }
+    finally { setIsProcessing(false); }
+  };
+
   // Scroll
   useLayoutEffect(() => { if (messages.length > 0 && messages.length <= 20) dummyDiv.current?.scrollIntoView({ behavior: "auto" }); }, [messages, msgSearchTerm]);
   const handleScroll = (e) => { if (e.target.scrollTop === 0 && !isLoadingOldMessages && messages.length >= msgLimit) { setIsLoadingOldMessages(true); setTimeout(() => setMsgLimit(prev => prev + 20), 500); } };
 
-  // --- ACTIONS ---
+  // =========================================================================================
+  // 2. ACTIONS (CHAT, UPLOAD, CALL, WHITEBOARD)
+  // =========================================================================================
   const uploadToCloudinary = async (file) => { const formData = new FormData(); formData.append("file", file); formData.append("upload_preset", UPLOAD_PRESET); const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { method: "POST", body: formData }); return await res.json(); };
-  const handleFileUpload = async (e) => { const file = e.target.files[0]; if(!file) return; try { toast.info("Đang tải..."); const data = await uploadToCloudinary(file); await addDoc(collection(db, "messages"), { fileUrl: data.secure_url, fileName: file.name, fileType: "document", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp() }); updateDoc(doc(db, "chat_rooms", selectedRoom.id), { updatedAt: serverTimestamp() }); } catch (err) { toast.error("Lỗi upload"); } };
+  
+  const handleFileUpload = async (e) => { const file = e.target.files[0]; if(!file) return; try { toast.info("Đang tải file..."); const data = await uploadToCloudinary(file); await addDoc(collection(db, "messages"), { fileUrl: data.secure_url, fileName: file.name, fileType: "document", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp() }); updateDoc(doc(db, "chat_rooms", selectedRoom.id), { updatedAt: serverTimestamp() }); } catch (err) { toast.error("Lỗi upload"); } };
   const handleImageUpload = async (e) => { const file = e.target.files[0]; if(!file) return; try { const data = await uploadToCloudinary(file); await addDoc(collection(db, "messages"), { fileUrl: data.secure_url, fileType: "image", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp() }); updateDoc(doc(db, "chat_rooms", selectedRoom.id), { updatedAt: serverTimestamp() }); } catch (err) { toast.error("Lỗi upload"); } };
   const handleSendMessage = async (e) => { e.preventDefault(); if ((!newMessage.trim()) || !selectedRoom) return; const payload = { text: newMessage, fileType: "text", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp() }; if (replyingTo) payload.replyTo = { id: replyingTo.id, text: replyingTo.text || "[File]", displayName: replyingTo.displayName }; await addDoc(collection(db, "messages"), payload); updateDoc(doc(db, "chat_rooms", selectedRoom.id), { updatedAt: serverTimestamp() }); setNewMessage(""); setReplyingTo(null); dummyDiv.current?.scrollIntoView({ behavior: "smooth" }); };
   const handleUnsend = async (msgId) => { if(!confirm("Thu hồi tin nhắn?")) return; try { await updateDoc(doc(db, "messages", msgId), { isUnsent: true, text: "Tin nhắn đã thu hồi", fileUrl: null }); } catch (e) { toast.error("Lỗi thu hồi"); } };
   const handleReaction = async (msgId, emoji) => { const msgRef = doc(db, "messages", msgId); const msg = messages.find(m => m.id === msgId); const newReactions = { ...(msg.reactions || {}) }; if (newReactions[user.uid] === emoji) delete newReactions[user.uid]; else newReactions[user.uid] = emoji; await updateDoc(msgRef, { reactions: newReactions }); setActiveReactionId(null); };
-  const handleVideoCall = async () => { if (!selectedRoom) return; const callUrl = `/video-call/${selectedRoom.id}`; window.open(callUrl, '_blank'); try { await addDoc(collection(db, "messages"), { text: `📞 Đã bắt đầu cuộc gọi video.`, fileType: "system", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp(), reactions: {} }); } catch (error) { console.error(error); } };
-
-  // 🔥 XỬ LÝ GỬI ẢNH TỪ WHITEBOARD
-  const handleSendWhiteboard = async (dataUrl) => {
-    if(!selectedRoom) return;
-    setShowWhiteboard(false); // Đóng bảng
-    toast.info("Đang gửi ảnh bảng trắng...");
-    
-    try {
-      // 1. Convert DataURL (Base64) thành Blob -> File
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
-      const file = new File([blob], "whiteboard_sketch.png", { type: "image/png" });
-
-      // 2. Upload lên Cloudinary
-      const data = await uploadToCloudinary(file);
-
-      // 3. Gửi tin nhắn ảnh
+  
+  const handleVideoCall = async () => { 
+    if (!selectedRoom) return; 
+    const callUrl = `/video-call/${selectedRoom.id}`; 
+    window.open(callUrl, '_blank'); // Mở tab mới
+    try { 
       await addDoc(collection(db, "messages"), { 
-        fileUrl: data.secure_url, 
-        fileType: "image", 
-        text: "🎨 Đã chia sẻ một bản vẽ",
-        uid: user.uid, 
-        displayName: user.displayName, 
-        photoURL: user.photoURL, 
-        roomId: selectedRoom.id, 
-        createdAt: serverTimestamp() 
-      });
-      updateDoc(doc(db, "chat_rooms", selectedRoom.id), { updatedAt: serverTimestamp() });
-      toast.success("Đã gửi!");
-    } catch (error) {
-      console.error(error);
-      toast.error("Lỗi khi gửi ảnh vẽ");
-    }
+        text: `📞 Đã bắt đầu cuộc gọi video.`, 
+        fileType: "system", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp(), reactions: {} 
+      }); 
+    } catch (error) { console.error(error); } 
   };
 
-  // --- MANAGEMENT FUNCTIONS ---
+  // --- WHITEBOARD FUNCTIONS ---
+  const openGroupWhiteboard = () => {
+    if (!selectedRoom) return;
+    setActiveBoardId(selectedRoom.id);
+    setBoardTitle(`Bảng nhóm: ${selectedRoom.name || "Chưa đặt tên"}`);
+  };
+
+  const openPersonalWhiteboard = () => {
+    if (!user) return;
+    setActiveBoardId(`${user.uid}_personal`);
+    setBoardTitle("🎨 Bảng nháp cá nhân");
+  };
+
+  // =========================================================================================
+  // 3. MANAGEMENT FUNCTIONS
+  // =========================================================================================
+  
   const handleKickMember = async (memberId, memberName) => { 
     if (!confirm(`Mời ${memberName} ra khỏi nhóm?`)) return; 
-    try { await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { members: arrayRemove(memberId), updatedAt: serverTimestamp() }); await addDoc(collection(db, "messages"), { text: `🚫 ${user.displayName} đã mời ${memberName} ra khỏi nhóm.`, fileType: "system", uid: "SYSTEM", displayName: "Hệ thống", roomId: selectedRoom.id, createdAt: serverTimestamp() }); setMemberDetails(prev => prev.filter(m => m.id !== memberId)); setSelectedRoom(prev => ({...prev, members: prev.members.filter(id => id !== memberId)})); toast.success(`Đã xóa ${memberName}`); } catch (error) { toast.error("Lỗi khi xóa"); } 
+    try { 
+      await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { members: arrayRemove(memberId), updatedAt: serverTimestamp() }); 
+      await addDoc(collection(db, "messages"), { text: `🚫 ${user.displayName} đã mời ${memberName} ra khỏi nhóm.`, fileType: "system", uid: "SYSTEM", displayName: "Hệ thống", roomId: selectedRoom.id, createdAt: serverTimestamp() }); 
+      setMemberDetails(prev => prev.filter(m => m.id !== memberId)); setSelectedRoom(prev => ({...prev, members: prev.members.filter(id => id !== memberId)})); 
+      toast.success(`Đã xóa ${memberName}`); 
+    } catch (error) { toast.error("Lỗi khi xóa"); } 
   };
   
   const handleLeaveGroup = async () => { 
@@ -162,8 +236,11 @@ const ChatRoom = () => {
       const batch = writeBatch(db);
       const msgSnap = await getDocs(query(collection(db, "messages"), where("roomId", "==", selectedRoom.id))); msgSnap.forEach(doc => batch.delete(doc.ref));
       const taskSnap = await getDocs(query(collection(db, "oppm_tasks"), where("roomId", "==", selectedRoom.id))); taskSnap.forEach(doc => batch.delete(doc.ref));
+      const wbSnap = await getDocs(query(collection(db, "whiteboards", selectedRoom.id, "elements"))); wbSnap.forEach(doc => batch.delete(doc.ref)); // Xóa luôn bảng trắng nhóm
+      
       batch.delete(doc(db, "chat_rooms", selectedRoom.id));
-      await batch.commit(); setSelectedRoom(null); setShowModal(false); toast.success("Đã giải tán nhóm!");
+      await batch.commit(); 
+      setSelectedRoom(null); setShowModal(false); toast.success("Đã giải tán nhóm!");
     } catch (error) { console.error(error); toast.error("Lỗi giải tán: " + error.message); } finally { setIsProcessing(false); }
   };
 
@@ -181,6 +258,9 @@ const ChatRoom = () => {
     } catch (error) { toast.error("Lỗi hủy kết bạn"); console.error(error); fetchFriendList(); }
   };
 
+  // =========================================================================================
+  // 4. FRIEND REQUEST
+  // =========================================================================================
   const handleAcceptRequest = async (req) => {
     setIsProcessing(true);
     try {
@@ -248,10 +328,18 @@ const ChatRoom = () => {
         <div className="sidebar-header">
            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 10}}>
              <h3 style={{margin:0}}>💬 Chat Nhóm</h3>
-             <div style={{display:'flex', gap: 10}}>
+             <div style={{display:'flex', gap: 8}}>
+               {/* Nút Bảng Cá Nhân */}
+               <div title="Bảng nháp cá nhân" style={{cursor:'pointer'}} onClick={openPersonalWhiteboard}>
+                 <Easel size={20} color="#059669"/>
+               </div>
+               
+               {/* Nút Danh bạ */}
                <div title="Danh bạ" style={{cursor:'pointer'}} onClick={()=>{ fetchFriendList(); setModalMode('manage_friends'); setShowModal(true); }}>
                  <BookUser size={20} color="#64748b"/>
                </div>
+               
+               {/* Nút Thông báo */}
                <div className="notification-bell" style={{position:'relative', cursor:'pointer'}} onClick={() => { if(friendRequests.length > 0) { setModalMode('view_requests'); setShowModal(true); } else toast.info("Không có lời mời nào."); }}>
                  <Bell size={20} color="#64748b"/>
                  {friendRequests.length > 0 && <span style={{position:'absolute', top:-5, right:-5, background:'#ef4444', color:'white', fontSize:'0.7rem', borderRadius:'50%', width:16, height:16, display:'flex', alignItems:'center', justifyContent:'center'}}>{friendRequests.length}</span>}
@@ -296,9 +384,9 @@ const ChatRoom = () => {
                <div className="header-actions">
                  <button className="btn-icon" onClick={handleVideoCall} title="Video Call"><Video size={22} color="#2563eb" /></button>
                  
-                 {/* 👇 NÚT BẢNG TRẮNG Ở ĐÂY */}
-                 <button className="btn-icon" onClick={() => setShowWhiteboard(true)} title="Bảng trắng">
-                    <PenTool size={22} color="#9333ea" /> {/* Màu tím cho nổi */}
+                 {/* Nút Bảng Trắng Nhóm (Chỉ hiện trong nhóm) */}
+                 <button className="btn-icon" onClick={openGroupWhiteboard} title="Bảng trắng nhóm">
+                    <PenTool size={22} color="#9333ea" />
                  </button>
 
                  {selectedRoom.type === 'group' && <button className="btn-icon" onClick={() => { fetchMemberDetails(); setModalMode('manage_members'); setShowModal(true); }}><Settings size={22} /></button>}
@@ -312,34 +400,36 @@ const ChatRoom = () => {
             <div className="messages-list" ref={chatContainerRef} onScroll={handleScroll}>
               {isLoadingOldMessages && <div className="loading"><Loader2 className="spin"/> Tải tin cũ...</div>}
               {messages.filter(m => !msgSearchTerm || (m.text||"").toLowerCase().includes(msgSearchTerm.toLowerCase())).map(msg => {
+                if (msg.isSystem) return <div key={msg.id} className="system-msg"><span>{msg.text}</span></div>;
                 const isMe = msg.uid === user.uid;
                 return (
                   <div key={msg.id} className={`message-row ${isMe ? 'mine' : 'theirs'}`}>
-                     {!isMe && <div className="msg-avatar">{msg.displayName?.charAt(0)}</div>}
-                     <div className="msg-content">
-                       {!isMe && <div className="sender-name">{msg.displayName}</div>}
-                       <div className="message-bubble-wrapper">
-                         {msg.replyTo && !msg.isUnsent && <div className="reply-quote"><div className="reply-bar"></div><div className="reply-info"><span className="reply-name">{msg.replyTo.displayName}</span><span className="reply-text">{msg.replyTo.text}</span></div></div>}
-                         {msg.isUnsent ? <div className="bubble unsent">🚫 Thu hồi</div> : (
-                           <>
-                             {msg.fileType === 'image' && <div className="msg-image"><img src={msg.fileUrl} onClick={()=>window.open(msg.fileUrl)}/></div>}
-                             {msg.fileType === 'document' && <div className="msg-file"><FileText size={24}/><div className="file-info"><span>{msg.fileName}</span><a href={msg.fileUrl} target="_blank"><Download size={14}/></a></div></div>}
-                             {msg.text && <div className={`bubble ${msgSearchTerm && msg.text.includes(msgSearchTerm)?'highlight':''}`}>{msg.text}</div>}
-                           </>
-                         )}
-                         {!msg.isUnsent && <div className="msg-actions"><button onClick={()=>setReplyingTo(msg)}><Reply size={14}/></button>{isMe && <button onClick={()=>handleUnsend(msg.id)}><Trash2 size={14}/></button>}<button onClick={()=>setActiveReactionId(msg.id)}><Smile size={14}/></button></div>}
-                         {activeReactionId === msg.id && <div className="reaction-picker">{['❤️','😆','👍','😢'].map(e=><span key={e} onClick={()=>handleReaction(msg.id,e)}>{e}</span>)}</div>}
-                       </div>
-                       <div className="timestamp">{msg.createdAt?.seconds ? new Date(msg.createdAt.seconds*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '...'}</div>
-                     </div>
+                    {!isMe && <div className="msg-avatar">{msg.displayName?.charAt(0)}</div>}
+                    <div className="msg-content">
+                      {!isMe && <div className="sender-name">{msg.displayName}</div>}
+                      <div className="message-bubble-wrapper">
+                        {msg.replyTo && !msg.isUnsent && <div className="reply-quote"><div className="reply-bar"></div><div className="reply-info"><span className="reply-name">{msg.replyTo.displayName}</span><span className="reply-text">{msg.replyTo.text}</span></div></div>}
+                        {msg.isUnsent ? <div className="bubble unsent">🚫 Thu hồi</div> : (
+                          <>
+                            {msg.fileType === 'image' && <div className="msg-image"><img src={msg.fileUrl} onClick={()=>window.open(msg.fileUrl)}/></div>}
+                            {msg.fileType === 'document' && <div className="msg-file"><FileText size={24}/><div className="file-info"><span>{msg.fileName}</span><a href={msg.fileUrl} target="_blank"><Download size={14}/></a></div></div>}
+                            {msg.text && <div className={`bubble ${msgSearchTerm && msg.text.includes(msgSearchTerm)?'highlight':''}`}>{msg.text}</div>}
+                          </>
+                        )}
+                        {!msg.isUnsent && <div className="msg-actions"><button onClick={()=>setReplyingTo(msg)}><Reply size={14}/></button>{isMe && <button onClick={()=>handleUnsend(msg.id)}><Trash2 size={14}/></button>}<button onClick={()=>setActiveReactionId(msg.id)}><Smile size={14}/></button></div>}
+                        {activeReactionId === msg.id && <div className="reaction-picker">{['❤️','😆','👍','😢'].map(e=><span key={e} onClick={()=>handleReaction(msg.id,e)}>{e}</span>)}</div>}
+                      </div>
+                      <div className="timestamp">{msg.createdAt?.seconds ? new Date(msg.createdAt.seconds*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '...'}</div>
+                    </div>
                   </div>
-                )
+                );
               })}
               <div ref={dummyDiv}></div>
             </div>
 
             <div className="chat-input-wrapper">
-               <form onSubmit={handleSendMessage} className="chat-input-area">
+              {replyingTo && <div className="replying-banner"><div className="reply-content"><span className="reply-label">Trả lời <b>{replyingTo.displayName}</b></span><span className="reply-preview">{replyingTo.text}</span></div><button onClick={()=>setReplyingTo(null)}><XCircle size={18}/></button></div>}
+              <form onSubmit={handleSendMessage} className="chat-input-area">
                  <input type="file" ref={imageInputRef} hidden accept="image/*" onChange={handleImageUpload} />
                  <input type="file" ref={fileInputRef} hidden onChange={handleFileUpload} />
                  <button type="button" className="btn-icon" onClick={()=>imageInputRef.current.click()}><ImageIcon size={20}/></button>
@@ -354,70 +444,87 @@ const ChatRoom = () => {
 
       {showResources && selectedRoom && <div style={{width:320, borderLeft:'1px solid #ddd'}}><ChatResources roomId={selectedRoom.id}/></div>}
 
-      {/* 👇 RENDER BẢNG TRẮNG NẾU SHOW = TRUE */}
-      {showWhiteboard && (
+      {/* --- RENDER WHITEBOARD (NẾU ĐANG MỞ) --- */}
+      {activeBoardId && (
         <Whiteboard 
-          onClose={() => setShowWhiteboard(false)} 
-          onSendToChat={handleSendWhiteboard} 
+          boardId={activeBoardId} 
+          title={boardTitle}
+          onClose={() => setActiveBoardId(null)} 
         />
       )}
 
-      {/* ... Modal Code (Giữ nguyên) ... */}
+      {/* --- MODAL DA DỤNG --- */}
       {showModal && (
         <div className="modal-overlay" onClick={()=>setShowModal(false)}>
-           <div className="modal-content" onClick={e=>e.stopPropagation()}>
-              <h3>
+          <div className="modal-content" onClick={e=>e.stopPropagation()}>
+            <h3>
               {modalMode==='view_requests' ? 'Lời Mời Kết Bạn' :
                modalMode==='create_group' ? 'Tạo Nhóm Mới' : 
                modalMode==='add_friend' ? 'Gửi Lời Mời' : 
                modalMode==='add_member' ? 'Thêm Thành Viên' : 
                modalMode==='manage_friends' ? 'Danh sách bạn bè' :
                modalMode==='manage_members' ? 'Quản Lý Thành Viên' : 'Đổi Tên Nhóm'}
-              </h3>
-              {/* ... Logic render modal body cũ (copy từ phần trước vào đây) ... */}
-              {/* Mình viết ngắn gọn chỗ này để tránh dài dòng */}
-              <div className="modal-body">
-                 {/* Logic UI Modal (Giữ nguyên từ version trước) */}
-                 {modalMode === 'view_requests' ? (
-                    <div className="requests-list" style={{maxHeight: 300, overflowY:'auto'}}>
-                       {friendRequests.map(req => (
-                          <div key={req.id} style={{display:'flex', justifyContent:'space-between', padding:'10px'}}>
-                             <div><strong>{req.fromName}</strong><br/>{req.fromEmail}</div>
-                             <div>
-                                <button onClick={()=>handleRejectRequest(req.id)} style={{marginRight:5}}><UserX size={16}/></button>
-                                <button onClick={()=>handleAcceptRequest(req)}><UserCheck size={16}/></button>
-                             </div>
+            </h3>
+            
+            <div className="modal-body">
+              {modalMode === 'view_requests' ? (
+                <div className="requests-list" style={{maxHeight: 300, overflowY:'auto'}}>
+                   {friendRequests.length === 0 ? <p style={{textAlign:'center', color:'#888'}}>Không có lời mời nào.</p> : 
+                    friendRequests.map(req => (
+                      <div key={req.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding: '10px', borderBottom:'1px solid #eee'}}>
+                        <div><strong>{req.fromName}</strong><div style={{fontSize:'0.8rem', color:'#666'}}>{req.fromEmail}</div></div>
+                        <div style={{display:'flex', gap:5}}>
+                           <button onClick={()=>handleRejectRequest(req.id)} style={{background:'#fee2e2', color:'#ef4444', padding: '6px 10px', border:'none', borderRadius: 4, cursor:'pointer'}}><UserX size={16}/></button>
+                           <button onClick={()=>handleAcceptRequest(req)} style={{background:'#dcfce7', color:'#166534', padding: '6px 10px', border:'none', borderRadius: 4, cursor:'pointer'}}><UserCheck size={16}/></button>
+                        </div>
+                      </div>
+                    ))
+                   }
+                </div>
+              ) : modalMode === 'manage_friends' ? (
+                 <div className="friend-list-container" style={{maxHeight: 300, overflowY:'auto'}}>
+                    {isProcessing ? <p style={{textAlign:'center'}}>Đang tải...</p> : 
+                     friendList.length === 0 ? <p style={{textAlign:'center', color:'#888'}}>Chưa có bạn bè nào.</p> :
+                     friendList.map(friend => (
+                       <div key={friend.friendId} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding: '10px 0', borderBottom:'1px solid #eee'}}>
+                          <div style={{display:'flex', alignItems:'center', gap:10}}>
+                            <div style={{width:32, height:32, background:'#e2e8f0', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center'}}>{friend.displayName.charAt(0)}</div>
+                            <div><strong>{friend.displayName}</strong><div style={{fontSize:'0.8rem', color:'#666'}}>{friend.email}</div></div>
                           </div>
-                       ))}
+                          <button onClick={()=>handleUnfriend(friend.roomId, friend.displayName)} title="Hủy kết bạn" style={{background:'none', border:'none', cursor:'pointer', color:'#ef4444'}}><UserMinus size={18}/></button>
+                       </div>
+                     ))
+                    }
+                 </div>
+              ) : modalMode === 'manage_members' ? (
+                 <div className="member-list-container" style={{maxHeight:300, overflowY:'auto'}}>
+                    <button className="btn-add-member-in-modal" onClick={() => setModalMode('add_member')}><Plus size={16}/> Thêm (Gmail)</button>
+                    {memberDetails.map(mem => (
+                      <div key={mem.id} style={{display:'flex', justifyContent:'space-between', padding:'10px 0', borderBottom:'1px solid #eee'}}>
+                         <div><strong>{mem.displayName}</strong><div style={{fontSize:'0.8rem', color:'#666'}}>{mem.email}</div></div>
+                         {mem.id !== selectedRoom.createdBy && isGroupAdmin && <button onClick={()=>handleKickMember(mem.id, mem.displayName)} style={{color:'#ef4444', background:'none', border:'none', cursor:'pointer'}}><Trash2 size={16}/></button>}
+                         {mem.id === selectedRoom.createdBy && <span style={{fontSize:'0.7rem', background:'#dcfce7', color:'#166534', padding:'2px 5px', borderRadius:4}}>Admin</span>}
+                      </div>
+                    ))}
+                    <div style={{marginTop:20, paddingTop:15, borderTop:'1px solid #eee', display:'flex', justifyContent:'center'}}>
+                      {!isGroupAdmin && <button onClick={handleLeaveGroup} style={{color:'#64748b', background:'#f1f5f9', padding:'8px 15px', border:'none', borderRadius:6, cursor:'pointer', display:'flex', gap:5}}><LogOut size={16}/> Rời nhóm</button>}
+                      {isGroupAdmin && <button onClick={handleDisbandGroup} style={{color:'white', background:'#ef4444', padding:'8px 15px', border:'none', borderRadius:6, cursor:'pointer', display:'flex', gap:5}}><ShieldAlert size={16}/> Giải tán nhóm</button>}
                     </div>
-                 ) : modalMode === 'manage_friends' ? (
-                    <div className="friend-list" style={{maxHeight:300, overflowY:'auto'}}>
-                       {friendList.map(f => (
-                          <div key={f.friendId} style={{display:'flex', justifyContent:'space-between', padding:'10px'}}>
-                             <div>{f.displayName}</div>
-                             <button onClick={()=>handleUnfriend(f.roomId, f.displayName)}><UserMinus size={16}/></button>
-                          </div>
-                       ))}
-                    </div>
-                 ) : modalMode === 'manage_members' ? (
-                    <div className="mem-list">
-                       <button onClick={()=>setModalMode('add_member')}>Thêm</button>
-                       {memberDetails.map(m => (
-                          <div key={m.id} style={{display:'flex', justifyContent:'space-between', padding:'5px'}}>
-                             {m.displayName}
-                             {isGroupAdmin && m.id !== user.uid && <button onClick={()=>handleKickMember(m.id, m.displayName)}><Trash2 size={16}/></button>}
-                          </div>
-                       ))}
-                       <button onClick={isGroupAdmin ? handleDisbandGroup : handleLeaveGroup} style={{marginTop:10, width:'100%', background:'#fee2e2', color:'red'}}>{isGroupAdmin ? 'Giải tán' : 'Rời nhóm'}</button>
-                    </div>
-                 ) : (
-                    <>
-                       <input value={inputTarget} onChange={e=>setInputTarget(e.target.value)} placeholder="Nhập..." autoFocus style={{width:'100%', padding:10, marginBottom:10}}/>
-                       <button onClick={handleModalSubmit} style={{width:'100%', padding:10, background:'#2563eb', color:'white'}}>Xác nhận</button>
-                    </>
-                 )}
-              </div>
-           </div>
+                 </div>
+              ) : (
+                <>
+                  <div className="input-group">
+                    <label>{modalMode.includes('add') ? 'Nhập Gmail:' : 'Tên:'}</label>
+                    <input value={inputTarget} onChange={e=>setInputTarget(e.target.value)} placeholder="..." autoFocus />
+                  </div>
+                  <div className="modal-actions" style={{display:'flex', gap: 10, marginTop: 15}}>
+                    <button onClick={()=>setShowModal(false)} style={{background:'#ccc', flex: 1}}>Hủy</button>
+                    <button onClick={handleModalSubmit} style={{background: '#2563eb', color: 'white', flex: 1}} disabled={isProcessing}>Xác nhận</button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
