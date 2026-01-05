@@ -1,7 +1,6 @@
-// src/modules/Dashboard/Dashboard.jsx
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { MessageSquare, BarChart2, FolderOpen, LogOut, Clock } from "lucide-react"; // Thêm icon FolderOpen
+import { LogOut, ArrowRight } from "lucide-react"; 
 import "./Dashboard.scss";
 
 const Dashboard = () => {
@@ -13,53 +12,78 @@ const Dashboard = () => {
     navigate("/login");
   };
 
+  // Cấu hình danh sách module để dễ quản lý & render
+  const modules = [
+    {
+      id: 'chat',
+      title: "THẢO LUẬN",
+      sub: "Chat Room",
+      desc: "Trao đổi nhanh, chém gió dự án.",
+      path: "/chat",
+      // Ảnh nền cho card Chat (Vibe công nghệ/kết nối)
+      bgImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=600&auto=format&fit=crop"
+    },
+    {
+      id: 'oppm',
+      title: "KẾ HOẠCH",
+      sub: "OPPM Board",
+      desc: "Theo dõi tiến độ & deadline.",
+      path: "/oppm",
+      // Ảnh nền cho card OPPM (Vibe làm việc/giấy tờ)
+      bgImage: "https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?q=80&w=600&auto=format&fit=crop"
+    },
+    {
+      id: 'resources',
+      title: "TÀI NGUYÊN",
+      sub: "Documents",
+      desc: "Kho lưu trữ tài liệu chung.",
+      path: "/resources",
+      // Ảnh nền cho card Tài liệu (Vibe thư viện/sách)
+      bgImage: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=600&auto=format&fit=crop"
+    }
+  ];
+
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div className="welcome-text">
-          <h1>Xin chào, {user?.displayName}! 👋</h1>
-          <p>Chào mừng bạn quay trở lại không gian làm việc nhóm.</p>
-        </div>
-        <button onClick={handleLogout} className="btn-logout">
-          <LogOut size={18} /> Đăng xuất
-        </button>
-      </header>
+    <div className="dashboard-cinematic">
+      {/* Background mờ phía sau toàn màn hình */}
+      <div className="bg-overlay"></div>
 
-      <div className="modules-grid">
-        {/* Module 1: Chat Room */}
-        <div className="module-card chat" onClick={() => navigate("/chat")}>
-          <div className="icon-wrapper">
-            <MessageSquare size={32} />
+      <div className="content-wrapper">
+        {/* Header */}
+        <header className="hero-header">
+          <div className="welcome-block">
+            <span className="sub-greeting">WELCOME BACK</span>
+            <h1 className="user-name">{user?.displayName || "Member"}</h1>
+            <p className="quote">"Sẵn sàng bứt phá cho đồ án này chưa?"</p>
           </div>
-          <h3>Thảo luận (Chat)</h3>
-          <p>Trao đổi nhanh, chém gió và cập nhật tình hình dự án.</p>
-        </div>
+          
+          <button onClick={handleLogout} className="btn-logout-minimal">
+            <LogOut size={20} />
+            <span>Đăng xuất</span>
+          </button>
+        </header>
 
-        {/* Module 2: OPPM (Quản lý tiến độ) */}
-        <div className="module-card oppm" onClick={() => navigate("/oppm")}>
-          <div className="icon-wrapper">
-            <BarChart2 size={32} />
-          </div>
-          <h3>Kế hoạch (OPPM)</h3>
-          <p>Theo dõi tiến độ, deadline và chấm điểm thành viên.</p>
-        </div>
-
-        {/* Module 3: Kho Tài Liệu (MỚI) */}
-        <div className="module-card resources" onClick={() => navigate("/resources")}>
-          <div className="icon-wrapper">
-            <FolderOpen size={32} />
-          </div>
-          <h3>Kho Tài Liệu</h3>
-          <p>Lưu trữ link, ebook, source code và tài nguyên dự án.</p>
-        </div>
-
-        {/* Module 4: Sắp tới - Meeting Minutes */}
-        <div className="module-card meeting coming-soon">
-           <div className="icon-wrapper">
-             <Clock size={32} />
-           </div>
-           <h3>Biên bản cuộc họp</h3>
-           <p>Lưu trữ nội dung họp & phân công task (Sắp ra mắt).</p>
+        {/* Card Slider Section */}
+        <div className="cards-section">
+          {modules.map((item) => (
+            <div 
+              key={item.id} 
+              className="cinematic-card" 
+              onClick={() => navigate(item.path)}
+              style={{ backgroundImage: `url(${item.bgImage})` }}
+            >
+              <div className="card-overlay">
+                <div className="card-content">
+                  <span className="card-sub">{item.sub}</span>
+                  <h3 className="card-title">{item.title}</h3>
+                  <div className="hover-reveal">
+                    <p>{item.desc}</p>
+                    <span className="fake-btn">Truy cập <ArrowRight size={14}/></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

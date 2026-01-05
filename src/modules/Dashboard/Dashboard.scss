@@ -1,50 +1,170 @@
-/* src/modules/Dashboard/Dashboard.scss */
-.dashboard-container {
-  max-width: 1200px; margin: 0 auto; padding: 40px 20px;
-  font-family: 'Segoe UI', sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&family=Inter:wght@300;400;600&display=swap');
 
-  .dashboard-header {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px;
-    h1 { margin: 0; color: #2c3e50; font-size: 2rem; }
-    p { margin: 5px 0 0; color: #7f8c8d; }
-    .btn-logout {
-      background: #e74c3c; color: white; border: none; padding: 10px 20px;
-      border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: bold;
-      &:hover { background: #c0392b; }
-    }
+/* --- CẤU HÌNH VIBE --- */
+.dashboard-cinematic {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #0f172a; // Màu nền tối dự phòng
+  font-family: 'Inter', sans-serif;
+  color: white;
+
+  /* Ảnh nền toàn trang (Background lớn) */
+  background-image: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+
+  /* Lớp phủ đen mờ để làm nổi bật nội dung */
+  .bg-overlay {
+    position: absolute; inset: 0;
+    background: rgba(15, 23, 42, 0.75); // Màu đen xanh đậm, độ mờ 75%
+    backdrop-filter: blur(5px); // Làm mờ ảnh nền 1 chút
+    z-index: 1;
   }
 
-  .modules-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;
+  /* Nội dung chính nằm đè lên overlay */
+  .content-wrapper {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 40px 60px;
+    max-width: 1600px;
+    margin: 0 auto;
 
-    .module-card {
-      background: white; padding: 30px; border-radius: 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.05); cursor: pointer;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      border: 1px solid #f0f0f0; display: flex; flex-direction: column; align-items: flex-start;
+    /* --- HEADER --- */
+    .hero-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 60px;
 
-      &:hover { transform: translateY(-8px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
-
-      .icon-wrapper {
-        width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
-        margin-bottom: 20px; color: white; font-weight: bold;
+      .welcome-block {
+        .sub-greeting {
+          font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase;
+          color: #94a3b8; font-weight: 600; display: block; margin-bottom: 5px;
+        }
+        .user-name {
+          font-family: 'Oswald', sans-serif; // Font chữ tiêu đề mạnh mẽ
+          font-size: 4rem; text-transform: uppercase; margin: 0;
+          line-height: 1.1; letter-spacing: 1px;
+          background: linear-gradient(to right, #fff, #cbd5e1);
+          
+          /* 👇 ĐÃ FIX LỖI Ở ĐÂY: Thêm thuộc tính chuẩn */
+          -webkit-background-clip: text; 
+          background-clip: text; 
+          
+          -webkit-text-fill-color: transparent;
+        }
+        .quote {
+          margin-top: 10px; color: #cbd5e1; font-weight: 300; font-style: italic;
+          border-left: 3px solid #3b82f6; padding-left: 15px;
+        }
       }
 
-      h3 { margin: 0 0 10px; color: #34495e; font-size: 1.4rem; }
-      p { margin: 0; color: #95a5a6; line-height: 1.5; }
+      .btn-logout-minimal {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white; padding: 10px 20px; border-radius: 30px;
+        cursor: pointer; display: flex; align-items: center; gap: 8px;
+        transition: 0.3s;
+        backdrop-filter: blur(10px);
 
-      /* MÀU SẮC TỪNG CARD */
-      &.chat .icon-wrapper { background: linear-gradient(135deg, #667eea, #764ba2); }
-      &.oppm .icon-wrapper { background: linear-gradient(135deg, #ff9966, #ff5e62); }
-      
-      /* Màu mới cho Kho tài liệu (Xanh lá / Teal) */
-      &.resources .icon-wrapper { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        &:hover { background: rgba(255, 255, 255, 0.2); border-color: white; }
+      }
+    }
 
-      /* Card sắp ra mắt (Meeting) - Màu xám */
-      &.coming-soon {
-        opacity: 0.7; cursor: default;
-        &:hover { transform: none; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .icon-wrapper { background: #bdc3c7; }
+    /* --- CARDS SECTION (CÁI VIBE CHÍNH) --- */
+    .cards-section {
+      display: flex;
+      gap: 30px;
+      height: 450px; /* Chiều cao cố định cho dải card */
+      align-items: center;
+
+      .cinematic-card {
+        flex: 1; /* Chia đều chiều rộng */
+        height: 100%;
+        background-size: cover;
+        background-position: center;
+        border-radius: 20px;
+        position: relative;
+        cursor: pointer;
+        overflow: hidden;
+        transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        
+        /* Hiệu ứng khi chưa hover: Tối đi một chút */
+        &::before {
+          content: ''; position: absolute; inset: 0;
+          background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.1));
+          transition: 0.5s;
+        }
+
+        /* CARD CONTENT */
+        .card-overlay {
+          position: absolute; bottom: 0; left: 0; width: 100%;
+          padding: 30px;
+          z-index: 2;
+
+          .card-content {
+            display: flex; flex-direction: column;
+            
+            .card-sub {
+              font-size: 0.75rem; color: #3b82f6; text-transform: uppercase;
+              font-weight: 700; letter-spacing: 1px; margin-bottom: 5px;
+            }
+            .card-title {
+              font-family: 'Oswald', sans-serif;
+              font-size: 2.5rem; margin: 0; text-transform: uppercase;
+              line-height: 1; color: white;
+              transition: transform 0.3s;
+            }
+            
+            /* Phần ẩn đi, chỉ hiện khi hover */
+            .hover-reveal {
+              max-height: 0; opacity: 0; overflow: hidden;
+              transition: all 0.5s ease;
+              
+              p { font-size: 0.9rem; color: #cbd5e1; margin: 10px 0 15px 0; line-height: 1.4; }
+              
+              .fake-btn {
+                display: inline-flex; align-items: center; gap: 5px;
+                font-size: 0.85rem; font-weight: 600; color: white;
+                border-bottom: 2px solid #3b82f6; padding-bottom: 2px;
+              }
+            }
+          }
+        }
+
+        /* --- HOVER EFFECTS (ĐIỂM NHẤN) --- */
+        &:hover {
+          flex: 1.5; /* Mở rộng chiều ngang khi hover */
+          transform: translateY(-10px);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+
+          &::before { background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0)); }
+
+          .card-title { transform: translateY(-5px); }
+          .hover-reveal { max-height: 100px; opacity: 1; } /* Hiện nội dung ẩn */
+        }
+      }
+    }
+  }
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+  .dashboard-cinematic .content-wrapper {
+    padding: 20px;
+    .hero-header { 
+       flex-direction: column; gap: 20px; margin-bottom: 30px;
+       .user-name { font-size: 2.5rem; }
+    }
+    .cards-section {
+      flex-direction: column; height: auto;
+      .cinematic-card {
+        height: 200px; width: 100%; flex: none;
+        &:hover { flex: none; transform: scale(1.02); }
       }
     }
   }
