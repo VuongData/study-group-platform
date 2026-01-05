@@ -1,16 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* ================= 1. KHAI BÁO BIẾN (QUAN TRỌNG) ================= */
-$primary-color: #2563eb;       
-$primary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
-$bg-color: #f8fafc;           
+/* ================= 1. KHAI BÁO BIẾN (FULL) ================= */
+/* Phải giữ nguyên khối này ở đầu file để tránh lỗi build */
+$primary-color: #2563eb;
+$primary-light: #eff6ff; /* 👈 Biến bị thiếu trước đó */
+$primary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+$bg-color: #f8fafc;
 $white: #ffffff;
-$text-dark: #1e293b;           
-$text-gray: #64748b;          
+$text-dark: #1e293b;
+$text-gray: #64748b;
 $border-color: #e2e8f0;
 $danger: #ef4444;
 $success: #22c55e;
-$sidebar-width: 280px; 
+$sidebar-width: 280px;
 
 * { box-sizing: border-box; }
 
