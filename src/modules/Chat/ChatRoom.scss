@@ -1,188 +1,74 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* --- KHÔNG DÙNG BIẾN ĐỂ TRÁNH LỖI COMPILE TRÊN VERCEL --- */
+/* ================= 1. KHAI BÁO BIẾN (QUAN TRỌNG) ================= */
+$primary-color: #2563eb;       
+$primary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
+$bg-color: #f8fafc;           
+$white: #ffffff;
+$text-dark: #1e293b;           
+$text-gray: #64748b;          
+$border-color: #e2e8f0;
+$danger: #ef4444;
+$success: #22c55e;
+$sidebar-width: 280px; 
 
 * { box-sizing: border-box; }
 
 .chat-room-container {
-  display: flex;
-  height: 100vh;
-  width: 100%;
-  background-color: #f8fafc;
-  font-family: 'Inter', sans-serif;
-  overflow: hidden;
+  display: flex; height: 100vh; width: 100%; background-color: $bg-color; font-family: 'Inter', sans-serif; overflow: hidden;
 
   /* ================= 2. SIDEBAR ================= */
   .chat-sidebar {
-    width: 280px;
-    background: #1e293b;
-    border-right: none;
-    display: flex;
-    flex-direction: column;
-    padding: 20px 0 20px 10px;
-    overflow: hidden;
-
+    width: $sidebar-width; background: #1e293b; border-right: none; display: flex; flex-direction: column; padding: 20px 0 20px 10px; overflow: hidden;
+    
     .sidebar-header {
-      padding-right: 20px;
-      margin-bottom: 20px;
-      color: white;
-      
+      padding-right: 20px; margin-bottom: 20px; color: white;
       h3 { margin: 0 0 15px 0; font-size: 1.25rem; font-weight: 700; color: white; }
-      
-      .notification-bell {
-        &:hover { background: rgba(255,255,255,0.1); }
-      }
-
-      .my-id-box {
-        margin: 10px 0;
-        background: rgba(255,255,255,0.05);
-        color: #94a3b8;
-        padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
-        display: flex; justify-content: space-between; align-items: center;
-        cursor: pointer; border: 1px dashed rgba(255,255,255,0.2);
-        transition: 0.2s;
-        &:hover { background: rgba(255,255,255,0.1); color: white; }
-      }
-
-      .search-room-box {
-        display: flex; align-items: center; gap: 8px;
-        background: rgba(255,255,255,0.1);
-        padding: 8px 12px; border-radius: 8px; border: 1px solid transparent;
-        transition: 0.2s;
-        
-        &:focus-within { background: rgba(255,255,255,0.2); }
-        input {
-          border: none; background: transparent; outline: none; width: 100%; font-size: 0.9rem;
-          color: white;
-          &::placeholder { color: #94a3b8; }
-        }
-        svg { color: #94a3b8; }
-      }
+      .notification-bell { &:hover { background: rgba(255,255,255,0.1); } }
+      .my-id-box { margin: 10px 0; background: rgba(255,255,255,0.05); color: #94a3b8; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px dashed rgba(255,255,255,0.2); transition: 0.2s; &:hover { background: rgba(255,255,255,0.1); color: white; } }
+      .search-room-box { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 8px; border: 1px solid transparent; transition: 0.2s; &:focus-within { background: rgba(255,255,255,0.2); } input { border: none; background: transparent; outline: none; width: 100%; font-size: 0.9rem; color: white; &::placeholder { color: #94a3b8; } } svg { color: #94a3b8; } }
     }
 
     .room-list {
-      flex: 1; overflow-y: auto; overflow-x: hidden;
-      display: flex; flex-direction: column; gap: 5px;
-      padding-right: 0;
-
+      flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 5px; padding-right: 0;
       .room-item {
-        position: relative;
-        display: flex; align-items: center; gap: 12px;
-        padding: 12px 20px;
-        border-top-left-radius: 30px;
-        border-bottom-left-radius: 30px;
-        cursor: pointer;
-        color: #94a3b8;
-        transition: 0.3s;
-        margin-left: 10px;
-
-        .room-avatar {
-          width: 40px; height: 40px;
-          background: rgba(255,255,255,0.1); color: white;
-          border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .room-info {
-          overflow: hidden;
-          h4 { margin: 0; font-size: 0.95rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-          p { margin: 2px 0 0 0; font-size: 0.8rem; color: #94a3b8; }
-        }
-
-        &:hover:not(.active) {
-          background: rgba(255,255,255,0.05);
-          color: white;
-        }
-
+        position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-top-left-radius: 30px; border-bottom-left-radius: 30px; cursor: pointer; color: #94a3b8; transition: 0.3s; margin-left: 10px;
+        .room-avatar { width: 40px; height: 40px; background: rgba(255,255,255,0.1); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .room-info { overflow: hidden; h4 { margin: 0; font-size: 0.95rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } p { margin: 2px 0 0 0; font-size: 0.8rem; color: #94a3b8; } }
+        &:hover:not(.active) { background: rgba(255,255,255,0.05); color: white; }
         &.active {
-          background: #ffffff;
-          color: #2563eb;
-          z-index: 10;
-
-          .room-avatar { background: #e0e7ff; color: #2563eb; }
-          .room-info h4 { color: #1e293b; }
-          .room-info p { color: #64748b; }
-
-          &::before {
-            content: ''; position: absolute; top: -50px; right: 0;
-            width: 50px; height: 50px; background: transparent; border-radius: 50%;
-            box-shadow: 25px 25px 0 0 #ffffff; pointer-events: none;
-          }
-
-          &::after {
-            content: ''; position: absolute; bottom: -50px; right: 0;
-            width: 50px; height: 50px; background: transparent; border-radius: 50%;
-            box-shadow: 25px -25px 0 0 #ffffff; pointer-events: none;
-          }
+          background: $white; color: $primary-color; z-index: 10;
+          .room-avatar { background: #e0e7ff; color: $primary-color; } .room-info h4 { color: $text-dark; } .room-info p { color: $text-gray; }
+          &::before { content: ''; position: absolute; top: -50px; right: 0; width: 50px; height: 50px; background: transparent; border-radius: 50%; box-shadow: 25px 25px 0 0 $white; pointer-events: none; }
+          &::after { content: ''; position: absolute; bottom: -50px; right: 0; width: 50px; height: 50px; background: transparent; border-radius: 50%; box-shadow: 25px -25px 0 0 $white; pointer-events: none; }
         }
       }
     }
-
-    .sidebar-actions {
-      padding: 15px 20px 0 0;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      
-      .btn-add-new {
-        background: rgba(255,255,255,0.1);
-        border: 1px dashed rgba(255,255,255,0.3); color: white;
-        padding: 10px; border-radius: 8px; cursor: pointer;
-        font-size: 0.85rem; font-weight: 600;
-        display: flex; align-items: center; justify-content: center; gap: 6px;
-        transition: 0.2s;
-        &:hover { background: #2563eb; border-color: #2563eb; }
-      }
-    }
+    .sidebar-actions { padding: 15px 20px 0 0; border-top: 1px solid rgba(255,255,255,0.1); .btn-add-new { background: rgba(255,255,255,0.1); border: 1px dashed rgba(255,255,255,0.3); color: white; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; &:hover { background: $primary-color; border-color: $primary-color; } } }
   }
 
   /* ================= 3. MAIN CHAT ================= */
   .chat-main {
     flex: 1; display: flex; flex-direction: column; background: #ffffff; position: relative;
-    .no-room { flex: 1; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 1.1rem; }
+    .no-room { flex: 1; display: flex; align-items: center; justify-content: center; color: $text-gray; font-size: 1.1rem; }
 
     /* HEADER */
     .chat-header {
-      height: 70px; padding: 0 20px; border-bottom: 1px solid #e2e8f0;
-      display: flex; align-items: center; justify-content: space-between;
-
+      height: 70px; padding: 0 20px; border-bottom: 1px solid $border-color; display: flex; align-items: center; justify-content: space-between;
       .header-left {
         display: flex; align-items: center; gap: 12px;
-        .avatar-group {
-          width: 42px; height: 42px; background: linear-gradient(135deg, #2563eb, #60a5fa);
-          color: white; font-weight: 700; font-size: 1.2rem; border-radius: 12px;
-          display: flex; align-items: center; justify-content: center;
-        }
-        .info-wrapper {
-          .title-row {
-            display: flex; align-items: center; gap: 8px;
-            h3 { margin: 0; font-size: 1rem; color: #1e293b; }
-            .btn-edit { background: none; border: none; cursor: pointer; color: #64748b; &:hover { color: #2563eb; } }
-          }
-          .status { font-size: 0.8rem; color: #64748b; font-weight: 500; }
-          .btn-set-nickname {
-            background: none; border: none; padding: 0; margin-top: 2px;
-            font-size: 0.8rem; color: #64748b; cursor: pointer;
-            display: flex; align-items: center; transition: all 0.2s; font-weight: 500;
-            &:hover { color: #2563eb; text-decoration: underline; }
-          }
-        }
+        .avatar-group { width: 42px; height: 42px; background: linear-gradient(135deg, $primary-color, #60a5fa); color: white; font-weight: 700; font-size: 1.2rem; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+        .info-wrapper { .title-row { display: flex; align-items: center; gap: 8px; h3 { margin: 0; font-size: 1rem; color: $text-dark; } .btn-edit { background: none; border: none; cursor: pointer; color: $text-gray; &:hover { color: $primary-color; } } } .status { font-size: 0.8rem; color: $text-gray; font-weight: 500; } .btn-set-nickname { background: none; border: none; padding: 0; margin-top: 2px; font-size: 0.8rem; color: $text-gray; cursor: pointer; display: flex; align-items: center; transition: all 0.2s; font-weight: 500; &:hover { color: $primary-color; text-decoration: underline; } } }
       }
-
-      .header-actions {
-        display: flex; align-items: center; gap: 10px;
-        
-        .btn-icon {
-          width: 38px; height: 38px; border-radius: 8px; border: none; background: transparent;
-          cursor: pointer; color: #64748b; display: flex; align-items: center; justify-content: center;
-          transition: 0.2s;
-          &:hover { background: #f8fafc; color: #2563eb; }
-          &.active { background: #eff6ff; color: #2563eb; }
-        }
-        
-        .divider { width: 1px; height: 24px; background: #e2e8f0; margin: 0 5px; }
-        
-        .msg-search {
-          display: flex; align-items: center; background: #f8fafc; padding: 5px 10px; border-radius: 20px;
-          input { border: none; background: transparent; outline: none; width: 120px; font-size: 0.85rem; }
-          svg { cursor: pointer; color: #64748b; &:hover { color: #ef4444; } }
-        }
+      .header-actions { 
+        display: flex; align-items: center; gap: 10px; 
+        .btn-icon { width: 38px; height: 38px; border-radius: 8px; border: none; background: transparent; cursor: pointer; color: $text-gray; display: flex; align-items: center; justify-content: center; transition: 0.2s; &:hover { background: $bg-color; color: $primary-color; } &.active { background: $primary-light; color: $primary-color; } } 
+        .divider { width: 1px; height: 24px; background: $border-color; margin: 0 5px; } 
+        .msg-search { 
+          display: flex; align-items: center; background: $bg-color; padding: 5px 10px; border-radius: 20px; 
+          input { border: none; background: transparent; outline: none; width: 120px; font-size: 0.85rem; } 
+          svg { cursor: pointer; color: $text-gray; &:hover { color: $danger; } }
+        } 
       }
     }
 
@@ -192,14 +78,14 @@
       overflow-y: auto; background-color: #f1f5f9;
       display: flex; flex-direction: column; gap: 20px;
 
-      .loading { text-align: center; color: #64748b; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 5px; }
+      .loading { text-align: center; color: $text-gray; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 5px; }
       .spin { animation: spin 1s linear infinite; }
-      .system-msg { align-self: center; background: rgba(0,0,0,0.05); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; color: #64748b !important; margin: 5px 0; text-align: center; }
+      .system-msg { align-self: center; background: rgba(0,0,0,0.05); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; color: $text-gray !important; margin: 5px 0; text-align: center; }
 
-      /* HIỆU ỨNG NHÁY SÁNG KHI CUỘN TỚI TIN NHẮN */
+      /* HIỆU ỨNG NHÁY SÁNG */
       @keyframes highlightPulse {
         0% { background-color: transparent; }
-        50% { background-color: rgba(37, 99, 235, 0.2); } /* Màu xanh nhạt */
+        50% { background-color: rgba(37, 99, 235, 0.2); }
         100% { background-color: transparent; }
       }
       .highlight-anim {
@@ -212,91 +98,81 @@
         
         &.mine { 
           align-self: flex-end; 
-          flex-direction: row-reverse; 
-          /* Tin nhắn của mình nằm sát phải */
           margin-left: auto;
+          flex-direction: row-reverse;
         }
         &.theirs { align-self: flex-start; }
 
-        .msg-avatar {
-          width: 35px; height: 35px; background: #cbd5e1; border-radius: 50%;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 0.8rem; font-weight: 600; color: #475569; flex-shrink: 0;
-          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
+        .msg-avatar { width: 35px; height: 35px; background: #cbd5e1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; color: #475569; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
         .msg-content {
           display: flex; flex-direction: column; position: relative;
           
-          .sender-name { font-size: 0.75rem; color: #64748b; margin-bottom: 4px; margin-left: 5px; font-weight: 500; }
+          .sender-name { font-size: 0.75rem; color: $text-gray; margin-bottom: 4px; margin-left: 5px; font-weight: 500; }
           .mine .sender-name { display: none; }
 
+          /* WRAPPER CHÍNH */
           .message-wrapper-outer {
             display: flex; 
-            flex-direction: column; /* Xếp chồng dọc để nút action nằm dưới */
+            flex-direction: column; 
             gap: 4px; 
             
-            /* Căn lề nút cho thẳng với bong bóng */
+            /* Căn lề nút */
             .mine & { align-items: flex-end; }
             .theirs & { align-items: flex-start; }
           }
 
+          /* BONG BÓNG CHAT VÀ TIMESTAMP */
           .message-bubble-wrapper {
             position: relative;
+            display: flex;
+            flex-direction: column; /* Xếp dọc bong bóng và timestamp */
             
-            /* 👇 STYLING CHO REPLY QUOTE */
+            /* Reply Quote */
             .reply-quote {
-              font-size: 0.8rem; 
-              padding: 8px 12px;
-              border-left: 3px solid; /* Màu border sẽ theo parent */
-              border-radius: 6px; 
-              margin-bottom: 6px; 
-              cursor: pointer; /* Cho biết có thể click */
+              font-size: 0.8rem; padding: 8px 12px;
+              border-left: 3px solid; border-radius: 6px; 
+              margin-bottom: 6px; cursor: pointer;
               transition: opacity 0.2s;
-              
               &:hover { opacity: 0.8; }
 
               .reply-name { font-weight: 600; display: block; font-size: 0.75rem; margin-bottom: 2px; }
-              .reply-text { 
-                white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; 
-                font-weight: 400;
-              }
+              .reply-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; font-weight: 400; }
             }
 
             .msg-image img { max-width: 250px; border-radius: 12px; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); transition: transform 0.2s; &:hover { transform: scale(1.02); } }
-            
-            .msg-file {
-              display: flex; align-items: center; gap: 10px; background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0;
-              .file-info { display: flex; flex-direction: column; font-size: 0.85rem; font-weight: 500; a { color: #2563eb; text-decoration: none; &:hover{text-decoration: underline;} } }
-            }
+            .msg-file { display: flex; align-items: center; gap: 10px; background: white; padding: 12px; border-radius: 12px; border: 1px solid $border-color; .file-info { display: flex; flex-direction: column; font-size: 0.85rem; font-weight: 500; a { color: $primary-color; text-decoration: none; &:hover{text-decoration: underline;} } } }
 
             .bubble {
               padding: 10px 16px; border-radius: 18px; font-size: 0.95rem;
               line-height: 1.5; word-wrap: break-word; position: relative;
               box-shadow: 0 1px 2px rgba(0,0,0,0.05);
               
-              &.unsent { background: white; border: 1px solid #e2e8f0; color: #64748b; font-style: italic; }
+              &.unsent { background: white; border: 1px solid $border-color; color: $text-gray; font-style: italic; }
               &.highlight { background: #fde047; color: black; }
             }
 
+            /* TIMESTAMP: NẰM DƯỚI BONG BÓNG */
+            .timestamp {
+              font-size: 0.65rem; color: #94a3b8;
+              margin-top: 4px;
+              opacity: 0.8;
+            }
+
             .reactions-display {
-              position: absolute; bottom: -10px; right: 0;
+              position: absolute; bottom: 15px; right: -5px; /* Điều chỉnh vị trí reaction */
               background: white; border-radius: 20px; padding: 2px 6px;
               box-shadow: 0 2px 5px rgba(0,0,0,0.1);
               display: flex; align-items: center; gap: 2px;
               font-size: 0.8rem; z-index: 5; border: 1px solid #f1f5f9;
               cursor: pointer;
-              .count { font-size: 0.7rem; color: #64748b; margin-left: 2px; font-weight: 700; }
-              .theirs & { right: auto; left: 0; }
+              .count { font-size: 0.7rem; color: $text-gray; margin-left: 2px; font-weight: 700; }
+              .theirs & { right: auto; left: -5px; }
             }
           }
           
-          .timestamp { font-size: 0.65rem; color: #94a3b8; margin-top: 6px; text-align: right; opacity: 0.8; }
-          .theirs .timestamp { text-align: left; margin-left: 5px; }
-          
           .msg-actions-hover {
-            display: flex; gap: 8px; 
-            opacity: 0; transition: opacity 0.2s ease;
+            display: flex; gap: 8px; opacity: 0; transition: opacity 0.2s ease;
             margin-top: 5px;
             button {
               border: none; background: #fff; cursor: pointer; color: #94a3b8;
@@ -304,7 +180,7 @@
               display: flex; align-items: center; justify-content: center;
               box-shadow: 0 2px 5px rgba(0,0,0,0.05);
               transition: all 0.2s;
-              &:hover { background: #e0e7ff; color: #2563eb; transform: translateY(-2px); }
+              &:hover { background: #e0e7ff; color: $primary-color; transform: translateY(-2px); }
             }
           }
           &:hover .msg-actions-hover { opacity: 1; }
@@ -332,55 +208,55 @@
           }
         } 
 
-        /* MÀU BONG BÓNG VÀ REPLY */
+        /* CĂN CHỈNH RIÊNG CHO MINE VÀ THEIRS */
         &.mine {
           .bubble { 
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white !important; 
-            border-bottom-right-radius: 4px; 
-            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+            background: $primary-gradient; color: white !important; 
+            border-bottom-right-radius: 4px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
           }
-          /* Reply Quote cho tin nhắn của mình (nằm trên nền xanh) */
           .reply-quote {
-            background-color: rgba(255, 255, 255, 0.2); /* Trong suốt nhẹ */
+            background-color: rgba(255, 255, 255, 0.2);
             border-left-color: white;
             .reply-name { color: white; }
             .reply-text { color: rgba(255, 255, 255, 0.9); }
           }
+          /* Timestamp bên phải */
+          .timestamp { align-self: flex-end; }
         }
 
         &.theirs {
           .bubble { 
             background-color: white !important; color: #1e293b !important; 
-            border: 1px solid #e2e8f0; border-bottom-left-radius: 4px;
+            border: 1px solid $border-color; border-bottom-left-radius: 4px;
           }
-          /* Reply Quote cho tin nhắn người khác (nằm trên nền trắng) */
           .reply-quote {
-            background-color: #f1f5f9; /* Xám nhạt */
-            border-left-color: #2563eb;
-            .reply-name { color: #1e293b; }
-            .reply-text { color: #64748b; }
+            background-color: #f1f5f9;
+            border-left-color: $primary-color;
+            .reply-name { color: $text-dark; }
+            .reply-text { color: $text-gray; }
           }
+          /* Timestamp bên trái */
+          .timestamp { align-self: flex-start; }
         }
       } 
     }
 
     /* INPUT AREA */
     .chat-input-wrapper {
-      padding: 20px; background: white; border-top: 1px solid #e2e8f0;
+      padding: 20px; background: white; border-top: 1px solid $border-color;
       .replying-banner { 
         display: flex; justify-content: space-between; align-items: center; 
-        background: #f8fafc; padding: 10px 15px; border-radius: 12px; margin-bottom: 12px; border-left: 4px solid #2563eb;
-        .reply-content { font-size: 0.85rem; display: flex; flex-direction: column; gap: 2px; b { color: #2563eb; } .reply-preview { color: #64748b; } } 
-        button { border: none; background: none; cursor: pointer; color: #64748b; &:hover { color: #ef4444; } } 
+        background: #f8fafc; padding: 10px 15px; border-radius: 12px; margin-bottom: 12px; border-left: 4px solid $primary-color;
+        .reply-content { font-size: 0.85rem; display: flex; flex-direction: column; gap: 2px; b { color: $primary-color; } .reply-preview { color: $text-gray; } } 
+        button { border: none; background: none; cursor: pointer; color: $text-gray; &:hover { color: $danger; } } 
       }
       .chat-input-area { 
         display: flex; align-items: center; gap: 12px; 
         background: #f1f5f9; padding: 8px 12px; border-radius: 28px; border: 1px solid transparent; transition: 0.2s; 
-        &:focus-within { border-color: #2563eb; background: white; box-shadow: 0 2px 10px rgba(37, 99, 235, 0.1); } 
-        input { flex: 1; border: none; background: transparent; outline: none; font-size: 0.95rem; padding: 5px; color: #1e293b; } 
-        .btn-icon { border: none; background: none; cursor: pointer; color: #64748b; padding: 6px; border-radius: 50%; &:hover { background: #e2e8f0; color: #2563eb; } } 
-        .btn-send { background: #2563eb; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(37, 99, 235, 0.3); &:hover { background: #1d4ed8; transform: scale(1.05); } } 
+        &:focus-within { border-color: $primary-color; background: white; box-shadow: 0 2px 10px rgba($primary-color, 0.1); } 
+        input { flex: 1; border: none; background: transparent; outline: none; font-size: 0.95rem; padding: 5px; color: $text-dark; } 
+        .btn-icon { border: none; background: none; cursor: pointer; color: $text-gray; padding: 6px; border-radius: 50%; &:hover { background: #e2e8f0; color: $primary-color; } } 
+        .btn-send { background: $primary-color; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(37, 99, 235, 0.3); &:hover { background: #1d4ed8; transform: scale(1.05); } } 
       }
     }
   }
@@ -390,11 +266,11 @@
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;
     .modal-content {
       background: white; padding: 30px; border-radius: 20px; width: 420px; max-width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-      h3 { margin-top: 0; color: #1e293b; text-align: center; margin-bottom: 25px; font-size: 1.3rem; }
-      .input-group { margin-bottom: 20px; label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; color: #64748b; } input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; outline: none; transition: 0.2s; font-size: 1rem; &:focus { border-color: #2563eb; box-shadow: 0 0 0 3px #eff6ff; } } }
+      h3 { margin-top: 0; color: $text-dark; text-align: center; margin-bottom: 25px; font-size: 1.3rem; }
+      .input-group { margin-bottom: 20px; label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; color: $text-gray; } input { width: 100%; padding: 12px; border: 1px solid $border-color; border-radius: 10px; outline: none; transition: 0.2s; font-size: 1rem; &:focus { border-color: $primary-color; box-shadow: 0 0 0 3px #eff6ff; } } }
       .modal-actions { display: flex; gap: 12px; margin-top: 20px; button { flex: 1; border: none; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; &:hover { transform: translateY(-2px); } } }
-      .requests-list, .friend-list, .mem-list, .member-list-container, .friend-list-container { border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; &::-webkit-scrollbar { width: 6px; } &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; } }
-      .btn-add-member-in-modal { width: 100%; padding: 10px; background: #eff6ff; color: #2563eb; border: 1px dashed #2563eb; border-radius: 8px; margin-bottom: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; font-weight: 600; transition: 0.2s; &:hover { background: #dbeafe; transform: scale(1.02); } }
+      .requests-list, .friend-list, .mem-list, .member-list-container, .friend-list-container { border: 1px solid $border-color; border-radius: 12px; padding: 10px; &::-webkit-scrollbar { width: 6px; } &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; } }
+      .btn-add-member-in-modal { width: 100%; padding: 10px; background: $primary-light; color: $primary-color; border: 1px dashed $primary-color; border-radius: 8px; margin-bottom: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; font-weight: 600; transition: 0.2s; &:hover { background: #dbeafe; transform: scale(1.02); } }
     }
   }
 }
