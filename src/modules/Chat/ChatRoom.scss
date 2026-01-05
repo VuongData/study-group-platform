@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* --- 1. BIẾN MÀU SẮC (THEO STYLE VIDEO) --- */
+/* --- 1. BIẾN MÀU SẮC --- */
 $primary-color: #2563eb;       
 $primary-light: #eff6ff;      
 $bg-color: #f8fafc;           
@@ -10,161 +10,42 @@ $text-gray: #64748b;
 $border-color: #e2e8f0;
 $danger: #ef4444;
 $success: #22c55e;
-$sidebar-width: 280px; /* Thu nhỏ lại chút cho gọn */
+$sidebar-width: 280px; 
 
-/* --- MÀU MỚI CHO SIDEBAR --- */
-$sidebar-bg: #1e293b;      /* Nền tối (Dark Slate) */
-$sidebar-text: #94a3b8;    /* Chữ xám nhạt */
-$active-bg: #ffffff;       /* Nền khi active (Trùng màu Chat Main) */
-$active-text: #2563eb;     /* Chữ khi active (Xanh dương) */
-$curve-size: 50px;         /* Độ cong của góc */
-
-/* Màu bong bóng chat */
 $bubble-mine-bg: #dbeafe;      
 $bubble-mine-text: #1e293b;    
 
 * { box-sizing: border-box; }
 
 .chat-room-container {
-  display: flex;
-  height: 100vh;
-  width: 100%;
-  background-color: $bg-color;
-  font-family: 'Inter', sans-serif;
-  overflow: hidden;
+  display: flex; height: 100vh; width: 100%; background-color: $bg-color; font-family: 'Inter', sans-serif; overflow: hidden;
 
-  /* ================= 2. SIDEBAR (CURVED STYLE) ================= */
+  /* SIDEBAR GIỮ NGUYÊN */
   .chat-sidebar {
-    width: $sidebar-width;
-    background: $sidebar-bg; /* Nền tối */
-    border-right: none;      /* Bỏ viền phải để liền mạch */
-    display: flex;
-    flex-direction: column;
-    padding: 20px 0 20px 10px; /* Padding trái để chừa chỗ cho hiệu ứng */
-    overflow: hidden;
-
+    width: $sidebar-width; background: #1e293b; border-right: none; display: flex; flex-direction: column; padding: 20px 0 20px 10px; overflow: hidden;
     .sidebar-header {
-      padding-right: 20px; 
-      margin-bottom: 20px; 
-      color: white;
-      
+      padding-right: 20px; margin-bottom: 20px; color: white;
       h3 { margin: 0 0 15px 0; font-size: 1.25rem; font-weight: 700; color: white; }
-      
-      /* Chỉnh lại màu icon/input cho hợp nền tối */
-      .notification-bell {
-        &:hover { background: rgba(255,255,255,0.1); }
-      }
-
-      .my-id-box {
-        margin: 10px 0; 
-        background: rgba(255,255,255,0.05); /* Trong suốt nhẹ */
-        color: $sidebar-text;
-        padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
-        display: flex; justify-content: space-between; align-items: center;
-        cursor: pointer; border: 1px dashed rgba(255,255,255,0.2); 
-        transition: 0.2s;
-        &:hover { background: rgba(255,255,255,0.1); color: white; }
-      }
-
-      .search-room-box {
-        display: flex; align-items: center; gap: 8px; 
-        background: rgba(255,255,255,0.1); /* Nền input tối */
-        padding: 8px 12px; border-radius: 8px; border: 1px solid transparent; 
-        transition: 0.2s;
-        
-        &:focus-within { background: rgba(255,255,255,0.2); }
-        input { 
-          border: none; background: transparent; outline: none; width: 100%; font-size: 0.9rem; 
-          color: white; 
-          &::placeholder { color: $sidebar-text; }
-        }
-        svg { color: $sidebar-text; }
-      }
+      .notification-bell { &:hover { background: rgba(255,255,255,0.1); } }
+      .my-id-box { margin: 10px 0; background: rgba(255,255,255,0.05); color: #94a3b8; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px dashed rgba(255,255,255,0.2); transition: 0.2s; &:hover { background: rgba(255,255,255,0.1); color: white; } }
+      .search-room-box { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 8px; border: 1px solid transparent; transition: 0.2s; &:focus-within { background: rgba(255,255,255,0.2); } input { border: none; background: transparent; outline: none; width: 100%; font-size: 0.9rem; color: white; &::placeholder { color: #94a3b8; } } svg { color: #94a3b8; } }
     }
-
     .room-list {
-      flex: 1; overflow-y: auto; overflow-x: hidden;
-      display: flex; flex-direction: column; gap: 5px;
-      padding-right: 0; /* Quan trọng: Không padding phải */
-
+      flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 5px; padding-right: 0;
       .room-item {
-        position: relative;
-        display: flex; align-items: center; gap: 12px;
-        padding: 12px 20px;
-        /* Bo tròn 2 góc bên trái */
-        border-top-left-radius: 30px;
-        border-bottom-left-radius: 30px;
-        cursor: pointer;
-        color: $sidebar-text;
-        transition: 0.3s;
-        margin-left: 10px; /* Đẩy vào 1 chút */
-
-        .room-avatar {
-          width: 40px; height: 40px; 
-          background: rgba(255,255,255,0.1); color: white;
-          border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .room-info {
-          overflow: hidden;
-          h4 { margin: 0; font-size: 0.95rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-          p { margin: 2px 0 0 0; font-size: 0.8rem; color: $sidebar-text; }
-        }
-
-        /* Hover effect (Khi chưa active) */
-        &:hover:not(.active) {
-          background: rgba(255,255,255,0.05);
-          color: white;
-        }
-
-        /* --- TRẠNG THÁI ACTIVE (HIỆU ỨNG CONG) --- */
+        position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-top-left-radius: 30px; border-bottom-left-radius: 30px; cursor: pointer; color: #94a3b8; transition: 0.3s; margin-left: 10px;
+        .room-avatar { width: 40px; height: 40px; background: rgba(255,255,255,0.1); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .room-info { overflow: hidden; h4 { margin: 0; font-size: 0.95rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } p { margin: 2px 0 0 0; font-size: 0.8rem; color: #94a3b8; } }
+        &:hover:not(.active) { background: rgba(255,255,255,0.05); color: white; }
         &.active {
-          background: $active-bg; /* Nền trắng */
-          color: $active-text;
-          z-index: 10;
-
-          .room-avatar { background: #e0e7ff; color: $active-text; }
-          .room-info h4 { color: $text-dark; }
-          .room-info p { color: $text-gray; }
-
-          /* 👉 Đường cong phía TRÊN (Box-shadow trick) */
-          &::before {
-            content: ''; position: absolute;
-            top: -$curve-size; right: 0;
-            width: $curve-size; height: $curve-size;
-            background: transparent;
-            border-radius: 50%;
-            box-shadow: 25px 25px 0 0 $active-bg; /* Đổ bóng màu trắng xuống góc */
-            pointer-events: none;
-          }
-
-          /* 👉 Đường cong phía DƯỚI */
-          &::after {
-            content: ''; position: absolute;
-            bottom: -$curve-size; right: 0;
-            width: $curve-size; height: $curve-size;
-            background: transparent;
-            border-radius: 50%;
-            box-shadow: 25px -25px 0 0 $active-bg; /* Đổ bóng màu trắng lên góc */
-            pointer-events: none;
-          }
+          background: $white; color: $primary-color; z-index: 10;
+          .room-avatar { background: #e0e7ff; color: $primary-color; } .room-info h4 { color: $text-dark; } .room-info p { color: $text-gray; }
+          &::before { content: ''; position: absolute; top: -50px; right: 0; width: 50px; height: 50px; background: transparent; border-radius: 50%; box-shadow: 25px 25px 0 0 $white; pointer-events: none; }
+          &::after { content: ''; position: absolute; bottom: -50px; right: 0; width: 50px; height: 50px; background: transparent; border-radius: 50%; box-shadow: 25px -25px 0 0 $white; pointer-events: none; }
         }
       }
     }
-
-    .sidebar-actions {
-      padding: 15px 20px 0 0;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      
-      .btn-add-new {
-        background: rgba(255,255,255,0.1); 
-        border: 1px dashed rgba(255,255,255,0.3); color: white;
-        padding: 10px; border-radius: 8px; cursor: pointer;
-        font-size: 0.85rem; font-weight: 600;
-        display: flex; align-items: center; justify-content: center; gap: 6px;
-        transition: 0.2s;
-        &:hover { background: $primary-color; border-color: $primary-color; }
-      }
-    }
+    .sidebar-actions { padding: 15px 20px 0 0; border-top: 1px solid rgba(255,255,255,0.1); .btn-add-new { background: rgba(255,255,255,0.1); border: 1px dashed rgba(255,255,255,0.3); color: white; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; &:hover { background: $primary-color; border-color: $primary-color; } } }
   }
 
   /* ================= 3. MAIN CHAT ================= */
@@ -174,41 +55,13 @@ $bubble-mine-text: #1e293b;
 
     /* HEADER */
     .chat-header {
-      height: 70px; padding: 0 20px; border-bottom: 1px solid $border-color;
-      display: flex; align-items: center; justify-content: space-between;
-
+      height: 70px; padding: 0 20px; border-bottom: 1px solid $border-color; display: flex; align-items: center; justify-content: space-between;
       .header-left {
         display: flex; align-items: center; gap: 12px;
-        .avatar-group {
-          width: 42px; height: 42px; background: linear-gradient(135deg, $primary-color, #60a5fa);
-          color: white; font-weight: 700; font-size: 1.2rem; border-radius: 12px;
-          display: flex; align-items: center; justify-content: center;
-        }
-        .info-wrapper {
-          .title-row {
-            display: flex; align-items: center; gap: 8px;
-            h3 { margin: 0; font-size: 1rem; color: $text-dark; }
-            .btn-edit { background: none; border: none; cursor: pointer; color: $text-gray; &:hover { color: $primary-color; } }
-          }
-          .status { font-size: 0.8rem; color: $success; font-weight: 500; }
-        }
+        .avatar-group { width: 42px; height: 42px; background: linear-gradient(135deg, $primary-color, #60a5fa); color: white; font-weight: 700; font-size: 1.2rem; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+        .info-wrapper { .title-row { display: flex; align-items: center; gap: 8px; h3 { margin: 0; font-size: 1rem; color: $text-dark; } .btn-edit { background: none; border: none; cursor: pointer; color: $text-gray; &:hover { color: $primary-color; } } } .status { font-size: 0.8rem; color: $text-gray; font-weight: 500; } .btn-set-nickname { background: none; border: none; padding: 0; margin-top: 2px; font-size: 0.8rem; color: $text-gray; cursor: pointer; display: flex; align-items: center; transition: all 0.2s; font-weight: 500; &:hover { color: $primary-color; text-decoration: underline; } } }
       }
-
-      .header-actions {
-        display: flex; align-items: center; gap: 10px;
-        .btn-icon {
-          width: 38px; height: 38px; border-radius: 8px; border: none; background: transparent;
-          cursor: pointer; color: $text-gray; display: flex; align-items: center; justify-content: center; transition: 0.2s;
-          &:hover { background: $bg-color; color: $primary-color; }
-          &.active { background: $primary-light; color: $primary-color; }
-        }
-        .divider { width: 1px; height: 24px; background: $border-color; margin: 0 5px; }
-        .msg-search {
-          display: flex; align-items: center; background: $bg-color; padding: 5px 10px; border-radius: 20px;
-          input { border: none; background: transparent; outline: none; width: 120px; font-size: 0.85rem; }
-          svg { cursor: pointer; color: $text-gray; &:hover { color: $danger; } }
-        }
-      }
+      .header-actions { display: flex; align-items: center; gap: 10px; .btn-icon { width: 38px; height: 38px; border-radius: 8px; border: none; background: transparent; cursor: pointer; color: $text-gray; display: flex; align-items: center; justify-content: center; transition: 0.2s; &:hover { background: $bg-color; color: $primary-color; } &.active { background: $primary-light; color: $primary-color; } } .divider { width: 1px; height: 24px; background: $border-color; margin: 0 5px; } .msg-search { display: flex; align-items: center; background: $bg-color; padding: 5px 10px; border-radius: 20px; input { border: none; background: transparent; outline: none; width: 120px; font-size: 0.85rem; } svg { cursor: pointer; color: $text-gray; &:hover { color: $danger; } } } }
     }
 
     /* MESSAGES LIST */
@@ -218,46 +71,35 @@ $bubble-mine-text: #1e293b;
 
       .loading { text-align: center; color: $text-gray; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 5px; }
       .spin { animation: spin 1s linear infinite; }
-      
-      .system-msg {
-        align-self: center; background: rgba(0,0,0,0.05); padding: 4px 12px;
-        border-radius: 20px; font-size: 0.75rem; color: $text-gray !important;
-        margin: 5px 0; text-align: center;
-      }
+      .system-msg { align-self: center; background: rgba(0,0,0,0.05); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; color: $text-gray !important; margin: 5px 0; text-align: center; }
 
       .message-row {
         display: flex; gap: 10px; max-width: 70%;
+        
         &.mine { align-self: flex-end; flex-direction: row-reverse; }
         &.theirs { align-self: flex-start; }
 
-        .msg-avatar {
-          width: 32px; height: 32px; background: #cbd5e1; border-radius: 50%;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 0.8rem; font-weight: 600; color: #475569; flex-shrink: 0;
-        }
+        .msg-avatar { width: 32px; height: 32px; background: #cbd5e1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; color: #475569; flex-shrink: 0; }
 
         .msg-content {
-          display: flex; flex-direction: column;
+          display: flex; flex-direction: column; position: relative;
           
           .sender-name { font-size: 0.75rem; color: $text-gray; margin-bottom: 2px; margin-left: 5px; }
           .mine .sender-name { display: none; }
 
+          /* 👇 1. Wrapper để xếp nút Actions ngang hàng với Bubble */
+          .message-wrapper-outer {
+            display: flex; align-items: center; gap: 8px; /* Khoảng cách giữa bong bóng và nút */
+            /* Đảo chiều cho tin nhắn của mình (nút sẽ nằm bên trái) */
+            .mine & { flex-direction: row-reverse; }
+          }
+
           .message-bubble-wrapper {
             position: relative;
             
-            .reply-quote {
-              font-size: 0.8rem; background: rgba(0,0,0,0.05); padding: 5px 10px;
-              border-left: 3px solid $primary-color; border-radius: 4px; margin-bottom: 4px;
-              .reply-name { font-weight: 600; display: block; color: $text-dark; }
-              .reply-text { color: $text-gray; }
-            }
-
+            .reply-quote { font-size: 0.8rem; background: rgba(0,0,0,0.05); padding: 5px 10px; border-left: 3px solid $primary-color; border-radius: 4px; margin-bottom: 4px; .reply-name { font-weight: 600; display: block; color: $text-dark; } .reply-text { color: $text-gray; } }
             .msg-image img { max-width: 200px; border-radius: 8px; cursor: pointer; border: 1px solid $border-color; }
-            
-            .msg-file {
-              display: flex; align-items: center; gap: 10px; background: white; padding: 10px; border-radius: 8px; border: 1px solid $border-color;
-              .file-info { display: flex; flex-direction: column; font-size: 0.85rem; font-weight: 500; a { color: $primary-color; } }
-            }
+            .msg-file { display: flex; align-items: center; gap: 10px; background: white; padding: 10px; border-radius: 8px; border: 1px solid $border-color; .file-info { display: flex; flex-direction: column; font-size: 0.85rem; font-weight: 500; a { color: $primary-color; } } }
 
             .bubble {
               padding: 10px 14px; border-radius: 12px; font-size: 0.95rem;
@@ -265,105 +107,97 @@ $bubble-mine-text: #1e293b;
               &.unsent { background: white; border: 1px solid $border-color; color: $text-gray; font-style: italic; }
               &.highlight { background: #fde047; color: black; }
             }
+
+            /* 👇 2. Hiển thị Icon đã thả (Gắn vào bong bóng) */
+            .reactions-display {
+              position: absolute; bottom: -12px; right: 0;
+              background: white; border-radius: 12px; padding: 2px 6px;
+              box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+              display: flex; align-items: center; gap: 3px;
+              font-size: 0.85rem; z-index: 5; border: 1px solid #f1f5f9;
+              
+              .count { font-size: 0.75rem; color: $text-gray; margin-left: 2px; font-weight: 600; }
+              
+              /* Nếu tin nhắn của người khác, reaction nằm bên trái */
+              .theirs & { right: auto; left: 0; }
+            }
           }
           
           .timestamp { font-size: 0.7rem; color: #94a3b8; margin-top: 4px; text-align: right; }
           
-          .msg-actions {
-            position: absolute; top: 50%; transform: translateY(-50%);
-            display: none; gap: 5px; background: white; padding: 2px 5px;
-            border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10;
-            button { border: none; background: none; cursor: pointer; color: $text-gray; &:hover { color: $primary-color; } }
+          /* 👇 3. Nút Actions (Hiện khi Hover) */
+          .msg-actions-hover {
+            display: flex; gap: 2px; opacity: 0; transition: opacity 0.2s ease;
+            button {
+              border: none; background: none; cursor: pointer; color: #94a3b8; 
+              padding: 5px; border-radius: 50%;
+              display: flex; align-items: center; justify-content: center;
+              &:hover { background: #e2e8f0; color: $text-dark; }
+            }
           }
-          .message-bubble-wrapper:hover .msg-actions { display: flex; }
-          &.mine .msg-actions { right: 100%; margin-right: 10px; }
-          &.theirs .msg-actions { left: 100%; margin-left: 10px; }
-          
-          .reaction-picker {
-             position: absolute; bottom: 100%; left: 0; background: white; padding: 5px;
-             border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex; gap: 5px; z-index: 20;
-             span { cursor: pointer; transition: 0.2s; &:hover { transform: scale(1.3); } }
+          /* Hover vào toàn bộ dòng tin nhắn mới hiện nút */
+          &:hover .msg-actions-hover { opacity: 1; }
+
+          /* 👇 4. Bảng chọn Emoji (Popover) */
+          .reaction-picker-popover {
+             position: absolute; bottom: 100%; right: 0; margin-bottom: 8px;
+             background: white; padding: 6px 10px;
+             border-radius: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.15); 
+             display: flex; gap: 6px; align-items: center; z-index: 20;
+             animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+             /* Mũi tên chỉ xuống */
+             &::after {
+               content: ''; position: absolute; bottom: -6px; right: 20px;
+               width: 0; height: 0; 
+               border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid white;
+             }
+
+             /* Nếu là tin nhắn người khác, popover hiện bên trái */
+             .theirs & { right: auto; left: 0; &::after { right: auto; left: 20px; } }
+
+             span { 
+               font-size: 1.3rem; cursor: pointer; transition: 0.2s; padding: 2px; border-radius: 4px;
+               &:hover { transform: scale(1.3); } 
+               &.active { background: #dbeafe; border-radius: 50%; } 
+             }
+             
+             .close-picker {
+               margin-left: 8px; padding: 4px; border-radius: 50%; background: #f1f5f9; 
+               cursor: pointer; color: $text-gray; display: flex;
+               &:hover { background: $danger; color: white; }
+             }
           }
         } 
 
         /* MÀU BONG BÓNG */
-        &.mine .bubble {
-          background-color: $bubble-mine-bg !important;
-          color: $bubble-mine-text !important;
-          border-bottom-right-radius: 2px;
-        }
-
-        &.theirs .bubble {
-          background-color: white !important;
-          color: $text-dark !important;
-          border: 1px solid $border-color;
-          border-bottom-left-radius: 2px;
-        }
+        &.mine .bubble { background-color: $bubble-mine-bg !important; color: $bubble-mine-text !important; border-bottom-right-radius: 2px; }
+        &.theirs .bubble { background-color: white !important; color: $text-dark !important; border: 1px solid $border-color; border-bottom-left-radius: 2px; }
       } 
     }
 
-    /* INPUT AREA */
+    /* INPUT AREA (Giữ nguyên) */
     .chat-input-wrapper {
       padding: 15px 20px; background: white; border-top: 1px solid $border-color;
-      
-      .replying-banner {
-        display: flex; justify-content: space-between; align-items: center;
-        background: $bg-color; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid $primary-color;
-        .reply-content { font-size: 0.85rem; display: flex; flex-direction: column; b { color: $primary-color; } .reply-preview { color: $text-gray; } }
-        button { border: none; background: none; cursor: pointer; color: $text-gray; &:hover { color: $danger; } }
-      }
-
-      .chat-input-area {
-        display: flex; align-items: center; gap: 10px;
-        background: $bg-color; padding: 8px 12px; border-radius: 24px; border: 1px solid transparent; transition: 0.2s;
-        &:focus-within { border-color: $primary-color; background: white; box-shadow: 0 2px 10px rgba($primary-color, 0.1); }
-        
-        input { flex: 1; border: none; background: transparent; outline: none; font-size: 0.95rem; }
-        .btn-icon { border: none; background: none; cursor: pointer; color: $text-gray; padding: 5px; &:hover { color: $primary-color; } }
-        .btn-send {
-          background: $primary-color; color: white; border: none;
-          width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-          cursor: pointer; transition: 0.2s;
-          &:hover { background: darken($primary-color, 10%); transform: scale(1.05); }
-        }
-      }
+      .replying-banner { display: flex; justify-content: space-between; align-items: center; background: $bg-color; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid $primary-color; .reply-content { font-size: 0.85rem; display: flex; flex-direction: column; b { color: $primary-color; } .reply-preview { color: $text-gray; } } button { border: none; background: none; cursor: pointer; color: $text-gray; &:hover { color: $danger; } } }
+      .chat-input-area { display: flex; align-items: center; gap: 10px; background: $bg-color; padding: 8px 12px; border-radius: 24px; border: 1px solid transparent; transition: 0.2s; &:focus-within { border-color: $primary-color; background: white; box-shadow: 0 2px 10px rgba($primary-color, 0.1); } input { flex: 1; border: none; background: transparent; outline: none; font-size: 0.95rem; } .btn-icon { border: none; background: none; cursor: pointer; color: $text-gray; padding: 5px; &:hover { color: $primary-color; } } .btn-send { background: $primary-color; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; &:hover { background: darken($primary-color, 10%); transform: scale(1.05); } } }
     }
   }
 
-  /* ================= 4. MODAL ================= */
+  /* MODAL (Giữ nguyên) */
   .modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5); z-index: 999;
-    display: flex; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;
-
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;
     .modal-content {
-      background: white; padding: 25px; border-radius: 16px; width: 400px; max-width: 90%;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-      
+      background: white; padding: 25px; border-radius: 16px; width: 400px; max-width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
       h3 { margin-top: 0; color: $text-dark; text-align: center; margin-bottom: 20px; }
-
-      .input-group {
-        margin-bottom: 15px;
-        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
-        input { width: 100%; padding: 10px; border: 1px solid $border-color; border-radius: 8px; outline: none; &:focus { border-color: $primary-color; } }
-      }
-
+      .input-group { margin-bottom: 15px; label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; } input { width: 100%; padding: 10px; border: 1px solid $border-color; border-radius: 8px; outline: none; &:focus { border-color: $primary-color; } } }
       .modal-actions button { border: none; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; &:hover { opacity: 0.9; } }
-
-      .requests-list, .friend-list, .mem-list, .member-list-container, .friend-list-container {
-        border: 1px solid $border-color; border-radius: 8px; padding: 5px;
-        &::-webkit-scrollbar { width: 6px; } &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-      }
-
-      .btn-add-member-in-modal {
-        width: 100%; padding: 8px; background: $primary-light; color: $primary-color;
-        border: 1px dashed $primary-color; border-radius: 6px; margin-bottom: 10px; cursor: pointer;
-        display: flex; align-items: center; justify-content: center; gap: 5px; font-weight: 600;
-        &:hover { background: #dbeafe; }
-      }
+      .requests-list, .friend-list, .mem-list, .member-list-container, .friend-list-container { border: 1px solid $border-color; border-radius: 8px; padding: 5px; &::-webkit-scrollbar { width: 6px; } &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; } }
+      .btn-add-member-in-modal { width: 100%; padding: 8px; background: $primary-light; color: $primary-color; border: 1px dashed $primary-color; border-radius: 6px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; font-weight: 600; &:hover { background: #dbeafe; } }
     }
   }
 }
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }

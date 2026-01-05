@@ -6,6 +6,7 @@
   display: flex;
   flex-direction: column;
 
+  /* --- HEADER --- */
   .wb-header {
     position: absolute; top: 10px; left: 20px; z-index: 100;
     display: flex; align-items: center; gap: 15px;
@@ -25,37 +26,87 @@
     }
   }
 
+  /* --- TOOLBAR (THANH CÔNG CỤ) --- */
   .wb-toolbar {
     position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-    background: white; padding: 6px 12px; border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;
-    display: flex; align-items: center; gap: 10px; z-index: 100;
+    background: white; 
+    padding: 8px 16px; /* Tăng padding chút cho thoáng */
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15); /* Bóng đậm hơn chút cho nổi */
+    border: 1px solid #e2e8f0;
+    display: flex; align-items: center; 
+    
+    /* 👇 FIX LỖI 1: Tăng khoảng cách để không bị đè nút */
+    gap: 20px; 
+    
+    z-index: 100;
 
-    .divider { width: 1px; height: 20px; background: #e2e8f0; }
+    .divider { width: 1px; height: 24px; background: #cbd5e1; }
     
     .group {
-      display: flex; align-items: center; gap: 5px;
+      display: flex; align-items: center; gap: 8px;
+
+      /* Các nút công cụ (Bút, Tẩy...) */
       button {
-        width: 32px; height: 32px; border: none; background: transparent; border-radius: 6px; cursor: pointer; color: #64748b;
-        &:hover { background: #f1f5f9; }
+        width: 36px; height: 36px; /* Nút to hơn xíu cho dễ bấm */
+        border: none; background: transparent; border-radius: 8px; 
+        cursor: pointer; color: #64748b;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+
+        &:hover { background: #f1f5f9; color: #2563eb; }
         &.active { background: #eff6ff; color: #2563eb; }
         &.btn-danger:hover { background: #fee2e2; color: #ef4444; }
       }
+
+      /* Phần chọn màu */
       .color-picker-wrapper {
-        position: relative; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
-        input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+        position: relative; width: 28px; height: 28px; 
+        display: flex; align-items: center; justify-content: center;
+        margin-right: 5px; /* Cách ra một chút so với nút bên cạnh */
+        
+        input { 
+          position: absolute; opacity: 0; inset: 0; cursor: pointer; width: 100%; height: 100%;
+        }
       }
+
+      /* 👇 FIX LỖI 2 & 3: Cụm điều chỉnh độ lớn (Size Control) */
       .size-control {
-        display: flex; align-items: center; gap: 5px; font-family: monospace; font-size: 0.8rem;
-        button { width: 20px; height: 20px; border: 1px solid #e2e8f0; }
+        display: flex; align-items: center; gap: 8px;
+        background: #f8fafc; /* Nền xám nhạt để tách biệt */
+        padding: 4px 8px;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+
+        /* Nút - và + */
+        button {
+          width: 24px; height: 24px; 
+          border: 1px solid #cbd5e1; 
+          background: white;
+          color: #64748b;
+          border-radius: 4px;
+          &:hover { background: #e2e8f0; }
+        }
+
+        /* Số hiển thị độ lớn */
+        span {
+          font-family: 'Inter', sans-serif;
+          font-size: 0.9rem;
+          font-weight: 700;
+          color: #334155; /* 👉 Màu chữ đậm để không bị chìm */
+          min-width: 20px; /* Cố định chiều rộng để không bị nhảy layout */
+          text-align: center;
+        }
       }
     }
   }
 
+  /* --- CANVAS --- */
   .canvas-wrapper {
     width: 100%; height: 100%;
     /* Lưới chấm bi */
     background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
     background-size: 20px 20px;
+    cursor: crosshair;
   }
 }
