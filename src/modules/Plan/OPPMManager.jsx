@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { db } from "../../services/firebase";
 import { 
   collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy, getDoc, doc 
@@ -13,6 +13,9 @@ import OPPMScoreView from "./OPPMScoreView";
 
 import "./OPPMManager.scss";
 
+// 👇 IMPORT ÂM THANH DEADLINE
+import deadlineSoundFile from "../../assets/sounds/deadline_tone.mp3";
+
 const OPPMManager = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("matrix");
@@ -24,14 +27,14 @@ const OPPMManager = () => {
   // State form giao việc
   const [taskTitle, setTaskTitle] = useState("");
   const [assignee, setAssignee] = useState("");
-  
-  // 👇 THAY ĐỔI: Dùng Start/End Date thay vì 1 deadline
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  
   const [loading, setLoading] = useState(false);
 
-  // ... (Giữ nguyên useEffect fetch Rooms và Members như cũ) ...
+  // 👇 REF AUDIO DEADLINE
+  const deadlineAudio = useRef(new Audio(deadlineSoundFile));
+
+  // 1. Fetch Rooms
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "chat_rooms"), where("members", "array-contains", user.uid), orderBy("updatedAt", "desc"));
@@ -43,6 +46,7 @@ const OPPMManager = () => {
     return () => unsubscribe();
   }, [user]);
 
+  // 2. Fetch Members của Room được chọn
   useEffect(() => {
     const fetchMembers = async () => {
       if (!selectedRoom?.members) { setRoomMembers([]); return; }
@@ -55,14 +59,50 @@ const OPPMManager = () => {
     fetchMembers(); setAssignee(""); 
   }, [selectedRoom]);
 
+  // 👇 3. LOGIC LẮNG NGHE DEADLINE MỚI & PHÁT ÂM THANH
+  useEffect(() => {
+    if (!user?.displayName) return;
+
+    let isInitialLoad = true;
+
+    // Lắng nghe tất cả task được giao cho mình (theo displayName)
+    // Lưu ý: Cần Index cho query này trong Firestore (nếu console báo lỗi)
+    const q = query(
+      collection(db, "oppm_tasks"), 
+      where("owner", "==", user.displayName), 
+      orderBy("createdAt", "desc")
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!isInitialLoad) {
+        snapshot.docChanges().forEach((change) => {
+          // Nếu có task mới thêm vào
+          if (change.type === "added") {
+            // Phát âm thanh
+            deadlineAudio.current.currentTime = 0;
+            deadlineAudio.current.play().catch(e => console.log(e));
+            
+            // Hiện thông báo
+            const task = change.doc.data();
+            toast.info(`📅 Bạn có deadline mới: "${task.title}"`, {
+              autoClose: 5000,
+              icon: "⏰"
+            });
+          }
+        });
+      }
+      isInitialLoad = false;
+    });
+
+    return () => unsubscribe();
+  }, [user.displayName]);
+
   // Hàm Giao Việc Mới
   const handleCreateTask = async (e) => {
     e.preventDefault();
     if (!selectedRoom) return toast.warning("Vui lòng chọn nhóm!");
     if (!taskTitle.trim() || !assignee) return toast.warning("Thiếu thông tin!");
     if (!startDate || !endDate) return toast.warning("Vui lòng nhập ngày bắt đầu và kết thúc!");
-    
-    // Validate ngày
     if (new Date(startDate) > new Date(endDate)) return toast.warning("Ngày kết thúc phải sau ngày bắt đầu!");
 
     setLoading(true);
@@ -71,12 +111,9 @@ const OPPMManager = () => {
         roomId: selectedRoom.id,
         title: taskTitle,
         owner: assignee,
-        
-        // 👇 LƯU DATA MỚI
         startDate: new Date(startDate).toISOString(),
         endDate: new Date(endDate).toISOString(),
-        
-        status: "pending", // done | pending
+        status: "pending", 
         approvalStatus: "pending",
         createdAt: serverTimestamp(),
         createdBy: user.uid
@@ -120,7 +157,6 @@ const OPPMManager = () => {
             </select>
           </div>
           
-          {/* 👇 2 INPUT NGÀY THÁNG */}
           <div className="input-group">
             <label>Bắt đầu</label>
             <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}/>
