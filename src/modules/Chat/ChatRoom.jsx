@@ -331,7 +331,7 @@ const ChatRoom = () => {
              <div style={{display:'flex', gap: 8}}>
                {/* Nút Bảng Cá Nhân */}
                <div title="Bảng nháp cá nhân" style={{cursor:'pointer'}} onClick={openPersonalWhiteboard}>
-                 <Easel size={20} color="#059669"/>
+                 <Presentation size={20} color="#059669"/>
                </div>
                
                {/* Nút Danh bạ */}
