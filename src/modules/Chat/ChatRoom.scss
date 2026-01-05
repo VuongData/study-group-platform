@@ -1,16 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 /* --- BIẾN MÀU SẮC & CẤU HÌNH --- */
-$primary-color: #2563eb;
-$primary-light: #eff6ff;
-$bg-color: #f8fafc;
+$primary-color: #2563eb;       /* Màu xanh chính (dùng cho icon, nút) */
+$primary-light: #eff6ff;       /* Màu nền nhạt */
+$bg-color: #f8fafc;            /* Màu nền tổng thể */
 $white: #ffffff;
-$text-dark: #1e293b;
-$text-gray: #64748b;
+$text-dark: #1e293b;           /* Chữ đen đậm */
+$text-gray: #64748b;           /* Chữ xám */
 $border-color: #e2e8f0;
 $danger: #ef4444;
 $success: #22c55e;
 $sidebar-width: 320px;
+
+// 👇 MÀU BONG BÓNG CHAT (THEO YÊU CẦU)
+$bubble-mine-bg: #dbeafe;      /* Xanh dương nhạt */
+$bubble-mine-text: #1e293b;    /* Chữ đen */
 
 * { box-sizing: border-box; }
 
@@ -199,24 +203,27 @@ $sidebar-width: 320px;
       }
     }
 
-    /* --- MESSAGES LIST --- */
+    /* --- MESSAGES LIST (ĐÃ CHỈNH MÀU) --- */
     .messages-list {
       flex: 1;
       padding: 20px;
       overflow-y: auto;
-      background-color: #f1f5f9; /* Màu nền nhẹ cho khung chat */
+      background-color: #f1f5f9; 
       display: flex; flex-direction: column; gap: 15px;
 
       .loading { text-align: center; color: $text-gray; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 5px; }
       .spin { animation: spin 1s linear infinite; }
 
+      /* Tin nhắn hệ thống (Nền xám, chữ xám) */
       .system-msg {
         align-self: center;
         background: rgba(0,0,0,0.05);
         padding: 4px 12px;
         border-radius: 20px;
         font-size: 0.75rem;
-        color: $text-gray;
+        color: $text-gray !important;
+        margin: 5px 0;
+        text-align: center;
       }
 
       .message-row {
@@ -230,13 +237,14 @@ $sidebar-width: 320px;
           width: 32px; height: 32px; background: #cbd5e1; border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
           font-size: 0.8rem; font-weight: 600; color: #475569;
+          flex-shrink: 0;
         }
 
         .msg-content {
           display: flex; flex-direction: column;
           
           .sender-name { font-size: 0.75rem; color: $text-gray; margin-bottom: 2px; margin-left: 5px; }
-          .mine .sender-name { display: none; } /* Ẩn tên mình */
+          .mine .sender-name { display: none; }
 
           .message-bubble-wrapper {
             position: relative;
@@ -245,7 +253,8 @@ $sidebar-width: 320px;
             .reply-quote {
               font-size: 0.8rem; background: rgba(0,0,0,0.05); padding: 5px 10px; 
               border-left: 3px solid $primary-color; border-radius: 4px; margin-bottom: 4px;
-              .reply-name { font-weight: 600; display: block; }
+              .reply-name { font-weight: 600; display: block; color: $text-dark; }
+              .reply-text { color: $text-gray; }
             }
 
             /* Image/File */
@@ -255,7 +264,7 @@ $sidebar-width: 320px;
               .file-info { display: flex; flex-direction: column; font-size: 0.85rem; font-weight: 500; a { color: $primary-color; } }
             }
 
-            /* Text Bubble */
+            /* Bubble Chung */
             .bubble {
               padding: 10px 14px;
               border-radius: 12px;
@@ -269,9 +278,22 @@ $sidebar-width: 320px;
             }
           }
           
-          /* Colors */
-          .mine .bubble { background: $primary-color; color: white; border-bottom-right-radius: 2px; }
-          .theirs .bubble { background: white; color: $text-dark; border: 1px solid $border-color; border-bottom-left-radius: 2px; }
+          /* 👇 CẤU HÌNH MÀU SẮC QUAN TRỌNG 👇 */
+          
+          /* Tin nhắn CỦA TÔI: Nền xanh nhạt - Chữ đen */
+          &.mine .bubble { 
+            background-color: $bubble-mine-bg !important; 
+            color: $bubble-mine-text !important; 
+            border-bottom-right-radius: 2px; 
+          }
+          
+          /* Tin nhắn NGƯỜI KHÁC: Nền trắng - Chữ đen */
+          &.theirs .bubble { 
+            background-color: white !important; 
+            color: $text-dark !important; 
+            border: 1px solid $border-color; 
+            border-bottom-left-radius: 2px; 
+          }
 
           .timestamp { font-size: 0.7rem; color: #94a3b8; margin-top: 4px; text-align: right; }
 
@@ -279,17 +301,16 @@ $sidebar-width: 320px;
           .msg-actions {
             position: absolute; top: 50%; transform: translateY(-50%);
             display: none; gap: 5px;
-            background: white; padding: 2px 5px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background: white; padding: 2px 5px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10;
             button { border: none; background: none; cursor: pointer; color: $text-gray; &:hover { color: $primary-color; } }
           }
           .message-bubble-wrapper:hover .msg-actions { display: flex; }
-          .mine .msg-actions { right: 100%; margin-right: 10px; }
-          .theirs .msg-actions { left: 100%; margin-left: 10px; }
+          &.mine .msg-actions { right: 100%; margin-right: 10px; }
+          &.theirs .msg-actions { left: 100%; margin-left: 10px; }
           
-          /* Reaction Picker */
           .reaction-picker {
              position: absolute; bottom: 100%; left: 0; background: white; padding: 5px; 
-             border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex; gap: 5px; z-index: 10;
+             border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex; gap: 5px; z-index: 20;
              span { cursor: pointer; transition: 0.2s; &:hover { transform: scale(1.3); } }
           }
         }
@@ -363,11 +384,8 @@ $sidebar-width: 320px;
         }
       }
 
-      /* List styles inside modal */
       .requests-list, .friend-list, .mem-list, .member-list-container, .friend-list-container {
         border: 1px solid $border-color; border-radius: 8px; padding: 5px;
-        
-        /* Custom scrollbar */
         &::-webkit-scrollbar { width: 6px; }
         &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
       }

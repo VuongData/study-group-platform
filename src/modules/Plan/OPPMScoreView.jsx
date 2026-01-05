@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "../../services/firebase";
-import { collection, query, where, onSnapshot, getDocs, doc, setDoc, getDoc } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc, setDoc, getDoc } from "firebase/firestore";
 import { useAuth } from "../../context/AuthContext";
 import { ChevronDown, ChevronUp, Star, Save, MessageSquare, User } from "lucide-react";
 import { toast } from "react-toastify";
@@ -36,9 +36,15 @@ const OPPMScoreView = ({ currentRoom }) => {
 
     // Fetch Members
     const fetchMembers = async () => {
-      const promises = currentRoom.members.map(uid => getDoc(doc(db, "users", uid)));
-      const snaps = await Promise.all(promises);
-      setMembers(snaps.map(s => ({ uid: s.id, ...s.data() })));
+      if (!currentRoom.members) return;
+      try {
+        const promises = currentRoom.members.map(uid => getDoc(doc(db, "users", uid)));
+        const snaps = await Promise.all(promises);
+        setMembers(snaps.map(s => {
+          if (s.exists()) return { uid: s.id, ...s.data() };
+          return { uid: s.id, displayName: "Người dùng ẩn" }; // Fallback nếu user lỗi
+        }));
+      } catch (e) { console.error(e); }
     };
     fetchMembers();
 
@@ -60,13 +66,13 @@ const OPPMScoreView = ({ currentRoom }) => {
     return (total / userReviews.length).toFixed(1);
   };
 
-  // 3. Xử lý Lưu đánh giá (FIX LỖI 9,1 Ở ĐÂY)
+  // 3. Xử lý Lưu đánh giá (ĐÃ FIX LỖI)
   const handleSaveReview = async (targetUid) => {
-    // 👇 Bước 1: Thay dấu phẩy thành dấu chấm
+    // Xử lý dấu phẩy thành dấu chấm
     let formattedScore = inputScore.toString().replace(',', '.');
     const scoreNum = Number(formattedScore);
 
-    // 👇 Bước 2: Kiểm tra hợp lệ
+    // Validate
     if (inputScore === "" || isNaN(scoreNum) || scoreNum < 0 || scoreNum > 10) {
       return toast.warning("Vui lòng nhập điểm hợp lệ (0-10)!");
     }
@@ -74,20 +80,25 @@ const OPPMScoreView = ({ currentRoom }) => {
     try {
       const reviewId = `${currentRoom.id}_${targetUid}_${user.uid}`;
       
-      await setDoc(doc(db, "oppm_reviews", reviewId), {
+      // 👇 QUAN TRỌNG: Kiểm tra và gán giá trị mặc định cho các trường có thể undefined
+      const payload = {
         roomId: currentRoom.id,
         targetUid: targetUid,
         reviewerUid: user.uid,
-        reviewerName: user.displayName,
-        score: scoreNum, // Lưu số đã convert (ví dụ 9.1)
-        comment: inputComment,
+        // Nếu user chưa có tên, lấy email hoặc chuỗi mặc định để không bị lỗi Firestore
+        reviewerName: user.displayName || user.email || "Thành viên ẩn danh", 
+        score: scoreNum, 
+        comment: inputComment || "", // Đảm bảo không bị undefined
         updatedAt: new Date()
-      });
+      };
+
+      await setDoc(doc(db, "oppm_reviews", reviewId), payload);
       
       toast.success("Đã gửi đánh giá!");
     } catch (error) {
-      console.error(error);
-      toast.error("Lỗi khi lưu.");
+      console.error("Save Error:", error);
+      // Hiển thị lỗi chi tiết để dễ debug
+      toast.error(`Lỗi: ${error.message}`);
     }
   };
 
@@ -97,7 +108,6 @@ const OPPMScoreView = ({ currentRoom }) => {
     } else {
       setExpandedUser(uid);
       const myReview = reviews.find(r => r.targetUid === uid && r.reviewerUid === user.uid);
-      // Hiển thị lại điểm cũ (chuyển dấu chấm thành phẩy cho thân thiện nếu thích)
       setInputScore(myReview?.score?.toString() || "");
       setInputComment(myReview?.comment || "");
     }
@@ -132,9 +142,9 @@ const OPPMScoreView = ({ currentRoom }) => {
             <div key={mem.uid} className={`table-row-group ${isExpanded ? 'active' : ''}`}>
               <div className="table-row-summary" onClick={() => handleExpand(mem.uid)}>
                 <div className="col-name">
-                   <div className="avatar">{mem.displayName?.charAt(0)}</div>
+                   <div className="avatar">{mem.displayName?.charAt(0) || "?"}</div>
                    <div>
-                     <strong>{mem.displayName} {mem.uid === user.uid && "(Bạn)"}</strong>
+                     <strong>{mem.displayName || "Thành viên"} {mem.uid === user.uid && "(Bạn)"}</strong>
                      <span className="role">{mem.uid === currentRoom.createdBy ? 'Trưởng nhóm' : 'Thành viên'}</span>
                    </div>
                 </div>
@@ -158,7 +168,7 @@ const OPPMScoreView = ({ currentRoom }) => {
                         <div className="input-wrap">
                           <label className="required"><Star size={14}/> Điểm (0-10)</label>
                           <input 
-                            type="text" // Chuyển type="number" thành "text" để nhập dấu phẩy thoải mái
+                            type="text" 
                             placeholder="vd: 8,5"
                             value={inputScore}
                             onChange={e => setInputScore(e.target.value)}
