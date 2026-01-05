@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* --- 1. BIẾN MÀU SẮC & CẤU HÌNH --- */
+/* --- 1. BIẾN MÀU SẮC (THEO STYLE VIDEO) --- */
 $primary-color: #2563eb;       
 $primary-light: #eff6ff;      
 $bg-color: #f8fafc;           
@@ -10,11 +10,18 @@ $text-gray: #64748b;
 $border-color: #e2e8f0;
 $danger: #ef4444;
 $success: #22c55e;
-$sidebar-width: 320px;
+$sidebar-width: 280px; /* Thu nhỏ lại chút cho gọn */
 
-// 👇 MÀU BONG BÓNG CHAT (THEO YÊU CẦU CỦA BẠN)
-$bubble-mine-bg: #dbeafe;      /* Xanh dương nhạt */
-$bubble-mine-text: #1e293b;    /* Chữ đen */
+/* --- MÀU MỚI CHO SIDEBAR --- */
+$sidebar-bg: #1e293b;      /* Nền tối (Dark Slate) */
+$sidebar-text: #94a3b8;    /* Chữ xám nhạt */
+$active-bg: #ffffff;       /* Nền khi active (Trùng màu Chat Main) */
+$active-text: #2563eb;     /* Chữ khi active (Xanh dương) */
+$curve-size: 50px;         /* Độ cong của góc */
+
+/* Màu bong bóng chat */
+$bubble-mine-bg: #dbeafe;      
+$bubble-mine-text: #1e293b;    
 
 * { box-sizing: border-box; }
 
@@ -26,71 +33,136 @@ $bubble-mine-text: #1e293b;    /* Chữ đen */
   font-family: 'Inter', sans-serif;
   overflow: hidden;
 
-  /* ================= 2. SIDEBAR ================= */
+  /* ================= 2. SIDEBAR (CURVED STYLE) ================= */
   .chat-sidebar {
     width: $sidebar-width;
-    background: $white;
-    border-right: 1px solid $border-color;
+    background: $sidebar-bg; /* Nền tối */
+    border-right: none;      /* Bỏ viền phải để liền mạch */
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: 20px 0 20px 10px; /* Padding trái để chừa chỗ cho hiệu ứng */
+    overflow: hidden;
 
     .sidebar-header {
-      margin-bottom: 20px;
-      h3 { font-size: 1.25rem; color: $text-dark; font-weight: 700; margin: 0 0 10px 0; }
+      padding-right: 20px; 
+      margin-bottom: 20px; 
+      color: white;
       
+      h3 { margin: 0 0 15px 0; font-size: 1.25rem; font-weight: 700; color: white; }
+      
+      /* Chỉnh lại màu icon/input cho hợp nền tối */
       .notification-bell {
-        display: flex; align-items: center; justify-content: center;
-        width: 36px; height: 36px; border-radius: 50%; transition: 0.2s;
-        &:hover { background: $bg-color; }
+        &:hover { background: rgba(255,255,255,0.1); }
       }
 
       .my-id-box {
-        margin: 10px 0; background: $primary-light; color: $primary-color;
+        margin: 10px 0; 
+        background: rgba(255,255,255,0.05); /* Trong suốt nhẹ */
+        color: $sidebar-text;
         padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
         display: flex; justify-content: space-between; align-items: center;
-        cursor: pointer; border: 1px dashed rgba($primary-color, 0.3); transition: 0.2s;
-        &:hover { background: darken($primary-light, 2%); }
-        svg { opacity: 0.7; }
+        cursor: pointer; border: 1px dashed rgba(255,255,255,0.2); 
+        transition: 0.2s;
+        &:hover { background: rgba(255,255,255,0.1); color: white; }
       }
 
       .search-room-box {
-        display: flex; align-items: center; gap: 8px; background: $bg-color;
-        padding: 8px 12px; border-radius: 8px; border: 1px solid transparent; transition: 0.2s;
-        &:focus-within { border-color: $primary-color; background: $white; }
-        input { border: none; background: transparent; outline: none; width: 100%; font-size: 0.9rem; }
-        svg { color: $text-gray; }
+        display: flex; align-items: center; gap: 8px; 
+        background: rgba(255,255,255,0.1); /* Nền input tối */
+        padding: 8px 12px; border-radius: 8px; border: 1px solid transparent; 
+        transition: 0.2s;
+        
+        &:focus-within { background: rgba(255,255,255,0.2); }
+        input { 
+          border: none; background: transparent; outline: none; width: 100%; font-size: 0.9rem; 
+          color: white; 
+          &::placeholder { color: $sidebar-text; }
+        }
+        svg { color: $sidebar-text; }
       }
     }
 
     .room-list {
-      flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px;
+      flex: 1; overflow-y: auto; overflow-x: hidden;
+      display: flex; flex-direction: column; gap: 5px;
+      padding-right: 0; /* Quan trọng: Không padding phải */
 
       .room-item {
-        display: flex; align-items: center; gap: 12px; padding: 10px;
-        border-radius: 10px; cursor: pointer; transition: 0.2s;
-        &:hover { background-color: $bg-color; }
-        &.active { background-color: $primary-light; }
+        position: relative;
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px 20px;
+        /* Bo tròn 2 góc bên trái */
+        border-top-left-radius: 30px;
+        border-bottom-left-radius: 30px;
+        cursor: pointer;
+        color: $sidebar-text;
+        transition: 0.3s;
+        margin-left: 10px; /* Đẩy vào 1 chút */
 
         .room-avatar {
-          width: 40px; height: 40px; background-color: #e0e7ff; color: $primary-color;
+          width: 40px; height: 40px; 
+          background: rgba(255,255,255,0.1); color: white;
           border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
         .room-info {
           overflow: hidden;
-          h4 { margin: 0; font-size: 0.95rem; color: $text-dark; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-          p { margin: 2px 0 0 0; font-size: 0.8rem; color: $text-gray; }
+          h4 { margin: 0; font-size: 0.95rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+          p { margin: 2px 0 0 0; font-size: 0.8rem; color: $sidebar-text; }
+        }
+
+        /* Hover effect (Khi chưa active) */
+        &:hover:not(.active) {
+          background: rgba(255,255,255,0.05);
+          color: white;
+        }
+
+        /* --- TRẠNG THÁI ACTIVE (HIỆU ỨNG CONG) --- */
+        &.active {
+          background: $active-bg; /* Nền trắng */
+          color: $active-text;
+          z-index: 10;
+
+          .room-avatar { background: #e0e7ff; color: $active-text; }
+          .room-info h4 { color: $text-dark; }
+          .room-info p { color: $text-gray; }
+
+          /* 👉 Đường cong phía TRÊN (Box-shadow trick) */
+          &::before {
+            content: ''; position: absolute;
+            top: -$curve-size; right: 0;
+            width: $curve-size; height: $curve-size;
+            background: transparent;
+            border-radius: 50%;
+            box-shadow: 25px 25px 0 0 $active-bg; /* Đổ bóng màu trắng xuống góc */
+            pointer-events: none;
+          }
+
+          /* 👉 Đường cong phía DƯỚI */
+          &::after {
+            content: ''; position: absolute;
+            bottom: -$curve-size; right: 0;
+            width: $curve-size; height: $curve-size;
+            background: transparent;
+            border-radius: 50%;
+            box-shadow: 25px -25px 0 0 $active-bg; /* Đổ bóng màu trắng lên góc */
+            pointer-events: none;
+          }
         }
       }
     }
 
     .sidebar-actions {
-      padding-top: 15px; border-top: 1px solid $border-color;
+      padding: 15px 20px 0 0;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      
       .btn-add-new {
-        background: $white; border: 1px dashed $border-color; color: $text-gray;
-        padding: 10px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600;
-        display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s;
-        &:hover { border-color: $primary-color; color: $primary-color; background: $primary-light; }
+        background: rgba(255,255,255,0.1); 
+        border: 1px dashed rgba(255,255,255,0.3); color: white;
+        padding: 10px; border-radius: 8px; cursor: pointer;
+        font-size: 0.85rem; font-weight: 600;
+        display: flex; align-items: center; justify-content: center; gap: 6px;
+        transition: 0.2s;
+        &:hover { background: $primary-color; border-color: $primary-color; }
       }
     }
   }
@@ -139,7 +211,7 @@ $bubble-mine-text: #1e293b;    /* Chữ đen */
       }
     }
 
-    /* MESSAGES LIST (QUAN TRỌNG: ĐÃ FIX CẤU TRÚC) */
+    /* MESSAGES LIST */
     .messages-list {
       flex: 1; padding: 20px; overflow-y: auto; background-color: #f1f5f9;
       display: flex; flex-direction: column; gap: 15px;
@@ -187,7 +259,6 @@ $bubble-mine-text: #1e293b;    /* Chữ đen */
               .file-info { display: flex; flex-direction: column; font-size: 0.85rem; font-weight: 500; a { color: $primary-color; } }
             }
 
-            /* Bong bóng chat cơ bản */
             .bubble {
               padding: 10px 14px; border-radius: 12px; font-size: 0.95rem;
               line-height: 1.4; word-wrap: break-word; position: relative;
@@ -213,9 +284,9 @@ $bubble-mine-text: #1e293b;    /* Chữ đen */
              border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex; gap: 5px; z-index: 20;
              span { cursor: pointer; transition: 0.2s; &:hover { transform: scale(1.3); } }
           }
-        } // End .msg-content
+        } 
 
-        /* 👇 FIX MÀU SẮC CHAT Ở ĐÂY (NẰM TRONG .message-row) 👇 */
+        /* MÀU BONG BÓNG */
         &.mine .bubble {
           background-color: $bubble-mine-bg !important;
           color: $bubble-mine-text !important;
@@ -228,7 +299,7 @@ $bubble-mine-text: #1e293b;    /* Chữ đen */
           border: 1px solid $border-color;
           border-bottom-left-radius: 2px;
         }
-      } // End .message-row
+      } 
     }
 
     /* INPUT AREA */
