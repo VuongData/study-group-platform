@@ -4,9 +4,9 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 
-/* --- 1. IMPORT MODULES --- */
+/* --- IMPORT MODULES --- */
 import Login from './modules/Auth/Login';
-import Register from './modules/Auth/Register'; // 👈 BẮT BUỘC PHẢI CÓ DÒNG NÀY
+import Register from './modules/Auth/Register'; // 👈 Import trang Đăng ký
 import Dashboard from './modules/Dashboard/Dashboard';
 import ChatRoom from './modules/Chat/ChatRoom';
 import OPPMManager from './modules/Plan/OPPMManager';
@@ -17,7 +17,6 @@ import AIAssistant from './modules/AI/AIAssistant';
 // Component bảo vệ Route (Chưa đăng nhập -> Đá về Login)
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
-  
   if (!user) return <Navigate to="/login" />;
   return children;
 };
@@ -40,13 +39,13 @@ function App() {
       <ToastContainer theme="colored" autoClose={2000} />
       
       <Routes>
-        {/* --- 2. PUBLIC ROUTES (Ai cũng vào được) --- */}
+        {/* --- PUBLIC ROUTES (Ai cũng vào được) --- */}
         <Route path="/login" element={<Login />} />
         
-        {/* 👇 QUAN TRỌNG: Thêm dòng này để bấm nút Đăng Ký nó biết đường chạy */}
+        {/* 👇 QUAN TRỌNG: Thêm dòng này để tạo đường dẫn đăng ký */}
         <Route path="/register" element={<Register />} /> 
         
-        {/* --- 3. PROTECTED ROUTES (Phải đăng nhập) --- */}
+        {/* --- PROTECTED ROUTES (Phải đăng nhập mới vào được) --- */}
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/chat" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
         <Route path="/oppm" element={<ProtectedRoute><OPPMManager /></ProtectedRoute>} />
@@ -56,11 +55,11 @@ function App() {
         <Route path="/video-call" element={<ProtectedRoute><VideoRoom /></ProtectedRoute>} />
         <Route path="/video-call/:roomId" element={<ProtectedRoute><VideoRoom /></ProtectedRoute>} />
         
-        {/* 4. Route mặc định: Nếu link sai -> Đá về Login */}
+        {/* Route không tồn tại -> Về Login */}
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
 
-      {/* AI Trợ giảng */}
+      {/* AI Trợ giảng toàn cục */}
       <ProtectedRoute>
          <LayoutWithAI /> 
       </ProtectedRoute>
