@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { LogOut, ArrowRight, Edit2, Check, X, User } from "lucide-react"; 
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+// 👇 Thay đổi import: thêm setDoc
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
 import { db, auth } from "../../services/firebase"; 
 import { toast } from "react-toastify";
@@ -15,7 +16,6 @@ const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   
-  // --- STATE MỚI ---
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState("");
@@ -23,7 +23,7 @@ const Dashboard = () => {
 
   const nameInputRef = useRef(null);
 
-  // 1. KIỂM TRA LẦN ĐẦU ĐĂNG NHẬP (Check isSetup)
+  // 1. KIỂM TRA LẦN ĐẦU (Fix logic: Chưa có doc cũng phải hiện Onboarding)
   useEffect(() => {
     if (!user) return;
     
@@ -32,11 +32,16 @@ const Dashboard = () => {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
         
-        if (userSnap.exists()) {
+        // Trường hợp 1: User chưa có trong Firestore (Vừa login Google xong)
+        if (!userSnap.exists()) {
+          setTempName(user.displayName || ""); 
+          setShowOnboarding(true); 
+        } 
+        // Trường hợp 2: User đã có trong Firestore nhưng chưa setup xong
+        else {
           const data = userSnap.data();
-          // Nếu chưa có trường isSetup hoặc chưa có tên -> Hiện Onboarding
-          if (!data.isSetup || !user.displayName) {
-            setTempName(user.displayName || ""); // Lấy tên tạm nếu có (từ Google)
+          if (!data.isSetup) {
+            setTempName(user.displayName || data.displayName || "");
             setShowOnboarding(true);
           }
         }
@@ -52,40 +57,47 @@ const Dashboard = () => {
     navigate("/login");
   };
 
-  // 2. HÀM CẬP NHẬT TÊN (Dùng chung cho cả Onboarding và Edit trên Dashboard)
+  // 2. HÀM CẬP NHẬT TÊN (Fix logic: Dùng setDoc merge thay vì updateDoc)
   const handleUpdateName = async (isOnboardingFlow = false) => {
     if (!tempName.trim()) return toast.warning("Tên không được để trống!");
     
     setIsLoading(true);
     try {
-      // A. Cập nhật trong Firebase Auth (Để hiện ngay trên Chat, Header)
-      await updateProfile(auth.currentUser, { displayName: tempName });
+      // A. Cập nhật Auth (Để hiện trên Chat ngay)
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, { displayName: tempName });
+      }
       
-      // B. Cập nhật trong Firestore Users (Để đồng bộ OPPM, Tài liệu, Search)
+      // B. Cập nhật Firestore (Dùng setDoc + merge để tránh lỗi "No document")
       const userRef = doc(db, "users", user.uid);
       
-      const updateData = { displayName: tempName };
-      if (isOnboardingFlow) {
-        updateData.isSetup = true; // Đánh dấu đã setup xong
-      }
+      const updateData = { 
+        uid: user.uid,
+        email: user.email,
+        displayName: tempName,
+        photoURL: user.photoURL || null,
+        // Nếu là luồng Onboarding thì đánh dấu đã setup
+        ...(isOnboardingFlow && { isSetup: true, createdAt: new Date() }) 
+      };
 
-      await updateDoc(userRef, updateData);
+      // ✅ FIX QUAN TRỌNG: merge: true (Tạo nếu chưa có, Sửa nếu đã có)
+      await setDoc(userRef, updateData, { merge: true });
       
-      // C. Update Local State & UI
+      // C. Update UI
       if (isOnboardingFlow) {
         setShowOnboarding(false);
-        toast.success(`Chào mừng ${tempName} đến với không gian làm việc! 🚀`);
+        toast.success(`Chào mừng ${tempName}! 🚀`);
       } else {
         setIsEditingName(false);
         toast.success("Đã đổi tên thành công!");
       }
 
-      // Reload nhẹ để UI cập nhật tên mới từ AuthContext (nếu cần)
-      window.location.reload(); 
+      // Reload nhẹ để đồng bộ lại context nếu cần
+      setTimeout(() => window.location.reload(), 1000);
 
     } catch (error) {
-      console.error(error);
-      toast.error("Lỗi cập nhật tên.");
+      console.error("Lỗi update:", error);
+      toast.error("Lỗi cập nhật: " + error.message);
     } finally {
       setIsLoading(false);
     }
@@ -106,7 +118,6 @@ const Dashboard = () => {
           <div className="welcome-block">
             <span className="sub-greeting">WELCOME BACK</span>
             
-            {/* --- KHU VỰC TÊN NGƯỜI DÙNG (CÓ THỂ SỬA) --- */}
             <div className="user-name-wrapper">
               {isEditingName ? (
                 <div className="edit-name-box">
@@ -124,7 +135,7 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <h1 className="user-name">
-                  {user?.displayName || "Member"}
+                  {user?.displayName || "Thành viên mới"}
                   <button 
                     className="btn-edit-name" 
                     onClick={() => { setTempName(user?.displayName || ""); setIsEditingName(true); }}
@@ -162,7 +173,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* --- LAYER ONBOARDING (LỚP PHỦ NGƯỜI MỚI) --- */}
+      {/* --- LAYER ONBOARDING --- */}
       {showOnboarding && (
         <div className="onboarding-overlay">
           <div className="onboarding-content">
