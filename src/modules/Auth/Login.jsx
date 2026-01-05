@@ -1,44 +1,62 @@
-// src/modules/Auth/Login.jsx
-import { useAuth } from "../../context/AuthContext"; // Gọi custom hook
-import { Navigate } from "react-router-dom";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; // 👈 1. Import thêm setDoc
+import { auth, db } from '../../services/firebase';
+import { toast } from 'react-toastify';
+import { LogIn } from 'lucide-react';
+import './Login.scss'; // (Giả sử bạn có file css)
 
 const Login = () => {
-  const { user, loginWithGoogle } = useAuth();
+  const navigate = useNavigate();
 
-  // Nếu đã login rồi thì không cho ở trang login nữa, đá về Dashboard
-  if (user) {
-    return <Navigate to="/" />;
-  }
+  const handleGoogleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      // 👇 2. ĐOẠN QUAN TRỌNG: Lưu thông tin User vào Firestore
+      // Dùng setDoc với { merge: true } để không bị mất dữ liệu cũ nếu họ đăng nhập lại
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        lastLogin: serverTimestamp(),
+        // Bạn có thể thêm các trường mặc định khác ở đây
+        role: "member" 
+      }, { merge: true });
+
+      toast.success(`Xin chào, ${user.displayName}!`);
+      navigate('/');
+    } catch (error) {
+      console.error(error);
+      toast.error("Đăng nhập thất bại. Vui lòng thử lại!");
+    }
+  };
 
   return (
-    <div style={{ 
-      height: '100vh', 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      background: '#121212',
-      color: 'white'
+    <div className="login-container" style={{
+      height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc'
     }}>
-      <div style={{ textAlign: 'center' }}>
-        <h1 style={{ fontSize: '3rem', marginBottom: '20px' }}>🎓 Study Platform</h1>
-        <p style={{ marginBottom: '40px', color: '#888' }}>
-          Hệ thống học nhóm & Quản lý dự án trực tuyến
-        </p>
+      <div className="login-card" style={{
+        background: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', textAlign: 'center'
+      }}>
+        <h2 style={{color: '#333', marginBottom: '10px'}}>Study Platform</h2>
+        <p style={{color: '#666', marginBottom: '30px'}}>Đăng nhập để kết nối và học tập</p>
         
         <button 
-          onClick={loginWithGoogle}
+          onClick={handleGoogleLogin}
           style={{
-            padding: '15px 30px',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            borderRadius: '50px',
-            border: 'none',
-            cursor: 'pointer',
-            background: 'linear-gradient(to right, #4facfe, #00f2fe)',
-            color: 'white'
+            display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 24px',
+            background: '#fff', border: '1px solid #ddd', borderRadius: '8px',
+            cursor: 'pointer', fontSize: '1rem', fontWeight: '500', transition: '0.2s'
           }}
+          onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
+          onMouseOut={e => e.currentTarget.style.background = '#fff'}
         >
-          <span style={{ marginRight: '10px' }}>G</span> 
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="20"/>
           Đăng nhập với Google
         </button>
       </div>
