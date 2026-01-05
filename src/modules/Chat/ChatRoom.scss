@@ -1,9 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 /* ================= 1. KHAI BÁO BIẾN (FULL) ================= */
-/* Phải giữ nguyên khối này ở đầu file để tránh lỗi build */
 $primary-color: #2563eb;
-$primary-light: #eff6ff; /* 👈 Biến bị thiếu trước đó */
+$primary-light: #eff6ff; 
 $primary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
 $bg-color: #f8fafc;
 $white: #ffffff;
@@ -216,11 +215,12 @@ $sidebar-width: 280px;
             background: $primary-gradient; color: white !important; 
             border-bottom-right-radius: 4px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
           }
+          /* 👇 Fix màu Reply cho tin nhắn của mình: Nền trắng mờ, chữ đen */
           .reply-quote {
-            background-color: rgba(255, 255, 255, 0.2);
-            border-left-color: white;
-            .reply-name { color: white; }
-            .reply-text { color: rgba(255, 255, 255, 0.9); }
+            background-color: rgba(255, 255, 255, 0.8); /* Nền sáng hơn */
+            border-left-color: #2563eb; /* Border xanh đậm */
+            .reply-name { color: #1e293b; } /* Tên màu đen */
+            .reply-text { color: #334155; } /* Text màu xám đậm */
           }
           /* Timestamp bên phải */
           .timestamp { align-self: flex-end; }
