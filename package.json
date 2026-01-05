@@ -12,10 +12,12 @@
   "dependencies": {
     "@zegocloud/zego-uikit-prebuilt": "^1.9.9",
     "firebase": "^10.14.1",
+    "konva": "^10.0.12",
     "lucide-react": "^0.468.0",
     "openai": "^6.15.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-konva": "^18.2.14",
     "react-router-dom": "^6.30.2",
     "react-toastify": "^10.0.6",
     "uuid": "^10.0.0"

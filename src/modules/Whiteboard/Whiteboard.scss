@@ -1,0 +1,99 @@
+.whiteboard-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;
+  overflow: hidden;
+
+  /* Toolbar nổi */
+  .toolbar {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 8px 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 50;
+    border: 1px solid #e2e8f0;
+
+    .divider {
+      width: 1px;
+      height: 24px;
+      background: #e2e8f0;
+    }
+
+    .group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      button {
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: transparent;
+        border-radius: 8px;
+        cursor: pointer;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+
+        &:hover { background: #f1f5f9; color: #1e293b; }
+        &.active { background: #eff6ff; color: #2563eb; }
+        &.btn-danger:hover { background: #fee2e2; color: #ef4444; }
+      }
+
+      /* Color Picker custom */
+      .color-picker-wrapper {
+        position: relative;
+        width: 30px; height: 30px;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        
+        input[type="color"] {
+          position: absolute;
+          inset: 0;
+          opacity: 0;
+          cursor: pointer;
+        }
+      }
+
+      /* Size control */
+      .size-control {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-family: monospace;
+        color: #475569;
+
+        .stepper {
+          display: flex;
+          flex-direction: column;
+          button {
+             width: 16px; height: 14px; 
+             border-radius: 2px;
+             border: 1px solid #e2e8f0;
+             margin-bottom: 2px;
+             &:hover { background: #e2e8f0; }
+          }
+        }
+      }
+    }
+  }
+
+  .canvas-wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    /* Background chấm bi cho dễ nhìn */
+    background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}
