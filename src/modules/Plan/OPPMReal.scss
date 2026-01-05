@@ -1,27 +1,42 @@
-/* src/modules/Plan/OPPMReal.scss */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+/* --- BIẾN MÀU SẮC --- */
 $bg-white: #ffffff;
-$border-color: #e5e7eb;
+$border-color: #e2e8f0;
 $primary: #2563eb;
+$success: #22c55e;
+$danger: #ef4444;
+$warning: #eab308;
+$text-dark: #1e293b;
+$text-gray: #64748b;
 
 .matrix-view-container {
   background: $bg-white;
   padding-bottom: 50px;
   font-family: 'Inter', sans-serif;
-  color: #1f2937;
+  color: $text-dark;
 
   /* --- 1. CONFIG PANEL --- */
   .config-panel {
-    background: #f8fafc; border: 1px solid $border-color; padding: 15px; border-radius: 8px; margin-bottom: 20px;
+    background: #f8fafc;
+    border: 1px solid $border-color;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
     
     .top-bar {
       display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+      
       .date-group {
         display: flex; align-items: center; gap: 10px;
-        input { padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; }
+        input { 
+          padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; 
+          font-family: inherit; outline: none;
+          &:focus { border-color: $primary; }
+        }
         .icon { color: $primary; }
       }
+      
       .btn-print {
         background: #334155; color: white; border: none; padding: 8px 16px; border-radius: 6px; 
         cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 600;
@@ -29,35 +44,55 @@ $primary: #2563eb;
       }
     }
 
-    .obj-grid {
-      display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 5px;
-      input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; }
+    .objectives-inputs {
+      strong { display: block; margin-bottom: 8px; font-size: 0.9rem; color: #334155; }
+      .obj-grid {
+        display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+        input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; }
+      }
     }
   }
 
   /* --- 2. PROGRESS BAR --- */
   .progress-section {
     background: #fff; border: 1px solid $border-color; padding: 15px; border-radius: 8px; margin-bottom: 20px;
-    .prog-header { display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: 600; color: #15803d; }
-    .prog-bar-bg { height: 12px; background: #dcfce7; border-radius: 6px; overflow: hidden; }
-    .prog-bar-fill { height: 100%; background: #22c55e; }
-    .note { font-size: 0.75rem; color: #64748b; margin-top: 5px; font-style: italic; }
+    
+    .prog-header { 
+      display: flex; justify-content: space-between; margin-bottom: 8px; 
+      font-weight: 700; color: #15803d; font-size: 0.95rem;
+    }
+    
+    .prog-bar-bg { 
+      height: 12px; background: #dcfce7; border-radius: 6px; overflow: hidden; 
+      .prog-bar-fill { 
+        height: 100%; background: $success; transition: width 0.5s ease;
+        /* Force in màu cho thanh progress */
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact; /* ✅ Đã thêm dòng chuẩn */
+      }
+    }
+    .note { font-size: 0.75rem; color: $text-gray; margin-top: 5px; font-style: italic; }
   }
 
-  /* --- 3. THE TABLE --- */
+  /* --- 3. THE TABLE (Bảng chính) --- */
+  .oppm-table-wrapper {
+    overflow-x: auto;
+  }
+
   .oppm-table {
-    width: 100%; border-collapse: collapse; 
+    width: 100%; border-collapse: collapse; min-width: 1000px;
     
     th, td { 
-      border: 1px solid #cbd5e1; padding: 8px; text-align: center; vertical-align: middle; font-size: 0.85rem; 
+      border: 1px solid #cbd5e1; padding: 6px; text-align: center; vertical-align: middle; font-size: 0.8rem; 
     }
 
-    // Header Styles
+    /* HEADER */
     thead th {
-      background: #f1f5f9; color: #334155; font-weight: 700;
+      background: #f1f5f9; color: $text-dark; font-weight: 700;
+      
       &.col-task { text-align: left; width: 250px; padding-left: 10px; }
       &.col-owner { width: 120px; }
-      &.col-time { width: 30px; font-size: 0.75rem; }
+      &.col-time { width: 35px; font-size: 0.75rem; color: #64748b; }
       
       &.vertical-header {
         height: 140px; vertical-align: bottom; width: 40px; padding-bottom: 10px;
@@ -68,86 +103,145 @@ $primary: #2563eb;
       }
     }
 
-    // Body Styles
+    /* BODY */
     tbody tr:hover { background: #f8fafc; }
     
-    .task-name { text-align: left; font-weight: 500; padding-left: 10px; display: flex; align-items: center; gap: 8px; }
-    .owner-name { font-weight: 600; color: #475569; }
-    
-    // DOTS STYLES
-    .cell-obj, .cell-dot { cursor: pointer; &:hover { background: #e0f2fe; } }
-    .square-dot { width: 14px; height: 14px; background: #1e293b; margin: 0 auto; } 
-    .circle-dot { width: 14px; height: 14px; background: #22c55e; border-radius: 50%; margin: 0 auto; }
-    
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-    .status-dot.pending { background: #eab308; }
-    .status-dot.done { background: #22c55e; }
+    .task-name { 
+      text-align: left; font-weight: 500; padding-left: 10px; 
+      display: flex; align-items: center; gap: 8px; height: 100%;
+    }
+    .owner-name { font-weight: 600; color: #475569; font-size: 0.75rem; }
 
-    .btn-delete { border: none; background: none; color: #ef4444; cursor: pointer; opacity: 0.6; &:hover { opacity: 1; } }
+    /* --- CÁC CHẤM TRÒN/VUÔNG (QUAN TRỌNG CHO IN ẤN) --- */
+    // Quy tắc chung để ép trình duyệt in màu nền
+    .square-dot, .circle-dot, .circle-dot-red, .status-dot {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important; /* ✅ Đã thêm dòng chuẩn */
+    }
+
+    .cell-obj, .cell-dot { cursor: pointer; &:hover { background: #e0f2fe; } }
+    .cell-dot-auto { background: #fafafa; cursor: default; }
+
+    // Vuông (Mục tiêu) - Màu đen
+    .square-dot { 
+      width: 12px; height: 12px; 
+      background-color: $text-dark !important; 
+      margin: 0 auto; 
+    } 
+
+    // Tròn Xanh (Done)
+    .circle-dot { 
+      width: 12px; height: 12px; 
+      background-color: $success !important; 
+      border-radius: 50%; margin: 0 auto; 
+    }
+
+    // Tròn Đỏ (Pending)
+    .circle-dot-red {
+      width: 12px; height: 12px;
+      background-color: $danger !important;
+      border-radius: 50%; margin: 0 auto;
+    }
+    
+    // Status dot nhỏ ở tên task
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .status-dot.pending { background-color: $warning !important; }
+    .status-dot.done { background-color: $success !important; }
+
+    .btn-delete { 
+      border: none; background: none; color: $danger; cursor: pointer; opacity: 0.6; 
+      &:hover { opacity: 1; } 
+    }
+
+    /* HÀNG TỔNG KẾT */
+    .summary-row {
+      background: #f8fafc; font-weight: 700;
+      .summary-cell { font-size: 0.75rem; }
+      
+      .text-success { color: $success; }
+      .text-danger { color: $danger; }
+      .text-warning { color: $warning; }
+    }
   }
   
-  // LEGEND
+  /* --- 4. LEGEND (CHÚ THÍCH) --- */
   .legend-container {
-    margin-top: 15px; display: flex; gap: 20px; font-size: 0.8rem; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0;
+    margin-top: 15px; display: flex; gap: 20px; font-size: 0.8rem; 
+    padding: 10px; background: #f8fafc; border: 1px solid $border-color;
+    
     .item { display: flex; align-items: center; gap: 6px; }
-    .sq { width: 12px; height: 12px; background: #1e293b; }
-    .ci { width: 12px; height: 12px; background: #22c55e; border-radius: 50%; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; }
-    .dot.pending { background: #eab308; }
-    .dot.done { background: #22c55e; }
+    
+    // Tái sử dụng style in ấn cho legend (Fix lỗi warning ở đây)
+    .sq { 
+      width: 12px; height: 12px; 
+      background-color: $text-dark !important; 
+      -webkit-print-color-adjust: exact; 
+      print-color-adjust: exact; /* ✅ Fix line 174 */
+    }
+    .ci { 
+      width: 12px; height: 12px; 
+      background-color: $success !important; 
+      border-radius: 50%; 
+      -webkit-print-color-adjust: exact; 
+      print-color-adjust: exact; /* ✅ Fix line 175 */
+    }
+    .ci-red { 
+      width: 12px; height: 12px; 
+      background-color: $danger !important; 
+      border-radius: 50%; 
+      -webkit-print-color-adjust: exact; 
+      print-color-adjust: exact; /* ✅ Fix line 176 */
+    }
   }
 }
 
 /* ==========================================================================
-   🖨️ PRINT RULES - CHỈ IN CÁI BẢNG (QUAN TRỌNG)
+   🖨️ PRINT RULES - QUY TẮC IN ẤN
    ========================================================================== */
 @media print {
-  // 1. ẨN TẤT CẢ
+  // 1. Ẩn tất cả mọi thứ trên trang web
   body * {
     visibility: hidden;
   }
 
-  // 2. ẨN CÁC THÀNH PHẦN KHÔNG CẦN THIẾT
-  .no-print, .sidebar, .header, .manager-header, .shared-form-container, .config-panel, .progress-section {
-    display: none !important;
-  }
-
-  // 3. HIỆN LẠI VÙNG BẢNG
+  // 2. Chỉ hiện vùng cần in (.printable-area)
   .printable-area, .printable-area * {
     visibility: visible;
   }
 
-  // 4. ĐỊNH VỊ BẢNG LÊN GÓC TRÁI TRÊN
+  // 3. Định vị vùng in về góc trên cùng bên trái của giấy
   .printable-area {
-    position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
     background: white;
-    
-    .legend-container { 
-      background: transparent !important; border: none !important; 
-    }
   }
 
-  // 5. STYLE BẢNG ĐEN TRẮNG TRUYỀN THỐNG
-  .oppm-table {
-    border: 2px solid #000 !important; // Viền ngoài đậm
-    font-size: 10pt !important; // Chữ nhỏ lại xíu cho vừa giấy
+  // 4. Ẩn các nút không cần thiết
+  .no-print, .col-action, .btn-delete {
+    display: none !important;
+  }
 
+  // 5. Tinh chỉnh Table khi in
+  .oppm-table {
+    border: 1px solid #000 !important;
+    
     th, td {
-      border: 1px solid #000 !important; // Viền ô đen
+      border: 1px solid #000 !important; // Viền đen rõ ràng
       color: #000 !important; // Chữ đen
     }
-    
-    thead th { 
-      background: #eee !important; // Nền header xám nhẹ
-      color: #000 !important; 
-    }
 
-    // Đảm bảo in được màu của các chấm
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    thead th {
+      background-color: #eee !important; // Nền xám nhẹ cho header
+      -webkit-print-color-adjust: exact; 
+      print-color-adjust: exact; /* ✅ Fix line 221 */
+    }
   }
 
-  // 6. XOAY NGANG GIẤY
+  // 6. Xoay ngang giấy in (Landscape)
   @page {
     size: landscape;
     margin: 10mm;

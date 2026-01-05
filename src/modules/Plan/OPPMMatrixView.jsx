@@ -1,208 +1,216 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { db } from "../../services/firebase";
-import { 
-  collection, onSnapshot, query, where, 
-  updateDoc, doc, deleteDoc 
-} from "firebase/firestore";
+import { collection, onSnapshot, query, where, updateDoc, doc, deleteDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
-import { Trash2, Printer, Calendar } from "lucide-react";
-import "./OPPMReal.scss"; // Import file CSS in ấn
+import { Printer, Calendar, Trash2 } from "lucide-react";
+import "./OPPMReal.scss";
 
 const OPPMMatrixView = ({ currentRoom }) => {
   const [tasks, setTasks] = useState([]);
-  
-  // State cấu hình (Ngày tháng & Mục tiêu)
-  // Bạn có thể nâng cấp để lưu cái này vào DB (collection oppm_config)
   const [objectives, setObjectives] = useState(["", "", "", "", ""]);
-  const [startDate, setStartDate] = useState("2025-01-01");
-  const [endDate, setEndDate] = useState("2025-12-31");
+  
+  // Cấu hình thời gian TỔNG CỦA DỰ ÁN (Project Duration)
+  // Mặc định lấy năm nay, hoặc bạn có thể lưu vào DB
+  const [projStartDate, setProjStartDate] = useState("2025-01-01");
+  const [projEndDate, setProjEndDate] = useState("2025-12-31");
 
-  // 1. FETCH DỮ LIỆU & SẮP XẾP
+  // 1. Fetch dữ liệu
   useEffect(() => {
     if (!currentRoom?.id) return;
-
-    // Lọc task theo ID phòng chat hiện tại
-    const q = query(
-      collection(db, "oppm_tasks"),
-      where("roomId", "==", currentRoom.id)
-    );
-
+    const q = query(collection(db, "oppm_tasks"), where("roomId", "==", currentRoom.id));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedTasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      // Sắp xếp Client-side theo tên người phụ trách (A -> Z)
-      fetchedTasks.sort((a, b) => {
-        const nameA = a.owner || "";
-        const nameB = b.owner || "";
-        return nameA.localeCompare(nameB, 'vi', { sensitivity: 'base' });
-      });
-
-      setTasks(fetchedTasks);
+      const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Sort A-Z owner
+      fetched.sort((a, b) => (a.owner || "").localeCompare(b.owner || "", 'vi'));
+      setTasks(fetched);
     });
-
     return () => unsubscribe();
   }, [currentRoom]);
 
-  // Toggle chấm tròn/vuông
-  const toggleDot = async (taskId, field) => {
+  // 2. Logic cập nhật chấm Mục tiêu (Cột 1-5 vẫn là thủ công)
+  const toggleObjective = async (taskId, index) => {
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
-    try {
-      await updateDoc(doc(db, "oppm_tasks", taskId), {
-        [field]: !task[field] // Đảo ngược giá trị true/false
-      });
-    } catch (error) {
-      console.error("Lỗi update:", error);
-    }
+    await updateDoc(doc(db, "oppm_tasks", taskId), { [`obj_${index}`]: !task[`obj_${index}`] });
+  };
+  
+  const handleDelete = async (id) => {
+    if(confirm("Xóa task này?")) await deleteDoc(doc(db, "oppm_tasks", id));
   };
 
-  // Xóa task
-  const handleDelete = async (taskId) => {
-    if(confirm("Bạn chắc chắn muốn xóa công việc này?")) {
-      await deleteDoc(doc(db, "oppm_tasks", taskId));
-      toast.success("Đã xóa");
-    }
+  // =================================================================================
+  // 🧠 LOGIC TÍNH TOÁN 20 CỘT TỰ ĐỘNG
+  // =================================================================================
+  
+  const timeSlices = useMemo(() => {
+    const start = new Date(projStartDate).getTime();
+    const end = new Date(projEndDate).getTime();
+    const totalDuration = end - start;
+    
+    // Nếu ngày sai, trả về mảng rỗng
+    if (totalDuration <= 0) return [];
+
+    const step = totalDuration / 20; // Chia làm 20 phần
+    
+    // Tạo mảng 20 khoảng thời gian
+    return Array.from({ length: 20 }, (_, i) => ({
+      index: i + 1,
+      rangeStart: start + (i * step),
+      rangeEnd: start + ((i + 1) * step)
+    }));
+  }, [projStartDate, projEndDate]);
+
+  // Kiểm tra Task có nằm trong Cột thời gian X không
+  const isTaskActiveInColumn = (task, column) => {
+    if (!task.startDate || !task.endDate) return false;
+    const tStart = new Date(task.startDate).getTime();
+    const tEnd = new Date(task.endDate).getTime();
+    
+    // Logic giao nhau (Overlap): Start của cái này < End của cái kia AND End của cái này > Start của cái kia
+    return (tStart < column.rangeEnd) && (tEnd > column.rangeStart);
   };
 
-  // Tạo mảng 20 tuần/cột thời gian
-  const timeColumns = Array.from({ length: 20 }, (_, i) => i + 1);
+  // Tính số liệu cho Hàng Tổng Kết (Summary Row)
+  const getColumnStats = (column) => {
+    // 1. Lọc ra các task ĐANG CHẠY trong cột này
+    const activeTasks = tasks.filter(t => isTaskActiveInColumn(t, column));
+    const totalActive = activeTasks.length;
+
+    if (totalActive === 0) return { label: "", className: "" };
+
+    // 2. Đếm số task đã xong (status === 'done')
+    // Quan trọng: Chỉ đếm những task đang active trong cột này mà đã xong
+    const doneCount = activeTasks.filter(t => t.status === 'done').length;
+
+    // 3. Quy định màu sắc hiển thị
+    // doneCount/totalActive. Ví dụ: 2/3
+    let className = "text-warning"; // Mặc định vàng
+    if (doneCount === totalActive) className = "text-success"; // Xanh (Xong hết)
+    else if (doneCount === 0) className = "text-danger"; // Đỏ (Chưa xong cái nào)
+
+    return { 
+      label: `${doneCount}/${totalActive}`, 
+      className 
+    };
+  };
+
+  // Tính tiến độ chung toàn dự án
+  const totalProgress = useMemo(() => {
+    if (tasks.length === 0) return 0;
+    const doneTasks = tasks.filter(t => t.status === 'done').length;
+    return Math.round((doneTasks / tasks.length) * 100);
+  }, [tasks]);
 
   return (
     <div className="matrix-view-container">
-      
-      {/* --- PHẦN CẤU HÌNH (Sẽ ẩn khi in) --- */}
+      {/* Cấu hình thời gian dự án */}
       <div className="config-panel no-print">
         <div className="top-bar">
            <div className="date-group">
              <Calendar size={18} className="icon"/>
-             <strong>Thời gian dự án: </strong>
-             <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}/>
-             <span>đến</span>
-             <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)}/>
+             <strong>Dự án bắt đầu: </strong>
+             <input type="date" value={projStartDate} onChange={e=>setProjStartDate(e.target.value)}/>
+             <strong> Kết thúc: </strong>
+             <input type="date" value={projEndDate} onChange={e=>setProjEndDate(e.target.value)}/>
            </div>
-           <button className="btn-print" onClick={()=>window.print()}>
-             <Printer size={18}/> In Bảng
-           </button>
+           <button className="btn-print" onClick={()=>window.print()}><Printer size={18}/> In Bảng</button>
         </div>
-        
         <div className="objectives-inputs">
            <strong>🎯 5 Mục tiêu Chiến lược:</strong>
            <div className="obj-grid">
              {objectives.map((obj, i) => (
-               <input 
-                 key={i} 
-                 placeholder={`Mục tiêu ${i+1}...`} 
-                 value={obj} 
-                 onChange={e=>{
-                   const newObjs = [...objectives]; 
-                   newObjs[i]=e.target.value; 
-                   setObjectives(newObjs);
-                 }}
-               />
+               <input key={i} placeholder={`Mục tiêu ${i+1}...`} value={obj} onChange={e=>{const n=[...objectives]; n[i]=e.target.value; setObjectives(n)}}/>
              ))}
            </div>
         </div>
       </div>
 
-      {/* --- THANH TIẾN ĐỘ (Sẽ ẩn khi in) --- */}
       <div className="progress-section no-print">
-        <div className="prog-header">
-          <strong>📈 TIẾN ĐỘ THỰC TẾ</strong>
-          <span className="percent">100%</span>
-        </div>
-        <div className="prog-bar-bg">
-          <div className="prog-bar-fill" style={{width: '100%'}}></div>
-        </div>
-        <p className="note">* Tính trung bình trên 20 cột thời gian có công việc.</p>
+        <div className="prog-header"><strong>📈 TIẾN ĐỘ CHUNG</strong><span className="percent">{totalProgress}%</span></div>
+        <div className="prog-bar-bg"><div className="prog-bar-fill" style={{width: `${totalProgress}%`}}></div></div>
       </div>
 
-      {/* --- CÁI BẢNG MA TRẬN (Vùng được in) --- */}
       <div className="oppm-table-wrapper printable-area">
         <table className="oppm-table">
           <thead>
             <tr>
               <th className="col-task">NỘI DUNG CÔNG VIỆC</th>
               <th className="col-owner">PHỤ TRÁCH</th>
-              
-              {/* 5 Cột Mục tiêu (Vertical Text) */}
+              {/* 5 Cột Mục tiêu */}
               {[1,2,3,4,5].map(i => (
                 <th key={`h-obj-${i}`} className="vertical-header">
-                  <div className="vertical-text">
-                    {objectives[i-1] || `Mục tiêu ${i}`}
-                  </div>
+                  <div className="vertical-text">{objectives[i-1] || `Mục tiêu ${i}`}</div>
                 </th>
               ))}
-
               {/* 20 Cột Thời gian */}
-              {timeColumns.map(t => (
-                <th key={`h-time-${t}`} className="col-time">{t}</th>
+              {timeSlices.map(col => (
+                <th key={`h-time-${col.index}`} className="col-time" title={new Date(col.rangeStart).toLocaleDateString()}>
+                  {col.index}
+                </th>
               ))}
-              
-              <th className="col-action no-print">Xóa</th>
+              <th className="col-action no-print"></th>
             </tr>
           </thead>
           <tbody>
             {tasks.map(task => (
               <tr key={task.id}>
-                {/* Tên Task */}
                 <td className="task-name">
                    <span className={`status-dot ${task.status === 'done' ? 'done' : 'pending'}`}></span>
                    {task.title}
                 </td>
-                
-                {/* Người phụ trách (Đã sort A-Z) */}
                 <td className="owner-name">{task.owner}</td>
-
-                {/* 5 Ô Vuông (Mục tiêu) */}
+                
+                {/* 5 Ô Vuông (Thủ công) */}
                 {[1,2,3,4,5].map(i => (
-                   <td 
-                     key={`obj-${i}`} 
-                     className="cell-obj"
-                     onClick={() => toggleDot(task.id, `obj_${i}`)}
-                   >
+                   <td key={`obj-${i}`} className="cell-obj" onClick={() => toggleObjective(task.id, i)}>
                      {task[`obj_${i}`] && <div className="square-dot"></div>}
                    </td>
                 ))}
 
-                {/* 20 Ô Tròn (Thời gian) */}
-                {timeColumns.map(t => (
-                   <td 
-                     key={`time-${t}`} 
-                     className="cell-dot"
-                     onClick={() => toggleDot(task.id, `time_${t}`)}
-                   >
-                     {task[`time_${t}`] && <div className="circle-dot"></div>}
-                   </td>
-                ))}
+                {/* 20 Ô Tròn (TỰ ĐỘNG) */}
+                {timeSlices.map(col => {
+                   const active = isTaskActiveInColumn(task, col);
+                   // Nếu active và done -> Xanh. Active và chưa done -> Đỏ.
+                   const dotClass = task.status === 'done' ? 'circle-dot' : 'circle-dot-red'; 
+                   
+                   return (
+                     <td key={`time-${col.index}`} className="cell-dot-auto">
+                       {active && <div className={dotClass}></div>}
+                     </td>
+                   );
+                })}
 
                 <td className="col-action no-print">
-                   <button onClick={()=>handleDelete(task.id)} className="btn-delete">
-                     <Trash2 size={16}/>
-                   </button>
+                   <button onClick={()=>handleDelete(task.id)} className="btn-delete"><Trash2 size={16}/></button>
                 </td>
               </tr>
             ))}
-            
-            {/* Dòng trống nếu chưa có task */}
-            {tasks.length === 0 && (
-              <tr>
-                <td colSpan="28" style={{padding: 20, fontStyle:'italic', color:'#999'}}>
-                  Chưa có công việc nào. Hãy thêm ở form bên trên!
-                </td>
-              </tr>
-            )}
+
+            {/* Hàng Tổng Kết */}
+            <tr className="summary-row">
+              <td colSpan={7} style={{textAlign: 'right', paddingRight: 10, fontWeight:'bold', color: '#64748b'}}>
+                📊 Tỉ lệ hoàn thành:
+              </td>
+              {timeSlices.map(col => {
+                const stats = getColumnStats(col);
+                return (
+                  <td key={`sum-${col.index}`} className="summary-cell">
+                    <span className={stats.className}>{stats.label}</span>
+                  </td>
+                );
+              })}
+              <td></td>
+            </tr>
           </tbody>
         </table>
 
-        {/* Chú thích (Luôn hiện để in ra cho chuyên nghiệp) */}
+        {/* Chú thích */}
         <div className="legend-container">
-           <div className="item"><span className="sq"></span> Mục tiêu (Objectives)</div>
-           <div className="item"><span className="ci"></span> Hoàn thành (Done)</div>
-           <div className="item"><span className="dot pending"></span> Chờ duyệt</div>
-           <div className="item"><span className="dot done"></span> Đã xong</div>
+           <div className="item"><span className="sq"></span> Mục tiêu</div>
+           <div className="item"><div className="circle-dot"></div> Hoàn thành (100%)</div>
+           <div className="item"><div className="circle-dot-red"></div> Chưa xong (0%)</div>
         </div>
       </div>
-
     </div>
   );
 };

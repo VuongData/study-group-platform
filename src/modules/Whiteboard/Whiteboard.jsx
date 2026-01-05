@@ -6,16 +6,17 @@ import {
 } from 'lucide-react';
 import { db } from '../../services/firebase';
 import { 
-  collection, addDoc, onSnapshot, query, orderBy, 
+  collection, addDoc, onSnapshot, query, 
   deleteDoc, getDocs, writeBatch, serverTimestamp 
 } from 'firebase/firestore';
+import { toast } from "react-toastify";
 import './Whiteboard.scss';
 
 const Whiteboard = ({ boardId, onClose, title }) => {
   // --- STATE ---
   const [tool, setTool] = useState('pen'); 
-  const [elements, setElements] = useState([]); // Lưu cả Line và Text chung 1 mảng để đúng thứ tự lớp
-  const [currentLine, setCurrentLine] = useState(null); // Nét đang vẽ dở (chưa lưu DB)
+  const [elements, setElements] = useState([]); // Danh sách nét vẽ từ DB
+  const [currentLine, setCurrentLine] = useState(null); // Nét đang vẽ dở
 
   // Settings
   const [strokeColor, setStrokeColor] = useState('#000000');
@@ -30,15 +31,27 @@ const Whiteboard = ({ boardId, onClose, title }) => {
 
   const isDrawing = useRef(false);
 
-  // --- 1. REAL-TIME SYNC (Lắng nghe dữ liệu từ Firestore) ---
+  // --- 1. REAL-TIME SYNC ---
   useEffect(() => {
     if (!boardId) return;
     
-    // Lắng nghe thay đổi trong collection 'elements' của bảng này
-    const q = query(collection(db, "whiteboards", boardId, "elements"), orderBy("createdAt", "asc"));
+    // 👇 FIX: Bỏ orderBy("createdAt") để tránh lỗi thiếu Index của Firebase
+    // Chúng ta sẽ sắp xếp ở client (bên dưới)
+    const q = query(collection(db, "whiteboards", boardId, "elements"));
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedElements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      // Sắp xếp thủ công theo thời gian để nét vẽ sau đè lên nét trước
+      fetchedElements.sort((a, b) => {
+        const t1 = a.createdAt?.seconds || 0;
+        const t2 = b.createdAt?.seconds || 0;
+        return t1 - t2;
+      });
+      
       setElements(fetchedElements);
+    }, (error) => {
+      console.error("Lỗi tải bảng vẽ:", error);
     });
 
     return () => unsubscribe();
@@ -46,9 +59,8 @@ const Whiteboard = ({ boardId, onClose, title }) => {
 
   // --- 2. DRAWING HANDLERS ---
   const handleMouseDown = (e) => {
-    // Nếu đang gõ chữ thì click ra ngoài sẽ là "Lưu chữ" chứ không phải vẽ
     if (isTyping) {
-      handleTextSubmit();
+      handleTextSubmit(); // Nếu đang gõ text mà click ra ngoài -> Lưu text
       return;
     }
 
@@ -59,7 +71,6 @@ const Whiteboard = ({ boardId, onClose, title }) => {
       setIsTyping(true);
       setTextPos({ x: pos.x, y: pos.y });
       setInputValue("");
-      // Hack nhẹ: setTimeout để đảm bảo DOM render xong mới focus
       setTimeout(() => textareaRef.current?.focus(), 50); 
       return;
     }
@@ -76,12 +87,12 @@ const Whiteboard = ({ boardId, onClose, title }) => {
   };
 
   const handleMouseMove = (e) => {
-    // Chỉ vẽ local (optimistic UI) cho mượt, chưa lưu DB
     if (!isDrawing.current || !currentLine) return;
     
     const stage = e.target.getStage();
     const point = stage.getPointerPosition();
     
+    // Cập nhật nét vẽ tạm thời (mượt mà)
     setCurrentLine(prev => ({
       ...prev,
       points: prev.points.concat([point.x, point.y])
@@ -92,30 +103,44 @@ const Whiteboard = ({ boardId, onClose, title }) => {
     if (!isDrawing.current || !currentLine) return;
     isDrawing.current = false;
 
-    // Khi thả chuột -> Lưu nét vẽ vào Firestore
+    // 👇 OPTIMISTIC UPDATE: Đẩy nét vẽ vào mảng hiển thị NGAY LẬP TỨC
+    // Để người dùng thấy nét vẽ không bị mất trong lúc chờ Server phản hồi
+    const tempElement = { ...currentLine, createdAt: { seconds: Date.now()/1000 } };
+    setElements(prev => [...prev, tempElement]); 
+    
+    const lineToSave = { ...currentLine };
+    setCurrentLine(null); // Reset nét tạm
+
+    // Gửi lên Server
     try {
       await addDoc(collection(db, "whiteboards", boardId, "elements"), {
-        ...currentLine,
+        ...lineToSave,
         createdAt: serverTimestamp()
       });
     } catch (error) {
       console.error("Lỗi lưu nét vẽ:", error);
-    } finally {
-      setCurrentLine(null); // Reset nét vẽ tạm
+      toast.error("Không lưu được nét vẽ!");
     }
   };
 
   // --- 3. TEXT HANDLERS ---
   const handleTextSubmit = async () => {
     if (inputValue.trim()) {
+      const newText = {
+        type: 'text',
+        text: inputValue,
+        x: textPos.x,
+        y: textPos.y,
+        fontSize: fontSize,
+        fill: strokeColor,
+      };
+
+      // Optimistic Update cho Text
+      setElements(prev => [...prev, { ...newText, createdAt: { seconds: Date.now()/1000 } }]);
+      
       try {
         await addDoc(collection(db, "whiteboards", boardId, "elements"), {
-          type: 'text',
-          text: inputValue,
-          x: textPos.x,
-          y: textPos.y,
-          fontSize: fontSize,
-          fill: strokeColor,
+          ...newText,
           createdAt: serverTimestamp()
         });
       } catch (error) {
@@ -126,22 +151,22 @@ const Whiteboard = ({ boardId, onClose, title }) => {
     setInputValue("");
   };
 
-  // --- 4. ACTIONS (Clear, Download) ---
+  // --- 4. ACTIONS ---
   const handleClear = async () => {
     if(!confirm("Xóa toàn bộ bảng này?")) return;
     try {
-      // Clean collection (Xóa từng doc vì Firestore không hỗ trợ xóa collection trực tiếp ở client)
       const batch = writeBatch(db);
       const snap = await getDocs(collection(db, "whiteboards", boardId, "elements"));
       snap.forEach(doc => batch.delete(doc.ref));
       await batch.commit();
+      setElements([]); // Xóa local ngay cho mượt
     } catch (error) {
       console.error("Lỗi xóa bảng:", error);
     }
   };
 
   const handleExport = () => {
-    const stage = document.querySelector('.konva-stage canvas'); // Lấy canvas DOM thực tế
+    const stage = document.querySelector('.konva-stage canvas');
     if(stage) {
       const uri = stage.toDataURL();
       const link = document.createElement('a');
@@ -156,12 +181,9 @@ const Whiteboard = ({ boardId, onClose, title }) => {
   return (
     <div className="whiteboard-overlay">
       <div className="whiteboard-container">
-        
-        {/* Header Bar */}
+        {/* Header */}
         <div className="wb-header">
-          <span className="wb-title">
-            <Cloud size={18} /> {title || "Bảng trắng"}
-          </span>
+          <span className="wb-title"><Cloud size={18} /> {title || "Bảng trắng"}</span>
           <button className="btn-close-wb" onClick={onClose}><CloseIcon size={20}/></button>
         </div>
 
@@ -191,7 +213,7 @@ const Whiteboard = ({ boardId, onClose, title }) => {
           </div>
         </div>
 
-        {/* Canvas Area */}
+        {/* Canvas */}
         <div className="canvas-wrapper" style={{ cursor: tool === 'text' ? 'text' : tool === 'eraser' ? 'cell' : 'crosshair' }}>
           <Stage
             width={window.innerWidth}
@@ -202,10 +224,9 @@ const Whiteboard = ({ boardId, onClose, title }) => {
             className="konva-stage"
           >
             <Layer>
-              {/* Background trắng */}
               <Line points={[0,0, 10000,0, 10000,10000, 0,10000]} closed fill="white" />
               
-              {/* Render các element đã lưu */}
+              {/* Render danh sách elements */}
               {elements.map((el, i) => {
                 if (el.type === 'text') {
                   return <Text key={i} {...el} fontFamily="Inter" />;
@@ -224,7 +245,7 @@ const Whiteboard = ({ boardId, onClose, title }) => {
                 );
               })}
 
-              {/* Render nét đang vẽ (Optimistic UI) */}
+              {/* Render nét đang vẽ dở */}
               {currentLine && (
                 <Line
                   points={currentLine.points}
@@ -239,32 +260,20 @@ const Whiteboard = ({ boardId, onClose, title }) => {
             </Layer>
           </Stage>
 
-          {/* Ô nhập liệu Text (Overlay HTML) */}
+          {/* Input Text */}
           {isTyping && (
             <textarea
               ref={textareaRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              onBlur={handleTextSubmit} // Click ra ngoài tự lưu
-              onKeyDown={(e) => { 
-                if (e.key === 'Enter' && !e.shiftKey) { 
-                  e.preventDefault(); 
-                  handleTextSubmit(); // Enter để lưu
-                } 
-              }}
+              onBlur={handleTextSubmit}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTextSubmit(); } }}
               style={{
-                position: 'fixed', // Dùng fixed để chắc chắn đè lên
-                top: textPos.y + 'px', 
-                left: textPos.x + 'px',
-                fontSize: fontSize + 'px', 
-                color: strokeColor,
-                lineHeight: 1,
-                border: '1px dashed #2563eb', 
-                background: 'rgba(255,255,255,0.8)', 
-                outline: 'none', 
-                resize: 'none', 
-                minWidth: '50px',
-                zIndex: 99999 // Z-index cực cao
+                position: 'fixed', 
+                top: textPos.y + 'px', left: textPos.x + 'px',
+                fontSize: fontSize + 'px', color: strokeColor, lineHeight: 1,
+                border: '1px dashed #2563eb', background: 'rgba(255,255,255,0.8)', 
+                outline: 'none', resize: 'none', minWidth: '50px', zIndex: 99999
               }}
               placeholder="Nhập..."
             />
