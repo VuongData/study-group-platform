@@ -11,7 +11,7 @@ import {
   Send, Image as ImageIcon, Search, Plus, Users, MessageCircle, 
   Copy, Check, Smile, Loader2, Edit2, X, Paperclip, FileText, Download, 
   FolderOpen, Reply, Trash2, XCircle, Video, UserPlus, Settings, LogOut, ShieldAlert,
-  Bell, UserCheck, UserX 
+  Bell, UserCheck, UserX, BookUser, UserMinus
 } from "lucide-react"; 
 import AIAssistant from "../AI/AIAssistant";
 import ChatResources from "./ChatResources"; 
@@ -35,8 +35,12 @@ const ChatRoom = () => {
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [friendRequests, setFriendRequests] = useState([]); // Lời mời kết bạn
-  const [memberDetails, setMemberDetails] = useState([]);   // Chi tiết thành viên
+  const [friendRequests, setFriendRequests] = useState([]); 
+  const [memberDetails, setMemberDetails] = useState([]);   
+  const [friendList, setFriendList] = useState([]); 
+  
+  // 👇 STATE MỚI: Lưu tên người dùng để hiển thị (Cache ID -> Name)
+  const [userNames, setUserNames] = useState({});
 
   // --- UI STATES ---
   const [msgLimit, setMsgLimit] = useState(20);
@@ -71,7 +75,49 @@ const ChatRoom = () => {
     return () => unsubscribe();
   }, [user]);
 
-  // Lấy danh sách lời mời kết bạn (Friend Requests)
+  // 👇 LOGIC MỚI: Tự động lấy tên hiển thị cho các phòng Chat Riêng (Direct)
+  useEffect(() => {
+    if (!user || rooms.length === 0) return;
+
+    const fetchUserNames = async () => {
+      const missingIds = new Set();
+      
+      // 1. Duyệt qua tất cả phòng, tìm các ID chưa có tên
+      rooms.forEach(room => {
+        if (room.type === 'direct') {
+          const otherId = room.members.find(id => id !== user.uid);
+          // Nếu có ID và chưa có trong cache userNames thì thêm vào danh sách cần lấy
+          if (otherId && !userNames[otherId]) {
+            missingIds.add(otherId);
+          }
+        }
+      });
+
+      if (missingIds.size === 0) return; // Đã có đủ tên, không cần tải lại
+
+      // 2. Tải thông tin từ Firestore
+      const newNames = {};
+      await Promise.all(Array.from(missingIds).map(async (uid) => {
+        try {
+          const docSnap = await getDoc(doc(db, "users", uid));
+          if (docSnap.exists()) {
+            newNames[uid] = docSnap.data().displayName;
+          } else {
+            newNames[uid] = "Người dùng ẩn";
+          }
+        } catch (e) {
+          newNames[uid] = "Lỗi tải tên";
+        }
+      }));
+
+      // 3. Cập nhật state
+      setUserNames(prev => ({ ...prev, ...newNames }));
+    };
+
+    fetchUserNames();
+  }, [rooms, user]); // Chạy lại khi danh sách phòng thay đổi
+
+  // Lấy danh sách lời mời kết bạn
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "friend_requests"), where("toUid", "==", user.uid));
@@ -81,10 +127,9 @@ const ChatRoom = () => {
     return () => unsubscribe();
   }, [user]);
 
-  // Lấy tin nhắn của phòng đã chọn
+  // Lấy tin nhắn
   useEffect(() => {
     if (!selectedRoom?.id) { setMessages([]); return; }
-    // Reset state khi đổi phòng
     setMsgLimit(20); setIsLoadingOldMessages(false); setShowResources(false); setReplyingTo(null); setMemberDetails([]);
 
     const q = query(collection(db, "messages"), where("roomId", "==", selectedRoom.id), orderBy("createdAt", "desc"), limit(msgLimit));
@@ -95,7 +140,8 @@ const ChatRoom = () => {
     return () => unsubscribe();
   }, [selectedRoom?.id, msgLimit]);
 
-  // Fetch chi tiết thành viên (cho modal quản lý)
+  // --- HELPERS FETCH DATA CHO MODAL ---
+  
   const fetchMemberDetails = async () => {
     if (!selectedRoom?.members) return;
     setIsProcessing(true);
@@ -108,15 +154,33 @@ const ChatRoom = () => {
     } catch (error) { console.error(error); } finally { setIsProcessing(false); }
   };
 
+  const fetchFriendList = async () => {
+    setIsProcessing(true);
+    try {
+      const directRooms = rooms.filter(r => r.type === 'direct');
+      const friendsData = await Promise.all(directRooms.map(async (room) => {
+        const friendId = room.members.find(id => id !== user.uid);
+        if(!friendId) return null;
+        const snap = await getDoc(doc(db, "users", friendId));
+        return {
+          roomId: room.id, 
+          friendId: friendId,
+          ...(snap.data() || { displayName: "Unknown", email: "N/A" })
+        };
+      }));
+      setFriendList(friendsData.filter(f => f !== null));
+    } catch (error) { console.error(error); toast.error("Lỗi tải danh bạ"); }
+    finally { setIsProcessing(false); }
+  };
+
   // Scroll & Lazy Load
   useLayoutEffect(() => { if (messages.length > 0 && messages.length <= 20) dummyDiv.current?.scrollIntoView({ behavior: "auto" }); }, [messages, msgSearchTerm]);
   const handleScroll = (e) => { if (e.target.scrollTop === 0 && !isLoadingOldMessages && messages.length >= msgLimit) { setIsLoadingOldMessages(true); setTimeout(() => setMsgLimit(prev => prev + 20), 500); } };
 
   // =========================================================================================
-  // 2. CHAT ACTIONS (Send, Upload, Reaction...)
+  // 2. CHAT ACTIONS
   // =========================================================================================
   const uploadToCloudinary = async (file) => { const formData = new FormData(); formData.append("file", file); formData.append("upload_preset", UPLOAD_PRESET); const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { method: "POST", body: formData }); return await res.json(); };
-  
   const handleFileUpload = async (e) => { const file = e.target.files[0]; if(!file) return; try { toast.info("Đang tải file..."); const data = await uploadToCloudinary(file); await addDoc(collection(db, "messages"), { fileUrl: data.secure_url, fileName: file.name, fileType: "document", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp() }); updateDoc(doc(db, "chat_rooms", selectedRoom.id), { updatedAt: serverTimestamp() }); } catch (err) { toast.error("Lỗi upload"); } };
   const handleImageUpload = async (e) => { const file = e.target.files[0]; if(!file) return; try { const data = await uploadToCloudinary(file); await addDoc(collection(db, "messages"), { fileUrl: data.secure_url, fileType: "image", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp() }); updateDoc(doc(db, "chat_rooms", selectedRoom.id), { updatedAt: serverTimestamp() }); } catch (err) { toast.error("Lỗi upload"); } };
   const handleSendMessage = async (e) => { e.preventDefault(); if ((!newMessage.trim()) || !selectedRoom) return; const payload = { text: newMessage, fileType: "text", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp() }; if (replyingTo) payload.replyTo = { id: replyingTo.id, text: replyingTo.text || "[File]", displayName: replyingTo.displayName }; await addDoc(collection(db, "messages"), payload); updateDoc(doc(db, "chat_rooms", selectedRoom.id), { updatedAt: serverTimestamp() }); setNewMessage(""); setReplyingTo(null); dummyDiv.current?.scrollIntoView({ behavior: "smooth" }); };
@@ -124,55 +188,49 @@ const ChatRoom = () => {
   const handleReaction = async (msgId, emoji) => { const msgRef = doc(db, "messages", msgId); const msg = messages.find(m => m.id === msgId); const newReactions = { ...(msg.reactions || {}) }; if (newReactions[user.uid] === emoji) delete newReactions[user.uid]; else newReactions[user.uid] = emoji; await updateDoc(msgRef, { reactions: newReactions }); setActiveReactionId(null); };
 
   // =========================================================================================
-  // 3. GROUP & MEMBER MANAGEMENT
+  // 3. MANAGEMENT
   // =========================================================================================
   
-  // Kick thành viên
   const handleKickMember = async (memberId, memberName) => { 
     if (!confirm(`Mời ${memberName} ra khỏi nhóm?`)) return; 
-    try { 
-      await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { members: arrayRemove(memberId), updatedAt: serverTimestamp() }); 
-      await addDoc(collection(db, "messages"), { text: `🚫 ${user.displayName} đã mời ${memberName} ra khỏi nhóm.`, fileType: "system", uid: "SYSTEM", displayName: "Hệ thống", roomId: selectedRoom.id, createdAt: serverTimestamp() }); 
-      setMemberDetails(prev => prev.filter(m => m.id !== memberId)); setSelectedRoom(prev => ({...prev, members: prev.members.filter(id => id !== memberId)})); 
-      toast.success(`Đã xóa ${memberName}`); 
-    } catch (error) { toast.error("Lỗi khi xóa"); } 
+    try { await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { members: arrayRemove(memberId), updatedAt: serverTimestamp() }); await addDoc(collection(db, "messages"), { text: `🚫 ${user.displayName} đã mời ${memberName} ra khỏi nhóm.`, fileType: "system", uid: "SYSTEM", displayName: "Hệ thống", roomId: selectedRoom.id, createdAt: serverTimestamp() }); setMemberDetails(prev => prev.filter(m => m.id !== memberId)); setSelectedRoom(prev => ({...prev, members: prev.members.filter(id => id !== memberId)})); toast.success(`Đã xóa ${memberName}`); } catch (error) { toast.error("Lỗi khi xóa"); } 
   };
   
-  // Rời nhóm
   const handleLeaveGroup = async () => { 
     if (!confirm("Rời khỏi nhóm?")) return; 
-    try { 
-      await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { members: arrayRemove(user.uid), updatedAt: serverTimestamp() }); 
-      await addDoc(collection(db, "messages"), { text: `👋 ${user.displayName} đã rời nhóm.`, fileType: "system", uid: "SYSTEM", displayName: "Hệ thống", roomId: selectedRoom.id, createdAt: serverTimestamp() }); 
-      setSelectedRoom(null); setShowModal(false); toast.info("Đã rời nhóm"); 
-    } catch (error) { toast.error("Lỗi rời nhóm"); } 
+    try { await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { members: arrayRemove(user.uid), updatedAt: serverTimestamp() }); await addDoc(collection(db, "messages"), { text: `👋 ${user.displayName} đã rời nhóm.`, fileType: "system", uid: "SYSTEM", displayName: "Hệ thống", roomId: selectedRoom.id, createdAt: serverTimestamp() }); setSelectedRoom(null); setShowModal(false); toast.info("Đã rời nhóm"); } catch (error) { toast.error("Lỗi rời nhóm"); } 
   };
 
-  // 🔥 GIẢI TÁN NHÓM (CLEAN CODE VỚI BATCH)
   const handleDisbandGroup = async () => {
     if (!confirm("CẢNH BÁO: Xóa vĩnh viễn nhóm và toàn bộ tin nhắn?")) return;
     setIsProcessing(true);
     try {
       const batch = writeBatch(db);
-      // 1. Xóa Messages
-      const msgSnap = await getDocs(query(collection(db, "messages"), where("roomId", "==", selectedRoom.id)));
-      msgSnap.forEach(doc => batch.delete(doc.ref));
-      // 2. Xóa Tasks OPPM
-      const taskSnap = await getDocs(query(collection(db, "oppm_tasks"), where("roomId", "==", selectedRoom.id)));
-      taskSnap.forEach(doc => batch.delete(doc.ref));
-      // 3. Xóa Room
+      const msgSnap = await getDocs(query(collection(db, "messages"), where("roomId", "==", selectedRoom.id))); msgSnap.forEach(doc => batch.delete(doc.ref));
+      const taskSnap = await getDocs(query(collection(db, "oppm_tasks"), where("roomId", "==", selectedRoom.id))); taskSnap.forEach(doc => batch.delete(doc.ref));
       batch.delete(doc(db, "chat_rooms", selectedRoom.id));
+      await batch.commit(); setSelectedRoom(null); setShowModal(false); toast.success("Đã giải tán nhóm!");
+    } catch (error) { console.error(error); toast.error("Lỗi giải tán: " + error.message); } finally { setIsProcessing(false); }
+  };
 
+  const handleUnfriend = async (roomId, friendName) => {
+    if (!confirm(`Bạn muốn hủy kết bạn với ${friendName}?\n\n⚠️ Hành động này sẽ xóa vĩnh viễn đoạn chat riêng tư.\n(Nếu chung nhóm học tập, vẫn sẽ nhìn thấy nhau trong nhóm)`)) return;
+    setFriendList(prev => prev.filter(f => f.roomId !== roomId)); 
+    try {
+      const batch = writeBatch(db);
+      const msgSnap = await getDocs(query(collection(db, "messages"), where("roomId", "==", roomId)));
+      msgSnap.forEach(doc => batch.delete(doc.ref));
+      batch.delete(doc(db, "chat_rooms", roomId));
       await batch.commit();
-      setSelectedRoom(null); setShowModal(false); toast.success("Đã giải tán nhóm!");
-    } catch (error) { 
-      console.error(error); 
-      toast.error("Lỗi giải tán: " + error.message); 
-    } finally { setIsProcessing(false); }
+      if(selectedRoom?.id === roomId) setSelectedRoom(null);
+      toast.success(`Đã hủy kết bạn với ${friendName}`);
+    } catch (error) {
+      toast.error("Lỗi hủy kết bạn"); console.error(error); fetchFriendList(); 
+    }
   };
 
   // =========================================================================================
-  // 4. FRIEND REQUEST LOGIC
+  // 4. FRIEND REQUEST
   // =========================================================================================
   const handleAcceptRequest = async (req) => {
     setIsProcessing(true);
@@ -191,66 +249,52 @@ const ChatRoom = () => {
     try { await deleteDoc(doc(db, "friend_requests", reqId)); toast.info("Đã từ chối"); if(friendRequests.length <= 1) setShowModal(false); } catch (e) { toast.error("Lỗi"); }
   };
 
-  // =========================================================================================
-  // 5. MODAL SUBMIT (CREATE / ADD FRIEND / ADD MEMBER)
-  // =========================================================================================
   const handleModalSubmit = async () => {
     if (!inputTarget.trim()) return toast.warning("Vui lòng nhập thông tin!");
     setIsProcessing(true);
     const commonData = { createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
 
     try {
-      // 1. TẠO NHÓM
       if (modalMode === 'create_group') {
         await addDoc(collection(db, "chat_rooms"), { name: inputTarget, type: "group", members: [user.uid], createdBy: user.uid, ...commonData });
         toast.success("Tạo nhóm thành công!");
-      } 
-      
-      // 2. GỬI LỜI MỜI KẾT BẠN (GMAIL)
-      else if (modalMode === 'add_friend') {
+      } else if (modalMode === 'add_friend') {
         const snap = await getDocs(query(collection(db, "users"), where("email", "==", inputTarget.trim())));
         if (snap.empty) { toast.error("Gmail không tồn tại!"); setIsProcessing(false); return; }
-        
         const targetUser = snap.docs[0];
-        if (targetUser.id === user.uid) { toast.warning("Không thể kết bạn với chính mình!"); setIsProcessing(false); return; }
-        
-        // Check đã là bạn chưa
+        if (targetUser.id === user.uid) { toast.warning("Không thể tự kết bạn!"); setIsProcessing(false); return; }
         const existing = rooms.find(r => r.type === 'direct' && r.members.includes(targetUser.id));
         if (existing) { toast.info("Đã là bạn bè!"); setIsProcessing(false); return; }
-        
-        // Check đã gửi lời mời chưa
         const reqSnap = await getDocs(query(collection(db, "friend_requests"), where("fromUid", "==", user.uid), where("toUid", "==", targetUser.id)));
         if (!reqSnap.empty) { toast.warning("Đã gửi lời mời rồi!"); setIsProcessing(false); return; }
-
         await addDoc(collection(db, "friend_requests"), { fromUid: user.uid, fromName: user.displayName, fromEmail: user.email, toUid: targetUser.id, createdAt: serverTimestamp() });
         toast.success("Đã gửi lời mời!");
-      } 
-      
-      // 3. THÊM THÀNH VIÊN VÀO NHÓM (GMAIL)
-      else if (modalMode === 'add_member') {
+      } else if (modalMode === 'add_member') {
         const snap = await getDocs(query(collection(db, "users"), where("email", "==", inputTarget.trim())));
         if (snap.empty) { toast.error("Gmail không tồn tại!"); setIsProcessing(false); return; }
         const newMem = snap.docs[0];
         if (selectedRoom.members.includes(newMem.id)) { toast.warning("Đã có trong nhóm!"); setIsProcessing(false); return; }
-        
         await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { members: arrayUnion(newMem.id), updatedAt: serverTimestamp() });
         await addDoc(collection(db, "messages"), { text: `👋 Đã thêm ${newMem.data().displayName} vào nhóm.`, fileType: "system", uid: "SYSTEM", displayName: "Hệ thống", roomId: selectedRoom.id, createdAt: serverTimestamp() });
         setSelectedRoom(prev => ({...prev, members: [...prev.members, newMem.id]}));
         toast.success("Đã thêm thành viên!");
-      }
-      
-      else if (modalMode === 'rename_group') {
+      } else if (modalMode === 'rename_group') {
         await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { name: inputTarget, updatedAt: serverTimestamp() });
         setSelectedRoom(prev => ({...prev, name: inputTarget}));
         toast.success("Đổi tên thành công!");
       }
-
       setShowModal(false); setInputTarget("");
     } catch (error) { console.error(error); toast.error("Lỗi xử lý."); } finally { setIsProcessing(false); }
   };
 
-  // UI Helpers
-  const getRoomName = (room) => { if (room.type === 'group') return room.name; const otherId = room.members.find(id => id !== user.uid); return `Bạn bè (${otherId?.slice(0,5)}...)`; };
+  // 👇 UI HELPERS: CẬP NHẬT ĐỂ HIỆN TÊN
+  const getRoomName = (room) => { 
+    if (room.type === 'group') return room.name; 
+    const otherId = room.members.find(id => id !== user.uid); 
+    // Nếu có tên trong Cache thì lấy, không thì hiện "Đang tải..." hoặc fallback
+    return userNames[otherId] || "Đang tải..."; 
+  };
+  
   const isGroupAdmin = selectedRoom?.createdBy === user.uid;
   const idToDisplay = selectedRoom ? selectedRoom.id : user.uid;
 
@@ -259,13 +303,19 @@ const ChatRoom = () => {
       {/* SIDEBAR */}
       <div className="chat-sidebar">
         <div className="sidebar-header">
-           <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-             <h3>💬 Chat Nhóm</h3>
-             <div className="notification-bell" style={{position:'relative', cursor:'pointer'}} onClick={() => { if(friendRequests.length > 0) { setModalMode('view_requests'); setShowModal(true); } else toast.info("Không có lời mời nào."); }}>
-               <Bell size={20} color="#64748b"/>
-               {friendRequests.length > 0 && <span style={{position:'absolute', top:-5, right:-5, background:'#ef4444', color:'white', fontSize:'0.7rem', borderRadius:'50%', width:16, height:16, display:'flex', alignItems:'center', justifyContent:'center'}}>{friendRequests.length}</span>}
+           <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 10}}>
+             <h3 style={{margin:0}}>💬 Chat Nhóm</h3>
+             <div style={{display:'flex', gap: 10}}>
+               <div title="Danh bạ" style={{cursor:'pointer'}} onClick={()=>{ fetchFriendList(); setModalMode('manage_friends'); setShowModal(true); }}>
+                 <BookUser size={20} color="#64748b"/>
+               </div>
+               <div className="notification-bell" style={{position:'relative', cursor:'pointer'}} onClick={() => { if(friendRequests.length > 0) { setModalMode('view_requests'); setShowModal(true); } else toast.info("Không có lời mời nào."); }}>
+                 <Bell size={20} color="#64748b"/>
+                 {friendRequests.length > 0 && <span style={{position:'absolute', top:-5, right:-5, background:'#ef4444', color:'white', fontSize:'0.7rem', borderRadius:'50%', width:16, height:16, display:'flex', alignItems:'center', justifyContent:'center'}}>{friendRequests.length}</span>}
+               </div>
              </div>
            </div>
+           
            <div className="my-id-box" onClick={() => {navigator.clipboard.writeText(idToDisplay); setCopied(true); setTimeout(()=>setCopied(false),2000)}}>
              <span>ID: {idToDisplay.slice(0, 8)}...</span>{copied ? <Check size={14}/> : <Copy size={14}/>}
            </div>
@@ -322,7 +372,7 @@ const ChatRoom = () => {
                       {!isMe && <div className="sender-name">{msg.displayName}</div>}
                       <div className="message-bubble-wrapper">
                         {msg.replyTo && !msg.isUnsent && <div className="reply-quote"><div className="reply-bar"></div><div className="reply-info"><span className="reply-name">{msg.replyTo.displayName}</span><span className="reply-text">{msg.replyTo.text}</span></div></div>}
-                        {msg.isUnsent ? <div className="bubble unsent">🚫 Tin nhắn đã thu hồi</div> : (
+                        {msg.isUnsent ? <div className="bubble unsent">🚫 Thu hồi</div> : (
                           <>
                             {msg.fileType === 'image' && <div className="msg-image"><img src={msg.fileUrl} onClick={()=>window.open(msg.fileUrl)}/></div>}
                             {msg.fileType === 'document' && <div className="msg-file"><FileText size={24}/><div className="file-info"><span>{msg.fileName}</span><a href={msg.fileUrl} target="_blank"><Download size={14}/></a></div></div>}
@@ -357,7 +407,7 @@ const ChatRoom = () => {
 
       {showResources && selectedRoom && <div style={{width:320, borderLeft:'1px solid #ddd'}}><ChatResources roomId={selectedRoom.id}/></div>}
 
-      {/* --- MODAL --- */}
+      {/* --- MODAL DA DỤNG --- */}
       {showModal && (
         <div className="modal-overlay" onClick={()=>setShowModal(false)}>
           <div className="modal-content" onClick={e=>e.stopPropagation()}>
@@ -366,6 +416,7 @@ const ChatRoom = () => {
                modalMode==='create_group' ? 'Tạo Nhóm Mới' : 
                modalMode==='add_friend' ? 'Gửi Lời Mời' : 
                modalMode==='add_member' ? 'Thêm Thành Viên' : 
+               modalMode==='manage_friends' ? 'Danh sách bạn bè' :
                modalMode==='manage_members' ? 'Quản Lý Thành Viên' : 'Đổi Tên Nhóm'}
             </h3>
             
@@ -384,6 +435,21 @@ const ChatRoom = () => {
                     ))
                    }
                 </div>
+              ) : modalMode === 'manage_friends' ? (
+                 <div className="friend-list-container" style={{maxHeight: 300, overflowY:'auto'}}>
+                    {isProcessing ? <p style={{textAlign:'center'}}>Đang tải...</p> : 
+                     friendList.length === 0 ? <p style={{textAlign:'center', color:'#888'}}>Chưa có bạn bè nào.</p> :
+                     friendList.map(friend => (
+                       <div key={friend.friendId} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding: '10px 0', borderBottom:'1px solid #eee'}}>
+                          <div style={{display:'flex', alignItems:'center', gap:10}}>
+                            <div style={{width:32, height:32, background:'#e2e8f0', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center'}}>{friend.displayName.charAt(0)}</div>
+                            <div><strong>{friend.displayName}</strong><div style={{fontSize:'0.8rem', color:'#666'}}>{friend.email}</div></div>
+                          </div>
+                          <button onClick={()=>handleUnfriend(friend.roomId, friend.displayName)} title="Hủy kết bạn" style={{background:'none', border:'none', cursor:'pointer', color:'#ef4444'}}><UserMinus size={18}/></button>
+                       </div>
+                     ))
+                    }
+                 </div>
               ) : modalMode === 'manage_members' ? (
                  <div className="member-list-container" style={{maxHeight:300, overflowY:'auto'}}>
                     <button className="btn-add-member-in-modal" onClick={() => setModalMode('add_member')}><Plus size={16}/> Thêm (Gmail)</button>
