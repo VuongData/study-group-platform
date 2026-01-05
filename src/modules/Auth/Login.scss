@@ -1,10 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
 /* --- CẤU HÌNH MÀU SẮC --- */
-$bg-dark: #1a1b26;        /* Nền tối chủ đạo */
-$neon-green: #00f7ff;     /* Màu Neon xanh ngọc */
-$lamp-color: #4fd1c5;     /* Màu vỏ đèn */
-$wire-color: #2d3748;     /* Dây đèn */
+$bg-dark: #1a1b26;        
+$bg-super-dark: #0f0f13; /* Màu tối hơn khi tắt đèn */
+$neon-green: #00f7ff;     
+$lamp-color: #4fd1c5;     
+$wire-color: #2d3748;     
 $text-white: #ffffff;
 $text-gray: #a0aec0;
 
@@ -18,118 +19,140 @@ $text-gray: #a0aec0;
   font-family: 'Poppins', sans-serif;
   position: relative;
   overflow: hidden;
+  transition: background-color 0.5s ease; /* Hiệu ứng chuyển màu nền mượt mà */
 
-  /* Hiệu ứng nền mờ */
+  /* TRẠNG THÁI: TẮT ĐÈN (CẢ PHÒNG TỐI OM) */
+  &.dark-room {
+    background-color: $bg-super-dark;
+    
+    /* Login Box tối đi một chút */
+    .login-box {
+      background: rgba(15, 20, 30, 0.85); 
+      border-color: rgba(255,255,255,0.05);
+      box-shadow: none;
+    }
+  }
+
   &::before {
     content: ''; position: absolute; width: 100%; height: 100%;
     background: radial-gradient(circle at 50% 10%, rgba(0, 247, 255, 0.1), transparent 60%);
     pointer-events: none;
+    transition: opacity 0.5s;
   }
+  
+  /* Khi tắt đèn thì bỏ luôn cái nền sáng mờ */
+  &.dark-room::before { opacity: 0; }
 
   /* =========================================
-     💡 CSS ART: CHIẾC ĐÈN CUTE
+     💡 CSS ART: CHIẾC ĐÈN CUTE + DÂY KÉO
      ========================================= */
   .lamp-wrapper {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    z-index: 10;
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; z-index: 10;
     transition: all 0.5s ease;
 
-    /* Dây đèn */
-    .wire {
-      width: 4px;
-      height: 120px;
-      background: $wire-color;
-      position: relative;
-      z-index: 1;
-    }
+    .wire { width: 4px; height: 120px; background: $wire-color; position: relative; z-index: 1; }
 
-    /* Đầu đèn (Chao đèn) */
     .lamp-head {
-      width: 120px;
-      height: 90px;
-      background: $lamp-color;
-      border-radius: 40px 40px 10px 10px; // Hình thang bo tròn
-      position: relative;
-      z-index: 2;
-      box-shadow: 
-        0 0 20px rgba(79, 209, 197, 0.4),
-        inset -10px -10px 20px rgba(0,0,0,0.2); // Tạo khối 3D
-      
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      width: 120px; height: 90px; background: $lamp-color;
+      border-radius: 40px 40px 10px 10px; position: relative; z-index: 2;
+      box-shadow: 0 0 20px rgba(79, 209, 197, 0.4), inset -10px -10px 20px rgba(0,0,0,0.2);
+      display: flex; justify-content: center; align-items: center;
+      transition: all 0.3s;
 
-      /* Khuôn mặt Cute */
       .lamp-face {
-        position: relative;
-        width: 100%; height: 100%;
-        
+        position: relative; width: 100%; height: 100%;
         .eye {
           position: absolute; top: 40px; width: 12px; height: 12px;
-          background: #1a202c; border-radius: 50%;
-          animation: blink 4s infinite;
-          &.left { left: 35px; }
-          &.right { right: 35px; }
+          background: #1a202c; border-radius: 50%; animation: blink 4s infinite;
+          &.left { left: 35px; } &.right { right: 35px; }
         }
-        
         .mouth {
           position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
-          width: 20px; height: 10px;
-          background: #1a202c;
-          border-radius: 0 0 20px 20px; /* Miệng cười */
-          transition: 0.3s;
+          width: 20px; height: 10px; background: #1a202c;
+          border-radius: 0 0 20px 20px; transition: 0.3s;
         }
       }
 
-      /* Chùm sáng (Light Beam) */
       .light-beam {
-        position: absolute;
-        top: 80px; /* Nằm dưới chao đèn */
-        left: 50%;
-        transform: translateX(-50%);
-        width: 300px; /* Rộng ra */
-        height: 600px;
+        position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
+        width: 300px; height: 600px;
         background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), transparent 80%);
-        clip-path: polygon(40% 0, 60% 0, 100% 100%, 0% 100%); /* Hình nón ánh sáng */
-        pointer-events: none;
-        opacity: 1;
-        transition: opacity 0.3s ease;
-        z-index: 0;
+        clip-path: polygon(40% 0, 60% 0, 100% 100%, 0% 100%);
+        pointer-events: none; opacity: 1; transition: opacity 0.3s ease; z-index: 0;
+      }
+
+      /* 👇 DÂY KÉO CÔNG TẮC (PULL STRING) */
+      .pull-string {
+        position: absolute;
+        top: 80px; /* Treo dưới đáy đèn */
+        right: 20px; /* Lệch sang phải 1 chút */
+        cursor: pointer;
+        display: flex; flex-direction: column; align-items: center;
+        transform-origin: top center;
+        transition: transform 0.1s; /* Animation kéo */
+
+        /* Sợi dây */
+        .string-line {
+          width: 2px; height: 60px;
+          background: #e2e8f0;
+        }
+        /* Cục nắm ở cuối dây */
+        .string-knob {
+          width: 10px; height: 10px;
+          background: #e2e8f0;
+          border-radius: 50%;
+        }
+
+        /* Hiệu ứng khi hover vào dây */
+        &:hover .string-knob { background: $neon-green; box-shadow: 0 0 5px $neon-green; }
+        
+        /* Animation khi KÉO (JS thêm class này) */
+        &.pull-action {
+          animation: pullDown 0.6s ease-in-out;
+        }
       }
     }
 
-    /* --- TRẠNG THÁI: KHI NHẬP PASS (Đèn Tắt/Sợ hãi) --- */
-    &.focus-password {
+    /* --- TRẠNG THÁI: TẮT ĐÈN HOÀN TOÀN (.lamp-off) --- */
+    &.lamp-off {
       .lamp-head {
-        .light-beam { opacity: 0.1; } // Tắt đèn
+        background: #2d3748; /* Vỏ đèn tối đi */
+        box-shadow: none;
+        
+        .light-beam { opacity: 0; } /* Mất tia sáng */
+        
         .lamp-face {
-          .eye { height: 4px; border-radius: 0; } // Mắt nhắm
-          .mouth { width: 10px; height: 10px; border-radius: 50%; bottom: 20px; } // Miệng 😮
+          .eye { background: #1a202c; height: 2px; border-radius: 0; animation: none; } /* Mắt nhắm ngủ */
+          .mouth { width: 8px; height: 8px; border-radius: 50%; } /* Miệng ngáy 'o' */
+        }
+      }
+    }
+
+    /* --- TRẠNG THÁI: KHI NHẬP PASS (Đèn mờ đi vì sợ) --- */
+    &.focus-password:not(.lamp-off) {
+      .lamp-head {
+        .light-beam { opacity: 0.15; }
+        .lamp-face {
+          .eye { height: 4px; border-radius: 0; }
+          .mouth { width: 10px; height: 10px; border-radius: 50%; bottom: 20px; }
         }
       }
     }
   }
 
   /* =========================================
-     📝 LOGIN FORM (GLASSMORPHISM)
+     LOGIN FORM
      ========================================= */
   .login-box {
-    margin-top: 150px; /* Để chừa chỗ cho đèn */
-    width: 400px;
-    padding: 40px;
-    background: rgba(30, 41, 59, 0.7); /* Kính mờ tối */
+    margin-top: 150px; width: 400px; padding: 40px;
+    background: rgba(30, 41, 59, 0.7); 
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 20px;
     backdrop-filter: blur(10px);
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-    z-index: 5;
-    animation: slideUp 0.8s ease-out;
+    z-index: 5; animation: slideUp 0.8s ease-out;
+    transition: background 0.5s;
 
     .header {
       text-align: center; margin-bottom: 30px;
@@ -139,64 +162,49 @@ $text-gray: #a0aec0;
 
     form {
       display: flex; flex-direction: column; gap: 20px;
-
       .input-group {
         position: relative;
-        
-        .icon {
-          position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
-          color: $text-gray; pointer-events: none; transition: 0.3s;
-        }
-
+        .icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: $text-gray; pointer-events: none; transition: 0.3s; }
         input {
-          width: 100%;
-          padding: 14px 14px 14px 45px; /* Padding trái né icon */
-          background: rgba(0, 0, 0, 0.3);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 10px;
-          color: $text-white;
-          font-size: 0.95rem;
-          outline: none;
-          transition: all 0.3s;
-
+          width: 100%; padding: 14px 14px 14px 45px;
+          background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 10px; color: $text-white; font-size: 0.95rem; outline: none; transition: all 0.3s;
           &::placeholder { color: rgba(255,255,255,0.3); }
-
-          /* Focus Effect */
           &:focus {
-            border-color: $neon-green;
-            box-shadow: 0 0 10px rgba(0, 247, 255, 0.3);
+            border-color: $neon-green; box-shadow: 0 0 10px rgba(0, 247, 255, 0.3);
             background: rgba(0, 0, 0, 0.5);
-            
-            & + .icon { color: $neon-green; } /* Icon sáng theo input */
+            & + .icon { color: $neon-green; }
           }
         }
       }
 
-      .forgot-pass {
-        text-align: right;
-        a { color: $text-gray; font-size: 0.85rem; text-decoration: none; transition: 0.3s; &:hover { color: $neon-green; } }
-      }
+      .forgot-pass { text-align: right; a { color: $text-gray; font-size: 0.85rem; text-decoration: none; transition: 0.3s; &:hover { color: $neon-green; } } }
 
       .btn-login {
-        background: linear-gradient(135deg, #00f7ff, #0099ff);
-        color: #000;
-        font-weight: 700;
-        padding: 14px;
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-        font-size: 1rem;
-        display: flex; align-items: center; justify-content: center; gap: 8px;
-        transition: 0.3s;
-        margin-top: 10px;
-
-        &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 5px 15px rgba(0, 247, 255, 0.4);
-        }
-        
+        background: linear-gradient(135deg, #00f7ff, #0099ff); color: #000;
+        font-weight: 700; padding: 14px; border: none; border-radius: 10px;
+        cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;
+        transition: 0.3s; margin-top: 10px;
+        &:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 247, 255, 0.4); }
         &:disabled { opacity: 0.7; cursor: not-allowed; }
         .spin { animation: spin 1s linear infinite; }
+      }
+    }
+
+    .divider {
+      display: flex; align-items: center; text-align: center; margin: 20px 0; color: $text-gray; font-size: 0.8rem;
+      &::before, &::after { content: ''; flex: 1; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+      span { padding: 0 10px; }
+    }
+
+    .social-login {
+      display: flex; flex-direction: column; gap: 10px;
+      .btn-social {
+        width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+        padding: 12px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05); color: $text-white; font-weight: 500; cursor: pointer; transition: 0.3s;
+        &:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
+        &.google:hover { border-color: #4285F4; box-shadow: 0 0 10px rgba(66, 133, 244, 0.3); }
       }
     }
 
@@ -207,18 +215,17 @@ $text-gray: #a0aec0;
   }
 }
 
-/* --- ANIMATIONS --- */
-@keyframes blink {
-  0%, 96%, 100% { height: 12px; }
-  98% { height: 2px; } /* Chớp mắt */
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(50px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
+/* --- KEYFRAMES --- */
+@keyframes blink { 0%, 96%, 100% { height: 12px; } 98% { height: 2px; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* Hiệu ứng kéo dây (Bật nảy như lò xo) */
+@keyframes pullDown {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(15px); } /* Kéo xuống 15px */
+  100% { transform: translateY(0); }   /* Bật lên lại */
+}
 
 /* Responsive Mobile */
 @media (max-width: 480px) {
