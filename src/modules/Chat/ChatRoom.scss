@@ -8,14 +8,14 @@
   display: flex;
   height: 100vh;
   width: 100%;
-  background-color: #f8fafc; /* $bg-color */
+  background-color: #f8fafc;
   font-family: 'Inter', sans-serif;
   overflow: hidden;
 
   /* ================= 2. SIDEBAR ================= */
   .chat-sidebar {
     width: 280px;
-    background: #1e293b; /* $sidebar-bg */
+    background: #1e293b;
     border-right: none;
     display: flex;
     flex-direction: column;
@@ -36,7 +36,7 @@
       .my-id-box {
         margin: 10px 0;
         background: rgba(255,255,255,0.05);
-        color: #94a3b8; /* $sidebar-text */
+        color: #94a3b8;
         padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
         display: flex; justify-content: space-between; align-items: center;
         cursor: pointer; border: 1px dashed rgba(255,255,255,0.2);
@@ -93,8 +93,8 @@
         }
 
         &.active {
-          background: #ffffff; /* $active-bg */
-          color: #2563eb; /* $active-text */
+          background: #ffffff;
+          color: #2563eb;
           z-index: 10;
 
           .room-avatar { background: #e0e7ff; color: #2563eb; }
@@ -168,7 +168,6 @@
       .header-actions {
         display: flex; align-items: center; gap: 10px;
         
-        /* 👇 Đã thay biến bằng mã màu trực tiếp để fix lỗi */
         .btn-icon {
           width: 38px; height: 38px; border-radius: 8px; border: none; background: transparent;
           cursor: pointer; color: #64748b; display: flex; align-items: center; justify-content: center;
@@ -189,7 +188,7 @@
 
     /* MESSAGES LIST */
     .messages-list {
-      flex: 1; padding: 20px 40px;
+      flex: 1; padding: 20px 20px;
       overflow-y: auto; background-color: #f1f5f9;
       display: flex; flex-direction: column; gap: 20px;
 
@@ -197,9 +196,26 @@
       .spin { animation: spin 1s linear infinite; }
       .system-msg { align-self: center; background: rgba(0,0,0,0.05); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; color: #64748b !important; margin: 5px 0; text-align: center; }
 
+      /* HIỆU ỨNG NHÁY SÁNG KHI CUỘN TỚI TIN NHẮN */
+      @keyframes highlightPulse {
+        0% { background-color: transparent; }
+        50% { background-color: rgba(37, 99, 235, 0.2); } /* Màu xanh nhạt */
+        100% { background-color: transparent; }
+      }
+      .highlight-anim {
+        animation: highlightPulse 2s ease;
+        border-radius: 8px;
+      }
+
       .message-row {
         display: flex; gap: 12px; max-width: 75%;
-        &.mine { align-self: flex-end; flex-direction: row-reverse; }
+        
+        &.mine { 
+          align-self: flex-end; 
+          flex-direction: row-reverse; 
+          /* Tin nhắn của mình nằm sát phải */
+          margin-left: auto;
+        }
         &.theirs { align-self: flex-start; }
 
         .msg-avatar {
@@ -216,18 +232,35 @@
           .mine .sender-name { display: none; }
 
           .message-wrapper-outer {
-            display: flex; align-items: flex-end; gap: 8px; 
-            .mine & { flex-direction: row-reverse; }
+            display: flex; 
+            flex-direction: column; /* Xếp chồng dọc để nút action nằm dưới */
+            gap: 4px; 
+            
+            /* Căn lề nút cho thẳng với bong bóng */
+            .mine & { align-items: flex-end; }
+            .theirs & { align-items: flex-start; }
           }
 
           .message-bubble-wrapper {
             position: relative;
             
+            /* 👇 STYLING CHO REPLY QUOTE */
             .reply-quote {
-              font-size: 0.8rem; background: rgba(0,0,0,0.05); padding: 6px 10px;
-              border-left: 3px solid #2563eb; border-radius: 6px; margin-bottom: 6px; opacity: 0.8;
+              font-size: 0.8rem; 
+              padding: 8px 12px;
+              border-left: 3px solid; /* Màu border sẽ theo parent */
+              border-radius: 6px; 
+              margin-bottom: 6px; 
+              cursor: pointer; /* Cho biết có thể click */
+              transition: opacity 0.2s;
+              
+              &:hover { opacity: 0.8; }
+
               .reply-name { font-weight: 600; display: block; font-size: 0.75rem; margin-bottom: 2px; }
-              .reply-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+              .reply-text { 
+                white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; 
+                font-weight: 400;
+              }
             }
 
             .msg-image img { max-width: 250px; border-radius: 12px; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); transition: transform 0.2s; &:hover { transform: scale(1.02); } }
@@ -262,8 +295,9 @@
           .theirs .timestamp { text-align: left; margin-left: 5px; }
           
           .msg-actions-hover {
-            display: flex; gap: 4px; opacity: 0; transition: opacity 0.2s ease;
-            margin-bottom: 5px;
+            display: flex; gap: 8px; 
+            opacity: 0; transition: opacity 0.2s ease;
+            margin-top: 5px;
             button {
               border: none; background: #fff; cursor: pointer; color: #94a3b8;
               width: 28px; height: 28px; border-radius: 50%;
@@ -298,15 +332,35 @@
           }
         } 
 
-        &.mine .bubble { 
-          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-          color: white !important; 
-          border-bottom-right-radius: 4px; 
-          box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+        /* MÀU BONG BÓNG VÀ REPLY */
+        &.mine {
+          .bubble { 
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white !important; 
+            border-bottom-right-radius: 4px; 
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+          }
+          /* Reply Quote cho tin nhắn của mình (nằm trên nền xanh) */
+          .reply-quote {
+            background-color: rgba(255, 255, 255, 0.2); /* Trong suốt nhẹ */
+            border-left-color: white;
+            .reply-name { color: white; }
+            .reply-text { color: rgba(255, 255, 255, 0.9); }
+          }
         }
-        &.theirs .bubble { 
-          background-color: white !important; color: #1e293b !important; 
-          border: 1px solid #e2e8f0; border-bottom-left-radius: 4px;
+
+        &.theirs {
+          .bubble { 
+            background-color: white !important; color: #1e293b !important; 
+            border: 1px solid #e2e8f0; border-bottom-left-radius: 4px;
+          }
+          /* Reply Quote cho tin nhắn người khác (nằm trên nền trắng) */
+          .reply-quote {
+            background-color: #f1f5f9; /* Xám nhạt */
+            border-left-color: #2563eb;
+            .reply-name { color: #1e293b; }
+            .reply-text { color: #64748b; }
+          }
         }
       } 
     }

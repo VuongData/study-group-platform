@@ -22,6 +22,7 @@ import Whiteboard from "../Whiteboard/Whiteboard";
 import { toast } from "react-toastify";
 import "./ChatRoom.scss";
 
+// Âm thanh (Nếu bạn để trong public thì dùng đường dẫn string, nếu import thì giữ nguyên dòng này)
 import messageSoundFile from "../../assets/sounds/message_tone.mp3"; 
 
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
@@ -38,11 +39,12 @@ const ChatRoom = () => {
   const chatContainerRef = useRef(null);
   const imageInputRef = useRef(null);
   const fileInputRef = useRef(null);
+  const prevScrollHeight = useRef(0);
   
   // Ref Audio
   const audioRef = useRef(new Audio(messageSoundFile));
 
-  // --- DATA STATES ---
+  // --- STATES ---
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -52,7 +54,6 @@ const ChatRoom = () => {
   const [userNames, setUserNames] = useState({});
   const [myNicknames, setMyNicknames] = useState({});
 
-  // --- UI STATES ---
   const [activeBoardId, setActiveBoardId] = useState(null); 
   const [boardTitle, setBoardTitle] = useState("");
   const [msgLimit, setMsgLimit] = useState(20);
@@ -63,7 +64,6 @@ const ChatRoom = () => {
   const [showResources, setShowResources] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
 
-  // --- SEARCH & MODAL STATES ---
   const [roomSearchTerm, setRoomSearchTerm] = useState("");
   const [msgSearchTerm, setMsgSearchTerm] = useState("");
   const [isSearchMsgOpen, setIsSearchMsgOpen] = useState(false);
@@ -73,28 +73,17 @@ const ChatRoom = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   // =========================================================================================
-  // 👇 0. LOGIC TAB TITLE NOTIFICATION (MỚI)
+  // LOGIC NOTIFICATION & FETCH DATA
   // =========================================================================================
   useEffect(() => {
-    const originalTitle = document.title; // Lưu tiêu đề gốc
-
-    const handleVisibilityChange = () => {
-      // Khi người dùng quay lại tab (visible), reset về tiêu đề gốc
-      if (!document.hidden) {
-        document.title = originalTitle;
-      }
-    };
-
+    const originalTitle = document.title; 
+    const handleVisibilityChange = () => { if (!document.hidden) document.title = originalTitle; };
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      document.title = originalTitle; // Reset khi unmount
+      document.title = originalTitle;
     };
   }, []);
-
-  // =========================================================================================
-  // DATA FETCHING
-  // =========================================================================================
 
   useEffect(() => {
     if (!user) return;
@@ -108,10 +97,7 @@ const ChatRoom = () => {
   useEffect(() => {
     if (!user?.uid) return;
     const unsub = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setMyNicknames(data.privateNicknames || {});
-      }
+      if (docSnap.exists()) { const data = docSnap.data(); setMyNicknames(data.privateNicknames || {}); }
     });
     return () => unsub();
   }, [user]);
@@ -148,15 +134,15 @@ const ChatRoom = () => {
     return () => unsubscribe();
   }, [user]);
 
-  // 👇 LẤY TIN NHẮN & XỬ LÝ THÔNG BÁO (ÂM THANH + TITLE)
+  // LOGIC LẤY TIN NHẮN
   useEffect(() => {
     if (!selectedRoom?.id) { setMessages([]); return; }
-    
-    setMsgLimit(20); 
+    if (msgLimit !== 20) setMsgLimit(20); 
     setIsLoadingOldMessages(false); 
     setShowResources(false); 
     setReplyingTo(null); 
     setMemberDetails([]);
+    prevScrollHeight.current = 0; 
 
     let isInitialLoad = true;
 
@@ -168,18 +154,12 @@ const ChatRoom = () => {
 
       if (!isInitialLoad) { 
         snapshot.docChanges().forEach((change) => {
-          // Khi có tin nhắn mới & không phải của mình
           if (change.type === "added") {
             const newMsg = change.doc.data();
             if (newMsg.uid !== user.uid) {
-              // 1. Phát âm thanh
               audioRef.current.currentTime = 0; 
               audioRef.current.play().catch(e => console.log("Audio block:", e));
-
-              // 2. 👇 Đổi Title nếu đang ở tab khác
-              if (document.hidden) {
-                document.title = "🔔 Bạn có thông báo mới!";
-              }
+              if (document.hidden) document.title = "🔔 Bạn có thông báo mới!";
             }
           }
         });
@@ -190,97 +170,66 @@ const ChatRoom = () => {
     return () => unsubscribe();
   }, [selectedRoom?.id, msgLimit]);
 
-  // Helpers & Actions
+  const handleScroll = (e) => {
+    const container = e.target;
+    if (container.scrollTop === 0 && !isLoadingOldMessages && messages.length >= msgLimit) {
+      prevScrollHeight.current = container.scrollHeight;
+      setIsLoadingOldMessages(true);
+      setTimeout(() => { setMsgLimit(prev => prev + 20); }, 500); 
+    }
+  };
+
+  useLayoutEffect(() => {
+    if (prevScrollHeight.current > 0 && chatContainerRef.current) {
+      const newScrollHeight = chatContainerRef.current.scrollHeight;
+      const diff = newScrollHeight - prevScrollHeight.current;
+      chatContainerRef.current.scrollTop = diff;
+      prevScrollHeight.current = 0;
+    } 
+    else if (messages.length > 0 && messages.length <= 20) {
+      dummyDiv.current?.scrollIntoView({ behavior: "auto" });
+    }
+  }, [messages]);
+
+  // 👇 HÀM SCROLL ĐẾN TIN NHẮN GỐC
+  const handleScrollToMessage = (msgId) => {
+    const element = document.getElementById(`msg-${msgId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      element.classList.add("highlight-anim");
+      setTimeout(() => element.classList.remove("highlight-anim"), 2000);
+    } else {
+      toast.info("Tin nhắn gốc đã quá cũ hoặc chưa được tải.");
+    }
+  };
+
+  // ... (ACTIONS) ...
   const fetchMemberDetails = async () => { if (!selectedRoom?.members) return; setIsProcessing(true); try { const details = await Promise.all(selectedRoom.members.map(async (uid) => { const snap = await getDoc(doc(db, "users", uid)); return { id: uid, ...(snap.data() || { displayName: "Unknown", email: "N/A" }) }; })); setMemberDetails(details); } catch (error) { console.error(error); } finally { setIsProcessing(false); } };
   const fetchFriendList = async () => { setIsProcessing(true); try { const directRooms = rooms.filter(r => r.type === 'direct'); const friendsData = await Promise.all(directRooms.map(async (room) => { const friendId = room.members.find(id => id !== user.uid); if(!friendId) return null; const snap = await getDoc(doc(db, "users", friendId)); return { roomId: room.id, friendId: friendId, ...(snap.data() || { displayName: "Unknown", email: "N/A" }) }; })); setFriendList(friendsData.filter(f => f !== null)); } catch (error) { console.error(error); } finally { setIsProcessing(false); } };
   
-  useLayoutEffect(() => { if (messages.length > 0 && messages.length <= 20) dummyDiv.current?.scrollIntoView({ behavior: "auto" }); }, [messages, msgSearchTerm]);
-  const handleScroll = (e) => { if (e.target.scrollTop === 0 && !isLoadingOldMessages && messages.length >= msgLimit) { setIsLoadingOldMessages(true); setTimeout(() => setMsgLimit(prev => prev + 20), 500); } };
-
   const uploadToCloudinary = async (file) => { const formData = new FormData(); formData.append("file", file); formData.append("upload_preset", UPLOAD_PRESET); const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { method: "POST", body: formData }); return await res.json(); };
   const handleFileUpload = async (e) => { const file = e.target.files[0]; if(!file) return; try { toast.info("Đang tải file..."); const data = await uploadToCloudinary(file); await addDoc(collection(db, "messages"), { fileUrl: data.secure_url, fileName: file.name, fileType: "document", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp() }); updateDoc(doc(db, "chat_rooms", selectedRoom.id), { updatedAt: serverTimestamp() }); } catch (err) { toast.error("Lỗi upload"); } };
   const handleImageUpload = async (e) => { const file = e.target.files[0]; if(!file) return; try { const data = await uploadToCloudinary(file); await addDoc(collection(db, "messages"), { fileUrl: data.secure_url, fileType: "image", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp() }); updateDoc(doc(db, "chat_rooms", selectedRoom.id), { updatedAt: serverTimestamp() }); } catch (err) { toast.error("Lỗi upload"); } };
   const handleSendMessage = async (e) => { e.preventDefault(); if ((!newMessage.trim()) || !selectedRoom) return; const payload = { text: newMessage, fileType: "text", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp() }; if (replyingTo) payload.replyTo = { id: replyingTo.id, text: replyingTo.text || "[File]", displayName: replyingTo.displayName }; await addDoc(collection(db, "messages"), payload); updateDoc(doc(db, "chat_rooms", selectedRoom.id), { updatedAt: serverTimestamp() }); setNewMessage(""); setReplyingTo(null); dummyDiv.current?.scrollIntoView({ behavior: "smooth" }); };
   const handleUnsend = async (msgId) => { if(!confirm("Thu hồi tin nhắn?")) return; try { await updateDoc(doc(db, "messages", msgId), { isUnsent: true, text: "Tin nhắn đã thu hồi", fileUrl: null }); } catch (e) { toast.error("Lỗi thu hồi"); } };
   const handleReaction = async (msgId, emoji) => { const msgRef = doc(db, "messages", msgId); const msg = messages.find(m => m.id === msgId); const newReactions = { ...(msg.reactions || {}) }; if (newReactions[user.uid] === emoji) delete newReactions[user.uid]; else newReactions[user.uid] = emoji; await updateDoc(msgRef, { reactions: newReactions }); setActiveReactionId(null); };
-  
   const handleVideoCall = async () => { if (!selectedRoom) return; const callUrl = `/video-call/${selectedRoom.id}`; window.open(callUrl, '_blank'); try { await addDoc(collection(db, "messages"), { text: `📞 Đã bắt đầu cuộc gọi video.`, fileType: "system", uid: user.uid, displayName: user.displayName, photoURL: user.photoURL, roomId: selectedRoom.id, createdAt: serverTimestamp(), reactions: {} }); } catch (error) { console.error(error); } };
   const openGroupWhiteboard = () => { if (!selectedRoom) return; setActiveBoardId(selectedRoom.id); setBoardTitle(`Bảng nhóm: ${selectedRoom.name || "Chưa đặt tên"}`); };
   const openPersonalWhiteboard = () => { if (!user) return; setActiveBoardId(`${user.uid}_personal`); setBoardTitle("🎨 Bảng nháp cá nhân"); };
 
-  // Management & Modal Logic (Giữ nguyên)
   const handleKickMember = async (memberId, memberName) => { if (!confirm(`Mời ${memberName} ra khỏi nhóm?`)) return; try { await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { members: arrayRemove(memberId), updatedAt: serverTimestamp() }); await addDoc(collection(db, "messages"), { text: `🚫 ${user.displayName} đã mời ${memberName} ra khỏi nhóm.`, fileType: "system", uid: "SYSTEM", displayName: "Hệ thống", roomId: selectedRoom.id, createdAt: serverTimestamp() }); setMemberDetails(prev => prev.filter(m => m.id !== memberId)); setSelectedRoom(prev => ({...prev, members: prev.members.filter(id => id !== memberId)})); toast.success(`Đã xóa ${memberName}`); } catch (error) { toast.error("Lỗi khi xóa"); } };
   const handleLeaveGroup = async () => { if (!confirm("Rời khỏi nhóm?")) return; try { await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { members: arrayRemove(user.uid), updatedAt: serverTimestamp() }); await addDoc(collection(db, "messages"), { text: `👋 ${user.displayName} đã rời nhóm.`, fileType: "system", uid: "SYSTEM", displayName: "Hệ thống", roomId: selectedRoom.id, createdAt: serverTimestamp() }); setSelectedRoom(null); setShowModal(false); toast.info("Đã rời nhóm"); } catch (error) { toast.error("Lỗi rời nhóm"); } };
   const handleDisbandGroup = async () => { if (!confirm("CẢNH BÁO: Xóa vĩnh viễn nhóm và toàn bộ tin nhắn?")) return; setIsProcessing(true); try { const batch = writeBatch(db); const msgSnap = await getDocs(query(collection(db, "messages"), where("roomId", "==", selectedRoom.id))); msgSnap.forEach(doc => batch.delete(doc.ref)); const taskSnap = await getDocs(query(collection(db, "oppm_tasks"), where("roomId", "==", selectedRoom.id))); taskSnap.forEach(doc => batch.delete(doc.ref)); const wbSnap = await getDocs(query(collection(db, "whiteboards", selectedRoom.id, "elements"))); wbSnap.forEach(doc => batch.delete(doc.ref)); batch.delete(doc(db, "chat_rooms", selectedRoom.id)); await batch.commit(); setSelectedRoom(null); setShowModal(false); toast.success("Đã giải tán nhóm!"); } catch (error) { console.error(error); toast.error("Lỗi giải tán: " + error.message); } finally { setIsProcessing(false); } };
   const handleUnfriend = async (roomId, friendName) => { if (!confirm(`Bạn muốn hủy kết bạn với ${friendName}?`)) return; setFriendList(prev => prev.filter(f => f.roomId !== roomId)); try { const batch = writeBatch(db); const msgSnap = await getDocs(query(collection(db, "messages"), where("roomId", "==", roomId))); msgSnap.forEach(doc => batch.delete(doc.ref)); batch.delete(doc(db, "chat_rooms", roomId)); await batch.commit(); if(selectedRoom?.id === roomId) setSelectedRoom(null); toast.success(`Đã hủy kết bạn với ${friendName}`); } catch (error) { toast.error("Lỗi hủy kết bạn"); console.error(error); fetchFriendList(); } };
   const handleAcceptRequest = async (req) => { setIsProcessing(true); try { const newRoom = { name: req.fromName, type: "direct", members: [user.uid, req.fromUid], createdAt: serverTimestamp(), updatedAt: serverTimestamp() }; const roomRef = await addDoc(collection(db, "chat_rooms"), newRoom); await addDoc(collection(db, "messages"), { text: `👋 Hai bạn đã trở thành bạn bè.`, fileType: "system", uid: "SYSTEM", displayName: "Hệ thống", roomId: roomRef.id, createdAt: serverTimestamp() }); await deleteDoc(doc(db, "friend_requests", req.id)); toast.success(`Đã kết bạn với ${req.fromName}`); if(friendRequests.length <= 1) setShowModal(false); } catch (e) { toast.error("Lỗi kết bạn"); } finally { setIsProcessing(false); } };
   const handleRejectRequest = async (reqId) => { if(!confirm("Từ chối?")) return; try { await deleteDoc(doc(db, "friend_requests", reqId)); toast.info("Đã từ chối"); if(friendRequests.length <= 1) setShowModal(false); } catch (e) { toast.error("Lỗi"); } };
-
-  const handleModalSubmit = async () => {
-    if (!inputTarget.trim()) return toast.warning("Vui lòng nhập thông tin!");
-    setIsProcessing(true);
-    const commonData = { createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
-
-    try {
-      if (modalMode === 'create_group') {
-        await addDoc(collection(db, "chat_rooms"), { name: inputTarget, type: "group", members: [user.uid], createdBy: user.uid, ...commonData });
-        toast.success("Tạo nhóm thành công!");
-      } 
-      else if (modalMode === 'add_friend') {
-        const snap = await getDocs(query(collection(db, "users"), where("email", "==", inputTarget.trim())));
-        if (snap.empty) { toast.error("Gmail không tồn tại!"); setIsProcessing(false); return; }
-        const targetUser = snap.docs[0];
-        if (targetUser.id === user.uid) { toast.warning("Không thể tự kết bạn!"); setIsProcessing(false); return; }
-        const existing = rooms.find(r => r.type === 'direct' && r.members.includes(targetUser.id));
-        if (existing) { toast.info("Đã là bạn bè!"); setIsProcessing(false); return; }
-        const reqSnap = await getDocs(query(collection(db, "friend_requests"), where("fromUid", "==", user.uid), where("toUid", "==", targetUser.id)));
-        if (!reqSnap.empty) { toast.warning("Đã gửi lời mời rồi!"); setIsProcessing(false); return; }
-        await addDoc(collection(db, "friend_requests"), { fromUid: user.uid, fromName: user.displayName, fromEmail: user.email, toUid: targetUser.id, createdAt: serverTimestamp() });
-        toast.success("Đã gửi lời mời!");
-      } 
-      else if (modalMode === 'add_member') {
-        const snap = await getDocs(query(collection(db, "users"), where("email", "==", inputTarget.trim())));
-        if (snap.empty) { toast.error("Gmail không tồn tại!"); setIsProcessing(false); return; }
-        const newMem = snap.docs[0];
-        if (selectedRoom.members.includes(newMem.id)) { toast.warning("Đã có trong nhóm!"); setIsProcessing(false); return; }
-        await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { members: arrayUnion(newMem.id), updatedAt: serverTimestamp() });
-        await addDoc(collection(db, "messages"), { text: `👋 Đã thêm ${newMem.data().displayName} vào nhóm.`, fileType: "system", uid: "SYSTEM", displayName: "Hệ thống", roomId: selectedRoom.id, createdAt: serverTimestamp() });
-        setSelectedRoom(prev => ({...prev, members: [...prev.members, newMem.id]}));
-        toast.success("Đã thêm thành viên!");
-      } 
-      else if (modalMode === 'set_nickname') {
-        const otherId = selectedRoom.members.find(id => id !== user.uid);
-        if (otherId) {
-          setMyNicknames(prev => ({...prev, [otherId]: inputTarget}));
-          await setDoc(doc(db, "users", user.uid), { [`privateNicknames.${otherId}`]: inputTarget }, { merge: true });
-          toast.success("Đã lưu biệt danh!");
-        } else {
-          toast.error("Lỗi: Không tìm thấy người dùng");
-        }
-      }
-      else if (modalMode === 'rename_group') {
-        await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { name: inputTarget, updatedAt: serverTimestamp() });
-        setSelectedRoom(prev => ({...prev, name: inputTarget}));
-        toast.success("Đổi tên thành công!");
-      }
-      setShowModal(false); setInputTarget("");
-    } catch (error) { console.error("Lỗi xử lý:", error); toast.error("Lỗi hệ thống: " + error.message); } finally { setIsProcessing(false); }
-  };
-
-  const getRoomName = (room) => {
-    if (room.type === 'group') return room.name;
-    const otherId = room.members.find(id => id !== user.uid);
-    if (!otherId) return "Unknown";
-    if (myNicknames[otherId]) return myNicknames[otherId];
-    return userNames[otherId] || "Đang tải...";
-  };
-
+  const handleModalSubmit = async () => { if (!inputTarget.trim()) return toast.warning("Vui lòng nhập thông tin!"); setIsProcessing(true); const commonData = { createdAt: serverTimestamp(), updatedAt: serverTimestamp() }; try { if (modalMode === 'create_group') { await addDoc(collection(db, "chat_rooms"), { name: inputTarget, type: "group", members: [user.uid], createdBy: user.uid, ...commonData }); toast.success("Tạo nhóm thành công!"); } else if (modalMode === 'add_friend') { const snap = await getDocs(query(collection(db, "users"), where("email", "==", inputTarget.trim()))); if (snap.empty) { toast.error("Gmail không tồn tại!"); setIsProcessing(false); return; } const targetUser = snap.docs[0]; if (targetUser.id === user.uid) { toast.warning("Không thể tự kết bạn!"); setIsProcessing(false); return; } const existing = rooms.find(r => r.type === 'direct' && r.members.includes(targetUser.id)); if (existing) { toast.info("Đã là bạn bè!"); setIsProcessing(false); return; } const reqSnap = await getDocs(query(collection(db, "friend_requests"), where("fromUid", "==", user.uid), where("toUid", "==", targetUser.id))); if (!reqSnap.empty) { toast.warning("Đã gửi lời mời rồi!"); setIsProcessing(false); return; } await addDoc(collection(db, "friend_requests"), { fromUid: user.uid, fromName: user.displayName, fromEmail: user.email, toUid: targetUser.id, createdAt: serverTimestamp() }); toast.success("Đã gửi lời mời!"); } else if (modalMode === 'add_member') { const snap = await getDocs(query(collection(db, "users"), where("email", "==", inputTarget.trim()))); if (snap.empty) { toast.error("Gmail không tồn tại!"); setIsProcessing(false); return; } const newMem = snap.docs[0]; if (selectedRoom.members.includes(newMem.id)) { toast.warning("Đã có trong nhóm!"); setIsProcessing(false); return; } await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { members: arrayUnion(newMem.id), updatedAt: serverTimestamp() }); await addDoc(collection(db, "messages"), { text: `👋 Đã thêm ${newMem.data().displayName} vào nhóm.`, fileType: "system", uid: "SYSTEM", displayName: "Hệ thống", roomId: selectedRoom.id, createdAt: serverTimestamp() }); setSelectedRoom(prev => ({...prev, members: [...prev.members, newMem.id]})); toast.success("Đã thêm thành viên!"); } else if (modalMode === 'set_nickname') { const otherId = selectedRoom.members.find(id => id !== user.uid); if (otherId) { setMyNicknames(prev => ({...prev, [otherId]: inputTarget})); await setDoc(doc(db, "users", user.uid), { [`privateNicknames.${otherId}`]: inputTarget }, { merge: true }); toast.success("Đã lưu biệt danh!"); } else { toast.error("Lỗi: Không tìm thấy người dùng"); } } else if (modalMode === 'rename_group') { await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { name: inputTarget, updatedAt: serverTimestamp() }); setSelectedRoom(prev => ({...prev, name: inputTarget})); toast.success("Đổi tên thành công!"); } setShowModal(false); setInputTarget(""); } catch (error) { console.error("Lỗi xử lý:", error); toast.error("Lỗi hệ thống: " + error.message); } finally { setIsProcessing(false); } };
+  const getRoomName = (room) => { if (room.type === 'group') return room.name; const otherId = room.members.find(id => id !== user.uid); if (!otherId) return "Unknown"; if (myNicknames[otherId]) return myNicknames[otherId]; return userNames[otherId] || "Đang tải..."; };
   const isGroupAdmin = selectedRoom?.createdBy === user.uid;
   const idToDisplay = selectedRoom ? selectedRoom.id : user.uid;
 
   return (
     <div className="chat-room-container">
-      {/* SIDEBAR */}
       <div className="chat-sidebar">
         <div className="sidebar-header">
            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 10}}>
@@ -308,7 +257,6 @@ const ChatRoom = () => {
         </div>
       </div>
 
-      {/* MAIN CHAT */}
       <div className="chat-main">
         {selectedRoom ? (
           <>
@@ -342,13 +290,29 @@ const ChatRoom = () => {
                 const uniqueReactions = [...new Set(Object.values(msg.reactions || {}))];
 
                 return (
-                  <div key={msg.id} className={`message-row ${isMe ? 'mine' : 'theirs'}`}>
+                  // 👇 GÁN ID VÀ THÊM XỬ LÝ CLICK
+                  <div key={msg.id} id={`msg-${msg.id}`} className={`message-row ${isMe ? 'mine' : 'theirs'}`}>
                     {!isMe && <div className="msg-avatar">{msg.displayName?.charAt(0)}</div>}
                     <div className="msg-content">
                       {!isMe && <div className="sender-name">{msg.displayName}</div>}
                       <div className="message-wrapper-outer">
                         <div className="message-bubble-wrapper">
-                          {msg.replyTo && !msg.isUnsent && <div className="reply-quote"><div className="reply-bar"></div><div className="reply-info"><span className="reply-name">{msg.replyTo.displayName}</span><span className="reply-text">{msg.replyTo.text}</span></div></div>}
+                          
+                          {/* REPLY QUOTE: CLICK ĐỂ SCROLL */}
+                          {msg.replyTo && !msg.isUnsent && (
+                            <div 
+                              className="reply-quote" 
+                              onClick={() => handleScrollToMessage(msg.replyTo.id)}
+                              title="Đi đến tin nhắn gốc"
+                            >
+                              <div className="reply-bar"></div>
+                              <div className="reply-info">
+                                <span className="reply-name">{msg.replyTo.displayName}</span>
+                                <span className="reply-text">{msg.replyTo.text}</span>
+                              </div>
+                            </div>
+                          )}
+
                           {msg.isUnsent ? <div className="bubble unsent">🚫 Thu hồi</div> : (
                             <>
                               {msg.fileType === 'image' && <div className="msg-image"><img src={msg.fileUrl} onClick={()=>window.open(msg.fileUrl)}/></div>}
@@ -408,6 +372,7 @@ const ChatRoom = () => {
       {showModal && (
         <div className="modal-overlay" onClick={()=>setShowModal(false)}>
           <div className="modal-content" onClick={e=>e.stopPropagation()}>
+            {/* Modal Content */}
             <h3>{modalMode==='view_requests'?'Lời Mời Kết Bạn':modalMode==='set_nickname'?'Đặt Biệt Danh':modalMode==='create_group'?'Tạo Nhóm Mới':modalMode==='add_friend'?'Gửi Lời Mời':modalMode==='add_member'?'Thêm Thành Viên':modalMode==='manage_friends'?'Danh sách bạn bè':modalMode==='manage_members'?'Quản Lý Thành Viên':'Đổi Tên Nhóm'}</h3>
             <div className="modal-body">
               {modalMode === 'view_requests' ? (
