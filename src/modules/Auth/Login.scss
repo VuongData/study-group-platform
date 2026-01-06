@@ -1,18 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 /* --- BIẾN MÀU SẮC --- */
-$bg-dark: #0f172a;         /* Xanh đen thẫm (Deep Navy) */
-$bg-panel: rgba(30, 41, 59, 0.7); /* Màu nền hộp Login (trong suốt) */
-$neon-cyan: #22d3ee;       /* Màu nhấn xanh ngọc */
-$lamp-shade: #2dd4bf;      /* Màu chao đèn */
+$bg-dark: #0f172a;         
+$bg-panel: rgba(30, 41, 59, 0.7); /* Kính mờ */
+$neon-cyan: #22d3ee;       
+$lamp-shade: #2dd4bf;      
 $text-primary: #f1f5f9;    
 $text-secondary: #94a3b8;
-$input-bg: rgba(15, 23, 42, 0.6); /* Nền input tối */
+$input-bg: rgba(15, 23, 42, 0.6); 
 
 .login-lamp-container {
   height: 100vh;
   width: 100vw;
-  overflow: hidden; /* Ẩn thanh cuộn trên PC */
+  overflow: hidden; /* ⛔ CHẶN THANH CUỘN TUYỆT ĐỐI */
   
   display: flex;
   flex-direction: column;
@@ -23,15 +23,15 @@ $input-bg: rgba(15, 23, 42, 0.6); /* Nền input tối */
   font-family: 'Poppins', sans-serif;
   position: relative;
   
-  /* Background gradient nhẹ */
-  background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
+  /* Gradient nền sang trọng */
+  background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 80%);
 
   /* --- HIỆU ỨNG TẮT ĐÈN --- */
   &.dark-room {
-    background: #020617; /* Đen kịt */
+    background: #020617; 
     .login-box {
-      background: rgba(15, 23, 42, 0.9);
-      border-color: rgba(255,255,255,0.03);
+      background: rgba(15, 23, 42, 0.95);
+      border-color: rgba(255,255,255,0.02);
       box-shadow: none;
     }
   }
@@ -39,17 +39,17 @@ $input-bg: rgba(15, 23, 42, 0.6); /* Nền input tối */
   /* --- CHIẾC ĐÈN (LAMP ART) --- */
   .lamp-wrapper {
     position: absolute; 
-    top: 0; 
+    top: -10px; /* Treo sát mép trên */
     left: 50%; 
     transform: translateX(-50%);
     display: flex; flex-direction: column; align-items: center; 
     z-index: 10;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.5s ease;
 
-    /* Dây đèn dài hơn để trông tự nhiên */
+    /* 👇 1. GIỮ NGUYÊN DÂY NGẮN VỪA PHẢI */
     .wire { 
       width: 2px; 
-      height: 160px; /* Tăng chiều dài dây */
+      height: 130px; /* Độ dài dây chuẩn */
       background: #475569; 
       position: relative; z-index: 1; 
     }
@@ -60,38 +60,31 @@ $input-bg: rgba(15, 23, 42, 0.6); /* Nền input tối */
       border-radius: 50px 50px 10px 10px; 
       position: relative; z-index: 2;
       box-shadow: 0 0 60px rgba(45, 212, 191, 0.3), inset -5px -5px 20px rgba(0,0,0,0.1);
-      
       display: flex; justify-content: center; align-items: center;
 
-      /* Khuôn mặt đèn */
       .lamp-face {
         position: relative; width: 100%; height: 100%;
         .eye { 
           position: absolute; top: 40px; width: 12px; height: 12px; 
           background: #0f172a; border-radius: 50%; 
           animation: blink 6s infinite;
-          &.left { left: 40px; } 
-          &.right { right: 40px; } 
+          &.left { left: 40px; } &.right { right: 40px; } 
         }
         .mouth { 
           position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); 
           width: 16px; height: 8px; background: #0f172a; 
-          border-radius: 0 0 16px 16px; 
-          transition: 0.3s;
+          border-radius: 0 0 16px 16px; transition: 0.3s;
         }
       }
 
-      /* Tia sáng (Beam) */
+      /* Tia sáng dài */
       .light-beam {
-        position: absolute; 
-        top: 85px; left: 50%; transform: translateX(-50%);
-        width: 400px; height: 900px; /* Tia sáng dài phủ hết form */
-        /* Gradient mượt hơn */
-        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+        position: absolute; top: 85px; left: 50%; transform: translateX(-50%);
+        width: 400px; height: 1000px; /* Dài xuống tận đáy màn hình */
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 0%, transparent 60%);
         clip-path: polygon(30% 0, 70% 0, 100% 100%, 0% 100%);
-        pointer-events: none; 
-        transition: opacity 0.3s; 
-        z-index: 0; /* Nằm dưới lamp head nhưng trên nền */
+        pointer-events: none; z-index: 0;
+        transition: opacity 0.3s;
       }
 
       /* Dây kéo công tắc */
@@ -100,99 +93,68 @@ $input-bg: rgba(15, 23, 42, 0.6); /* Nền input tối */
         cursor: pointer;
         display: flex; flex-direction: column; align-items: center;
         transform-origin: top center; 
-        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        transition: transform 0.2s;
         
         .string-line { width: 1px; height: 45px; background: #cbd5e1; }
-        .string-knob { 
-          width: 10px; height: 10px; background: #fff; border-radius: 50%; 
-          box-shadow: 0 0 10px rgba(255,255,255,0.5);
-        }
+        .string-knob { width: 10px; height: 10px; background: #fff; border-radius: 50%; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
         &:hover .string-knob { background: $neon-cyan; box-shadow: 0 0 15px $neon-cyan; }
         &.pull-action { animation: pullDown 0.6s ease-in-out; }
       }
     }
 
-    /* Logic tắt đèn */
     &.lamp-off .lamp-head {
       background: #334155; box-shadow: none;
       .light-beam { opacity: 0; }
-      .lamp-face { 
-        .eye { height: 2px; border-radius: 0; animation: none; background: #1e293b; } /* Mắt nhắm */
-        .mouth { width: 6px; height: 6px; border-radius: 50%; } /* Miệng ngáy o o */
-      }
+      .lamp-face { .eye { height: 2px; border-radius: 0; animation: none; background: #1e293b; } .mouth { width: 6px; height: 6px; border-radius: 50%; } }
     }
+    
+    /* Khi nhập pass, đèn tối đi chút */
+    &.focus-password:not(.lamp-off) .light-beam { opacity: 0.35; }
   }
 
-  /* --- LOGIN BOX (FORM) --- */
+  /* --- LOGIN BOX --- */
   .login-box {
-    /* 👇 ĐẨY XUỐNG SÂU HƠN ĐỂ NÉ ĐÈN */
-    margin-top: 290px; 
+    /* 👇 2. ĐẨY HỘP XUỐNG SÂU ĐỂ NÉ ĐÈN */
+    margin-top: 320px; 
     
-    width: 400px; 
-    padding: 40px;
+    width: 380px; /* Gọn hơn xíu */
+    padding: 35px;
     
-    /* Hiệu ứng kính mờ (Glassmorphism) */
+    /* Kính mờ sang trọng */
     background: $bg-panel;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 24px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     z-index: 5;
-    animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation: slideUp 0.8s ease-out;
 
     .header {
-      text-align: center; margin-bottom: 30px;
-      h2 { 
-        margin: 0; color: $text-primary; 
-        font-size: 2rem; font-weight: 700; 
-        text-shadow: 0 0 20px rgba(255,255,255,0.1);
-      }
-      p { margin: 8px 0 0; color: $text-secondary; font-size: 0.9rem; }
+      text-align: center; margin-bottom: 25px;
+      h2 { margin: 0; color: $text-primary; font-size: 2rem; font-weight: 700; text-shadow: 0 0 20px rgba(255,255,255,0.1); }
+      p { margin: 5px 0 0; color: $text-secondary; font-size: 0.9rem; }
     }
 
     form {
-      display: flex; flex-direction: column; gap: 20px;
+      display: flex; flex-direction: column; gap: 18px;
       
       .input-group {
         position: relative; display: flex; align-items: center;
-        
-        .icon { 
-          position: absolute; left: 16px; z-index: 2; 
-          color: $text-secondary; transition: 0.3s; 
-        }
+        .icon { position: absolute; left: 16px; z-index: 2; color: $text-secondary; }
         
         input {
-          width: 100%; 
-          padding: 16px 16px 16px 48px; /* Chừa chỗ cho icon */
-          padding-right: 45px; /* Chừa chỗ cho nút mắt */
-          
-          /* Style input tối màu */
+          width: 100%; padding: 14px 14px 14px 48px; padding-right: 45px;
           background: $input-bg;
           border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 12px;
-          
-          color: $text-primary; 
-          font-size: 0.95rem; 
-          outline: none; 
-          transition: all 0.3s;
-          
+          border-radius: 12px; color: $text-primary; font-size: 0.95rem; outline: none; transition: all 0.3s;
           &::placeholder { color: rgba(148, 163, 184, 0.5); }
-          
           &:focus {
-            background: rgba(30, 41, 59, 0.8);
-            border-color: $neon-cyan;
-            box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.1);
+            background: rgba(30, 41, 59, 0.8); border-color: $neon-cyan; box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.1);
             & + .icon { color: $neon-cyan; }
           }
         }
-
         .btn-toggle-password {
-          position: absolute; right: 16px; 
-          background: none; border: none;
-          color: $text-secondary; cursor: pointer; 
-          padding: 4px; z-index: 3; transition: 0.3s;
+          position: absolute; right: 16px; background: none; border: none; color: $text-secondary; cursor: pointer; padding: 4px; z-index: 3;
           &:hover { color: $text-primary; }
         }
       }
@@ -200,66 +162,52 @@ $input-bg: rgba(15, 23, 42, 0.6); /* Nền input tối */
       .forgot-pass { text-align: right; }
 
       .btn-login {
-        margin-top: 10px;
+        margin-top: 5px;
         background: linear-gradient(135deg, #06b6d4, #3b82f6);
-        color: white;
-        font-weight: 600; padding: 16px; 
-        border: none; border-radius: 12px;
-        cursor: pointer; font-size: 1rem;
-        display: flex; align-items: center; justify-content: center; gap: 8px;
-        transition: 0.3s;
+        color: white; font-weight: 600; padding: 14px; border: none; border-radius: 12px;
+        cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s;
         box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
-        
-        &:hover { 
-          transform: translateY(-2px); 
-          box-shadow: 0 8px 25px rgba(6, 182, 212, 0.4); 
-        }
-        &:disabled { opacity: 0.7; transform: none; }
+        &:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(6, 182, 212, 0.4); }
+        &:disabled { opacity: 0.7; }
         .spin { animation: spin 1s linear infinite; }
       }
     }
 
     .divider {
-      display: flex; align-items: center; margin: 24px 0; 
-      color: $text-secondary; font-size: 0.85rem;
-      &::before, &::after { 
-        content: ''; flex: 1; height: 1px; 
-        background: rgba(255,255,255,0.1); 
-      }
+      display: flex; align-items: center; margin: 20px 0; color: $text-secondary; font-size: 0.85rem;
+      &::before, &::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.1); }
       span { padding: 0 12px; }
     }
 
     .social-login .btn-social {
-      width: 100%; padding: 14px;
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
+      width: 100%; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px;
       color: $text-primary; font-weight: 500; cursor: pointer; transition: 0.3s;
-      
       &:hover { background: rgba(255, 255, 255, 0.1); }
     }
 
     .footer {
-      text-align: center; margin-top: 24px; color: $text-secondary; font-size: 0.9rem;
-      button { 
-        background: none; border: none; font-weight: 600; 
-        color: $neon-cyan; cursor: pointer; margin-left: 4px;
-        &:hover { text-decoration: underline; }
-      }
+      text-align: center; margin-top: 20px; color: $text-secondary; font-size: 0.9rem;
+      button { background: none; border: none; font-weight: 600; color: $neon-cyan; cursor: pointer; margin-left: 4px; &:hover { text-decoration: underline; } }
     }
   }
 
-  /* --- RESPONSIVE CHO LAPTOP --- */
-  @media (max-height: 800px) {
-    /* Thu nhỏ mọi thứ khi màn hình thấp để không bị mất chân trang */
-    .lamp-wrapper { transform: translateX(-50%) scale(0.85); top: -20px; }
-    .login-box { margin-top: 240px; transform: scale(0.9); transform-origin: top center; }
+  /* 👇 3. QUAN TRỌNG: TỰ ĐỘNG THU NHỎ TRÊN LAPTOP ĐỂ KHÔNG BỊ CUỘN */
+  @media (max-height: 850px) {
+    .lamp-wrapper { transform: translateX(-50%) scale(0.9); top: -20px; }
+    /* Giảm margin-top và scale nhỏ box lại */
+    .login-box { margin-top: 260px; transform: scale(0.9); transform-origin: top center; }
   }
 
+  @media (max-height: 700px) {
+    .lamp-wrapper { transform: translateX(-50%) scale(0.8); top: -30px; }
+    .login-box { margin-top: 220px; transform: scale(0.85); }
+  }
+
+  /* Mobile */
   @media (max-width: 480px) {
     overflow-y: auto; /* Mobile cho phép cuộn */
-    .login-box { width: 90%; margin-top: 250px; transform: none; padding: 30px 20px; }
+    .login-box { width: 90%; margin-top: 280px; transform: none; padding: 30px 20px; }
     .lamp-wrapper { transform: translateX(-50%) scale(0.7); }
   }
 }
