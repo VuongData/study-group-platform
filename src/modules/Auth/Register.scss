@@ -1,143 +1,146 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-$bg-dark: #1a1b26;        
-$neon-purple: #bd34fe; 
-$lamp-color: #4fd1c5;     
-$wire-color: #2d3748;     
-$text-white: #ffffff;
-$text-gray: #a0aec0;
+/* --- BIẾN MÀU TÍM CHO REGISTER --- */
+$bg-dark: #0f172a;       
+$neon-purple: #c084fc;    /* Tím neon sáng */
+$btn-purple: #9333ea;     /* Tím đậm cho nút */
+$lamp-shade: #2dd4bf;     /* Đèn vẫn giữ màu xanh ngọc để đồng bộ */
+$text-primary: #f1f5f9;
+$text-secondary: #94a3b8;
+$input-bg: rgba(15, 23, 42, 0.6);
 
 .register-lamp-container {
-  /* 👇 FIX SCROLL */
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-
+  
   display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-  background-color: $bg-dark; font-family: 'Poppins', sans-serif;
+  background-color: $bg-dark;
+  font-family: 'Poppins', sans-serif;
   position: relative;
-  padding-top: 0;
+  
+  /* Gradient nền hơi tím nhẹ */
+  background: radial-gradient(circle at 50% 0%, #2e1065 0%, #0f172a 70%);
 
-  &::before {
-    content: ''; position: absolute; width: 100%; height: 100%;
-    background: radial-gradient(circle at 50% 20%, rgba(189, 52, 254, 0.1), transparent 60%);
-    pointer-events: none;
-  }
-
+  /* --- LAMP ART (Giống Login) --- */
   .lamp-wrapper {
-    position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
     display: flex; flex-direction: column; align-items: center; z-index: 10;
-    transition: all 0.5s ease;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 
-    .wire { width: 4px; height: 100px; background: $wire-color; position: relative; z-index: 1; }
+    .wire { width: 2px; height: 160px; background: #475569; position: relative; z-index: 1; }
+    
     .lamp-head {
-      width: 140px; height: 100px; background: $lamp-color;
+      width: 140px; height: 90px; background: $lamp-shade;
       border-radius: 50px 50px 10px 10px; position: relative; z-index: 2;
-      box-shadow: 0 0 20px rgba(79, 209, 197, 0.4), inset -10px -10px 20px rgba(0,0,0,0.1);
+      box-shadow: 0 0 60px rgba(45, 212, 191, 0.3), inset -5px -5px 20px rgba(0,0,0,0.1);
       display: flex; justify-content: center; align-items: center;
 
       .lamp-face {
         position: relative; width: 100%; height: 100%;
-        .eye { position: absolute; top: 45px; width: 14px; height: 14px; background: #1a202c; border-radius: 50%; animation: blink 4s infinite; &.left { left: 40px; } &.right { right: 40px; } }
-        .mouth { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); width: 24px; height: 12px; background: #1a202c; border-radius: 0 0 24px 24px; transition: 0.3s; }
+        .eye { position: absolute; top: 40px; width: 12px; height: 12px; background: #0f172a; border-radius: 50%; animation: blink 6s infinite; &.left { left: 40px; } &.right { right: 40px; } }
+        .mouth { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); width: 16px; height: 8px; background: #0f172a; border-radius: 0 0 16px 16px; transition: 0.3s; }
       }
       .light-beam {
-        position: absolute; top: 90px; left: 50%; transform: translateX(-50%);
-        width: 350px; height: 800px;
-        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.25), transparent 70%);
-        clip-path: polygon(35% 0, 65% 0, 100% 100%, 0% 100%);
-        pointer-events: none; opacity: 1; transition: opacity 0.3s ease; z-index: 0;
+        position: absolute; top: 85px; left: 50%; transform: translateX(-50%);
+        width: 400px; height: 900px;
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+        clip-path: polygon(30% 0, 70% 0, 100% 100%, 0% 100%);
+        pointer-events: none; z-index: 0;
       }
     }
     
     &.focus-password .lamp-head {
-      .light-beam { opacity: 0.1; }
-      .lamp-face { .eye { height: 4px; border-radius: 0; } .mouth { width: 12px; height: 12px; border-radius: 50%; bottom: 20px; } }
+      .light-beam { opacity: 0.2; } /* Khi nhập pass thì đèn tối bớt */
+      .lamp-face { .eye { height: 4px; border-radius: 0; } .mouth { width: 8px; height: 8px; border-radius: 50%; bottom: 20px; } }
     }
   }
 
+  /* --- REGISTER BOX --- */
   .register-box {
-    /* 👇 CHỈNH TỈ LỆ ĐỒNG BỘ LOGIN */
-    margin-top: 220px; 
+    margin-top: 290px; /* Đẩy xuống giống Login */
+    width: 420px; padding: 40px;
     
-    width: 420px; padding: 35px 35px;
-    background: rgba(30, 41, 59, 0.85); 
-    border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px;
-    backdrop-filter: blur(12px); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    z-index: 5; animation: slideUp 0.8s ease-out;
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    z-index: 5;
+    animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
 
     .header {
       text-align: center; margin-bottom: 25px;
-      h2 { margin: 0; color: $text-white; font-size: 1.8rem; font-weight: 700; }
-      p { margin: 5px 0 0; color: $text-gray; font-size: 0.9rem; }
+      h2 { margin: 0; color: $text-primary; font-size: 1.8rem; font-weight: 700; text-shadow: 0 0 20px rgba(192, 132, 252, 0.2); }
+      p { margin: 5px 0 0; color: $text-secondary; font-size: 0.9rem; }
     }
 
     form {
-      display: flex; flex-direction: column; gap: 15px; /* Giảm gap để form ngắn lại */
+      display: flex; flex-direction: column; gap: 16px;
 
       .input-group {
         position: relative; display: flex; align-items: center;
-        .icon { position: absolute; left: 15px; z-index: 2; color: $text-gray; pointer-events: none; transition: 0.3s; }
+        .icon { position: absolute; left: 16px; z-index: 2; color: $text-secondary; }
         
         input {
-          width: 100%; padding: 12px 12px 12px 45px; padding-right: 40px;
-          background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 12px; color: $text-white; font-size: 0.95rem; outline: none; transition: all 0.3s;
-          &::placeholder { color: rgba(255,255,255,0.25); }
+          width: 100%; padding: 14px 14px 14px 48px; padding-right: 45px;
+          background: $input-bg;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          border-radius: 12px; color: $text-primary; font-size: 0.95rem; outline: none; transition: all 0.3s;
+          &::placeholder { color: rgba(148, 163, 184, 0.5); }
           &:focus {
-            border-color: $neon-purple; box-shadow: 0 0 0 4px rgba(189, 52, 254, 0.1);
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(30, 41, 59, 0.8);
+            border-color: $neon-purple;
+            box-shadow: 0 0 0 4px rgba(192, 132, 252, 0.1);
             & + .icon { color: $neon-purple; }
           }
         }
         .btn-toggle-password {
-          position: absolute; right: 12px; background: none; border: none;
-          color: $text-gray; cursor: pointer; display: flex; align-items: center;
-          padding: 5px; z-index: 3; transition: color 0.3s;
-          &:hover { color: $neon-purple; }
+          position: absolute; right: 16px; background: none; border: none;
+          color: $text-secondary; cursor: pointer; padding: 4px; z-index: 3;
+          &:hover { color: $text-primary; }
         }
       }
 
       .btn-register {
-        background: linear-gradient(135deg, #bd34fe, #4158d0);
-        color: #fff; font-weight: 700; padding: 14px; border: none; border-radius: 12px;
-        cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;
-        transition: all 0.3s ease; margin-top: 10px;
-        box-shadow: 0 4px 15px rgba(189, 52, 254, 0.3);
-        &:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(189, 52, 254, 0.5); }
-        &:disabled { opacity: 0.7; cursor: not-allowed; }
+        margin-top: 10px;
+        background: linear-gradient(135deg, #a855f7, #4f46e5);
+        color: white; font-weight: 700; padding: 16px; 
+        border: none; border-radius: 12px; cursor: pointer; font-size: 1rem;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        transition: 0.3s;
+        box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+        
+        &:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(168, 85, 247, 0.4); }
+        &:disabled { opacity: 0.7; }
         .spin { animation: spin 1s linear infinite; }
       }
     }
 
     .footer {
-      text-align: center; margin-top: 20px; color: $text-gray; font-size: 0.9rem;
+      text-align: center; margin-top: 20px; color: $text-secondary; font-size: 0.9rem;
       button { 
-        background: none; border: none; font-family: inherit; font-size: inherit;
-        color: $neon-purple; font-weight: 600; cursor: pointer; margin-left: 5px;
-        transition: 0.3s;
-        &:hover { color: #fff; text-shadow: 0 0 10px $neon-purple; }
+        background: none; border: none; font-weight: 600; 
+        color: $neon-purple; cursor: pointer; margin-left: 5px;
+        &:hover { text-decoration: underline; }
       }
     }
   }
   
-  /* 👇 RESPONSIVE SCALE: Tự động thu nhỏ khi màn hình thấp */
-  @media (max-height: 900px) {
-    .lamp-wrapper { top: -30px; transform: translateX(-50%) scale(0.9); }
-    .register-box { margin-top: 180px; transform: scale(0.9); transform-origin: top center; }
+  /* RESPONSIVE */
+  @media (max-height: 800px) {
+    .lamp-wrapper { transform: translateX(-50%) scale(0.85); top: -20px; }
+    .register-box { margin-top: 240px; transform: scale(0.9); transform-origin: top center; }
   }
 
-  @media (max-height: 700px) {
-    .lamp-wrapper { top: -40px; transform: translateX(-50%) scale(0.8); }
-    .register-box { margin-top: 140px; transform: scale(0.8); transform-origin: top center; }
+  @media (max-width: 480px) {
+    overflow-y: auto;
+    .register-box { width: 90%; margin-top: 250px; transform: none; padding: 30px 20px; }
+    .lamp-wrapper { transform: translateX(-50%) scale(0.7); }
   }
 }
 
-@keyframes blink { 0%, 96%, 100% { height: 14px; } 98% { height: 2px; } }
-@keyframes slideUp { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes blink { 0%, 96%, 100% { height: 12px; } 98% { height: 2px; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes spin { 100% { transform: rotate(360deg); } }
-@media (max-width: 480px) { 
-    .register-lamp-container { height: 100vh; overflow-y: auto; }
-    .register-box { width: 92%; padding: 30px 20px; margin-top: 200px; transform: none; } 
-    .lamp-wrapper { transform: translateX(-50%) scale(0.7); top: -20px; } 
-}
