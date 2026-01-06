@@ -1,139 +1,201 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
-/* --- BIẾN MÀU TÍM CHO REGISTER --- */
-$bg-dark: #0f172a;       
-$neon-purple: #c084fc;    
-$lamp-shade: #2dd4bf;     
-$text-primary: #f1f5f9;
-$text-secondary: #94a3b8;
-$input-bg: rgba(15, 23, 42, 0.6);
+/* --- CẤU HÌNH MÀU SẮC --- */
+$bg-dark: #1a1b26;        
+$bg-super-dark: #0f0f13; /* Màu khi tắt đèn */
+$neon-green: #00f7ff;
+$neon-purple: #bd34fe; 
+$lamp-color: #4fd1c5;     
+$wire-color: #2d3748;     
+$text-white: #ffffff;
+$text-gray: #a0aec0;
 
 .register-lamp-container {
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden; /* Chặn cuộn */
-  
-  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   background-color: $bg-dark;
   font-family: 'Poppins', sans-serif;
   position: relative;
-  
-  background: radial-gradient(circle at 50% 0%, #2e1065 0%, #0f172a 70%);
+  overflow: hidden;
+  padding: 20px 0;
+  transition: background-color 0.5s ease;
 
-  /* --- LAMP ART --- */
+  /* TRẠNG THÁI: TẮT ĐÈN */
+  &.dark-room {
+    background-color: $bg-super-dark;
+    
+    .register-box {
+      background: rgba(15, 20, 30, 0.85); 
+      border-color: rgba(255,255,255,0.05);
+      box-shadow: none;
+    }
+  }
+
+  &::before {
+    content: ''; position: absolute; width: 100%; height: 100%;
+    /* Màu nền tím nhẹ đặc trưng của Register */
+    background: radial-gradient(circle at 50% 10%, rgba(189, 52, 254, 0.15), transparent 60%);
+    pointer-events: none;
+    transition: opacity 0.5s;
+  }
+  
+  /* Tắt đèn thì mất nền tím */
+  &.dark-room::before { opacity: 0; }
+
+  /* --- LAMP ART (Đồng bộ Login) --- */
   .lamp-wrapper {
     position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
     display: flex; flex-direction: column; align-items: center; z-index: 10;
     transition: all 0.5s ease;
 
-    .wire { width: 2px; height: 130px; background: #475569; position: relative; z-index: 1; }
+    /* Dây ngắn 80px cho gọn */
+    .wire { width: 4px; height: 80px; background: $wire-color; position: relative; z-index: 1; }
     
     .lamp-head {
-      width: 140px; height: 90px; background: $lamp-shade;
-      border-radius: 50px 50px 10px 10px; position: relative; z-index: 2;
-      box-shadow: 0 0 60px rgba(45, 212, 191, 0.3), inset -5px -5px 20px rgba(0,0,0,0.1);
+      width: 120px; height: 90px; background: $lamp-color;
+      border-radius: 40px 40px 10px 10px; position: relative; z-index: 2;
+      box-shadow: 0 0 20px rgba(79, 209, 197, 0.4), inset -10px -10px 20px rgba(0,0,0,0.2);
       display: flex; justify-content: center; align-items: center;
+      transition: all 0.3s;
 
       .lamp-face {
         position: relative; width: 100%; height: 100%;
-        .eye { position: absolute; top: 40px; width: 12px; height: 12px; background: #0f172a; border-radius: 50%; animation: blink 6s infinite; &.left { left: 40px; } &.right { right: 40px; } }
-        .mouth { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); width: 16px; height: 8px; background: #0f172a; border-radius: 0 0 16px 16px; transition: 0.3s; }
+        .eye {
+          position: absolute; top: 40px; width: 12px; height: 12px;
+          background: #1a202c; border-radius: 50%; animation: blink 4s infinite;
+          &.left { left: 35px; } &.right { right: 35px; }
+        }
+        .mouth {
+          position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
+          width: 20px; height: 10px; background: #1a202c;
+          border-radius: 0 0 20px 20px; transition: 0.3s;
+        }
       }
+
       .light-beam {
-        position: absolute; top: 85px; left: 50%; transform: translateX(-50%);
-        width: 400px; height: 1000px;
-        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 0%, transparent 60%);
-        clip-path: polygon(30% 0, 70% 0, 100% 100%, 0% 100%);
-        pointer-events: none; z-index: 0;
+        position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
+        width: 300px; height: 600px;
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), transparent 80%);
+        clip-path: polygon(40% 0, 60% 0, 100% 100%, 0% 100%);
+        pointer-events: none; opacity: 1; transition: opacity 0.3s ease; z-index: 0;
+      }
+
+      /* DÂY KÉO CÔNG TẮC */
+      .pull-string {
+        position: absolute; top: 80px; right: 20px; cursor: pointer;
+        display: flex; flex-direction: column; align-items: center;
+        transform-origin: top center; transition: transform 0.1s;
+
+        .string-line { width: 2px; height: 60px; background: #e2e8f0; }
+        .string-knob { width: 10px; height: 10px; background: #e2e8f0; border-radius: 50%; }
+
+        &:hover .string-knob { background: $neon-green; box-shadow: 0 0 5px $neon-green; }
+        &.pull-action { animation: pullDown 0.6s ease-in-out; }
       }
     }
     
-    &.focus-password .lamp-head {
+    /* Khi Tắt đèn */
+    &.lamp-off {
+      .lamp-head {
+        background: #2d3748; box-shadow: none;
+        .light-beam { opacity: 0; }
+        .lamp-face { .eye { background: #1a202c; height: 2px; border-radius: 0; animation: none; } .mouth { width: 8px; height: 8px; border-radius: 50%; } }
+      }
+    }
+    
+    /* Khi nhập Pass */
+    &.focus-password:not(.lamp-off) .lamp-head {
       .light-beam { opacity: 0.15; }
-      .lamp-face { .eye { height: 4px; border-radius: 0; } .mouth { width: 8px; height: 8px; border-radius: 50%; bottom: 20px; } }
+      .lamp-face { .eye { height: 4px; border-radius: 0; } .mouth { width: 10px; height: 10px; border-radius: 50%; bottom: 20px; } }
     }
   }
 
   /* --- REGISTER BOX --- */
   .register-box {
-    margin-top: 320px; /* Đồng bộ vị trí với Login */
-    width: 400px; padding: 35px;
-    
-    background: rgba(30, 41, 59, 0.7);
-    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 24px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    margin-top: 150px; /* Đẩy lên cao hơn chút (cũ là 160) để vừa với dây ngắn */
+    width: 420px;
+    padding: 40px;
+    background: rgba(30, 41, 59, 0.75); 
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     z-index: 5;
-    animation: slideUp 0.8s ease-out;
+    
+    /* Animation mượt mà */
+    animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
 
     .header {
       text-align: center; margin-bottom: 25px;
-      h2 { margin: 0; color: $text-primary; font-size: 1.8rem; font-weight: 700; text-shadow: 0 0 20px rgba(192, 132, 252, 0.2); }
-      p { margin: 5px 0 0; color: $text-secondary; font-size: 0.9rem; }
+      h2 { margin: 0; color: $text-white; font-size: 1.8rem; font-weight: 700; }
+      p { margin: 5px 0 0; color: $text-gray; font-size: 0.9rem; }
     }
 
     form {
-      display: flex; flex-direction: column; gap: 16px;
+      display: flex; flex-direction: column; gap: 15px;
 
       .input-group {
-        position: relative; display: flex; align-items: center;
-        .icon { position: absolute; left: 16px; z-index: 2; color: $text-secondary; }
-        
+        position: relative;
+        .icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: $text-gray; pointer-events: none; transition: 0.3s; }
         input {
-          width: 100%; padding: 14px 14px 14px 48px; padding-right: 45px;
-          background: $input-bg;
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 12px; color: $text-primary; font-size: 0.95rem; outline: none; transition: all 0.3s;
-          &::placeholder { color: rgba(148, 163, 184, 0.5); }
+          width: 100%; padding: 12px 12px 12px 45px;
+          background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 10px; color: $text-white; font-size: 0.95rem; outline: none; transition: all 0.3s;
+          &::placeholder { color: rgba(255,255,255,0.3); }
           &:focus {
-            background: rgba(30, 41, 59, 0.8); border-color: $neon-purple; box-shadow: 0 0 0 4px rgba(192, 132, 252, 0.1);
+            border-color: $neon-purple;
+            box-shadow: 0 0 10px rgba(189, 52, 254, 0.3);
+            background: rgba(0, 0, 0, 0.5);
             & + .icon { color: $neon-purple; }
           }
-        }
-        .btn-toggle-password {
-          position: absolute; right: 16px; background: none; border: none; color: $text-secondary; cursor: pointer; padding: 4px; z-index: 3;
-          &:hover { color: $text-primary; }
         }
       }
 
       .btn-register {
-        margin-top: 10px;
-        background: linear-gradient(135deg, #a855f7, #4f46e5);
-        color: white; font-weight: 700; padding: 16px; 
-        border: none; border-radius: 12px; cursor: pointer; font-size: 1rem;
-        display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s;
-        box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
-        &:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(168, 85, 247, 0.4); }
-        &:disabled { opacity: 0.7; }
+        background: linear-gradient(135deg, #bd34fe, #4158d0);
+        color: #fff; font-weight: 700; padding: 14px; border: none; border-radius: 10px;
+        cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;
+        transition: 0.3s; margin-top: 10px;
+        
+        &:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(189, 52, 254, 0.4); }
+        &:disabled { opacity: 0.7; cursor: not-allowed; }
         .spin { animation: spin 1s linear infinite; }
       }
     }
 
     .footer {
-      text-align: center; margin-top: 20px; color: $text-secondary; font-size: 0.9rem;
-      button { background: none; border: none; font-weight: 600; color: $neon-purple; cursor: pointer; margin-left: 5px; &:hover { text-decoration: underline; } }
+      text-align: center; margin-top: 20px; color: $text-gray; font-size: 0.9rem;
+      a { color: $neon-purple; font-weight: 600; text-decoration: none; margin-left: 5px; &:hover { text-decoration: underline; } }
     }
   }
-  
-  /* RESPONSIVE LAPTOP */
+
+  /* 👇 FIX ANIMATION (Dùng Zoom để không bị giật) */
   @media (max-height: 850px) {
-    .lamp-wrapper { transform: translateX(-50%) scale(0.9); top: -20px; }
-    .register-box { margin-top: 260px; transform: scale(0.9); transform-origin: top center; }
+    .lamp-wrapper { zoom: 0.9; top: -10px; }
+    .register-box { 
+      margin-top: 130px; 
+      zoom: 0.9; 
+    }
   }
 
   @media (max-height: 700px) {
-    .lamp-wrapper { transform: translateX(-50%) scale(0.8); top: -30px; }
-    .register-box { margin-top: 220px; transform: scale(0.85); }
+    .lamp-wrapper { zoom: 0.8; top: -15px; }
+    .register-box { 
+      margin-top: 110px; 
+      zoom: 0.85; 
+    }
   }
 
   @media (max-width: 480px) {
-    overflow-y: auto;
-    .register-box { width: 90%; margin-top: 280px; transform: none; padding: 30px 20px; }
-    .lamp-wrapper { transform: translateX(-50%) scale(0.7); }
+    .register-box { width: 90%; padding: 25px; margin-top: 150px; zoom: 1; }
+    .lamp-wrapper { transform: translateX(-50%) scale(0.7); top: -20px; zoom: 1; }
   }
 }
 
 @keyframes blink { 0%, 96%, 100% { height: 12px; } 98% { height: 2px; } }
-@keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes spin { 100% { transform: rotate(360deg); } }
+@keyframes pullDown { 0% { transform: translateY(0); } 50% { transform: translateY(15px); } 100% { transform: translateY(0); } }

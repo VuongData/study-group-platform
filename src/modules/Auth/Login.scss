@@ -12,7 +12,7 @@ $input-bg: rgba(15, 23, 42, 0.6);
 .login-lamp-container {
   height: 100vh;
   width: 100vw;
-  overflow: hidden; /* ⛔ CHẶN THANH CUỘN TUYỆT ĐỐI */
+  overflow: hidden; /* Chặn thanh cuộn */
   
   display: flex;
   flex-direction: column;
@@ -23,33 +23,48 @@ $input-bg: rgba(15, 23, 42, 0.6);
   font-family: 'Poppins', sans-serif;
   position: relative;
   
-  /* Gradient nền sang trọng */
-  background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 80%);
+  /* Background gradient */
+  background: radial-gradient(circle at 50% 0%, #1e293b 0%, #020617 80%);
 
-  /* --- HIỆU ỨNG TẮT ĐÈN --- */
+  /* 👇 SPOTLIGHT THEO CHUỘT */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(
+      600px circle at var(--x, 50%) var(--y, 50%), 
+      rgba(34, 211, 238, 0.08), 
+      transparent 40% 
+    );
+    z-index: 0;
+    pointer-events: none;
+    transition: background 0.05s linear; 
+  }
+
   &.dark-room {
-    background: #020617; 
+    background: #000000; 
     .login-box {
       background: rgba(15, 23, 42, 0.95);
       border-color: rgba(255,255,255,0.02);
       box-shadow: none;
     }
+    &::before { opacity: 0; }
   }
 
   /* --- CHIẾC ĐÈN (LAMP ART) --- */
   .lamp-wrapper {
     position: absolute; 
-    top: -10px; /* Treo sát mép trên */
+    top: -10px; 
     left: 50%; 
     transform: translateX(-50%);
     display: flex; flex-direction: column; align-items: center; 
     z-index: 10;
     transition: all 0.5s ease;
 
-    /* 👇 1. GIỮ NGUYÊN DÂY NGẮN VỪA PHẢI */
+    /* 👇 1. DÂY NGẮN LẠI (80px) CHO GỌN */
     .wire { 
       width: 2px; 
-      height: 130px; /* Độ dài dây chuẩn */
+      height: 80px;  /* Đã chỉnh ngắn lại */
       background: #475569; 
       position: relative; z-index: 1; 
     }
@@ -64,6 +79,8 @@ $input-bg: rgba(15, 23, 42, 0.6);
 
       .lamp-face {
         position: relative; width: 100%; height: 100%;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
         .eye { 
           position: absolute; top: 40px; width: 12px; height: 12px; 
           background: #0f172a; border-radius: 50%; 
@@ -75,25 +92,35 @@ $input-bg: rgba(15, 23, 42, 0.6);
           width: 16px; height: 8px; background: #0f172a; 
           border-radius: 0 0 16px 16px; transition: 0.3s;
         }
+
+        /* Các trạng thái biểu cảm */
+        &.happy {
+          .eye { background: transparent !important; box-shadow: 0 -3px 0 0 #0f172a inset; animation: none; }
+          .mouth { width: 18px; height: 10px; border-radius: 0 0 20px 20px; bottom: 22px; }
+        }
+        &.surprised {
+          .eye { height: 14px; width: 14px; animation: none; }
+          .mouth { width: 10px; height: 10px; border-radius: 50%; bottom: 20px; } 
+        }
+        &.scared {
+          .eye { height: 4px; border-radius: 0; animation: none; } 
+          .mouth { width: 8px; height: 6px; border-radius: 50%; bottom: 20px; } 
+        }
       }
 
-      /* Tia sáng dài */
       .light-beam {
         position: absolute; top: 85px; left: 50%; transform: translateX(-50%);
-        width: 400px; height: 1000px; /* Dài xuống tận đáy màn hình */
+        width: 400px; height: 1000px;
         background: linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 0%, transparent 60%);
         clip-path: polygon(30% 0, 70% 0, 100% 100%, 0% 100%);
         pointer-events: none; z-index: 0;
         transition: opacity 0.3s;
       }
 
-      /* Dây kéo công tắc */
       .pull-string {
-        position: absolute; top: 80px; right: 25px; 
-        cursor: pointer;
+        position: absolute; top: 80px; right: 25px; cursor: pointer;
         display: flex; flex-direction: column; align-items: center;
-        transform-origin: top center; 
-        transition: transform 0.2s;
+        transform-origin: top center; transition: transform 0.2s;
         
         .string-line { width: 1px; height: 45px; background: #cbd5e1; }
         .string-knob { width: 10px; height: 10px; background: #fff; border-radius: 50%; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
@@ -105,29 +132,25 @@ $input-bg: rgba(15, 23, 42, 0.6);
     &.lamp-off .lamp-head {
       background: #334155; box-shadow: none;
       .light-beam { opacity: 0; }
-      .lamp-face { .eye { height: 2px; border-radius: 0; animation: none; background: #1e293b; } .mouth { width: 6px; height: 6px; border-radius: 50%; } }
+      .lamp-face { .eye { height: 2px; background: #1e293b; animation: none; } .mouth { width: 6px; height: 6px; border-radius: 50%; } }
     }
-    
-    /* Khi nhập pass, đèn tối đi chút */
-    &.focus-password:not(.lamp-off) .light-beam { opacity: 0.35; }
   }
 
   /* --- LOGIN BOX --- */
   .login-box {
-    /* 👇 2. ĐẨY HỘP XUỐNG SÂU ĐỂ NÉ ĐÈN */
-    margin-top: 320px; 
+    /* 👇 2. ĐẨY LÊN CAO HƠN (220px thay vì 320px) */
+    margin-top: 220px; 
     
-    width: 380px; /* Gọn hơn xíu */
-    padding: 35px;
-    
-    /* Kính mờ sang trọng */
+    width: 380px; padding: 35px;
     background: $bg-panel;
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 24px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     z-index: 5;
-    animation: slideUp 0.8s ease-out;
+    
+    /* Animation trồi lên mượt mà */
+    animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
 
     .header {
       text-align: center; margin-bottom: 25px;
@@ -192,28 +215,36 @@ $input-bg: rgba(15, 23, 42, 0.6);
     }
   }
 
-  /* 👇 3. QUAN TRỌNG: TỰ ĐỘNG THU NHỎ TRÊN LAPTOP ĐỂ KHÔNG BỊ CUỘN */
+  /* 👇 3. FIX LỖI ANIMATION GIẬT (Dùng Zoom thay vì Transform Scale) */
+  /* Cách này giúp animation 'slideUp' (dùng transform) không bị xung đột */
   @media (max-height: 850px) {
-    .lamp-wrapper { transform: translateX(-50%) scale(0.9); top: -20px; }
-    /* Giảm margin-top và scale nhỏ box lại */
-    .login-box { margin-top: 260px; transform: scale(0.9); transform-origin: top center; }
+    .lamp-wrapper { zoom: 0.9; top: -10px; }
+    .login-box { 
+      margin-top: 180px; 
+      zoom: 0.9; /* Thu nhỏ toàn bộ box */
+    }
   }
 
   @media (max-height: 700px) {
-    .lamp-wrapper { transform: translateX(-50%) scale(0.8); top: -30px; }
-    .login-box { margin-top: 220px; transform: scale(0.85); }
+    .lamp-wrapper { zoom: 0.8; top: -15px; }
+    .login-box { 
+      margin-top: 150px; 
+      zoom: 0.85; 
+    }
   }
 
-  /* Mobile */
   @media (max-width: 480px) {
-    overflow-y: auto; /* Mobile cho phép cuộn */
-    .login-box { width: 90%; margin-top: 280px; transform: none; padding: 30px 20px; }
-    .lamp-wrapper { transform: translateX(-50%) scale(0.7); }
+    overflow-y: auto;
+    .login-box { width: 90%; margin-top: 220px; padding: 30px 20px; zoom: 1; }
+    .lamp-wrapper { transform: translateX(-50%) scale(0.7); zoom: 1; }
   }
 }
 
 /* Animations */
 @keyframes blink { 0%, 96%, 100% { height: 12px; } 98% { height: 2px; } }
-@keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { 
+  from { opacity: 0; transform: translateY(40px); } 
+  to { opacity: 1; transform: translateY(0); } 
+}
 @keyframes spin { 100% { transform: rotate(360deg); } }
 @keyframes pullDown { 0% { transform: translateY(0); } 50% { transform: translateY(15px); } 100% { transform: translateY(0); } }
