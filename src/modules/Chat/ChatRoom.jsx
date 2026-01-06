@@ -37,7 +37,7 @@ const ChatRoom = () => {
   const imageInputRef = useRef(null);
   const fileInputRef = useRef(null);
   
-  // 👇 QUAN TRỌNG: Ref để kiểm soát vị trí cuộn
+  // Ref để kiểm soát vị trí cuộn
   const prevScrollHeight = useRef(null); 
   const isLoadingHistory = useRef(false); // Cờ đánh dấu đang tải lịch sử
   
@@ -56,7 +56,7 @@ const ChatRoom = () => {
   const [activeBoardId, setActiveBoardId] = useState(null); 
   const [boardTitle, setBoardTitle] = useState("");
   
-  // 👇 State limit tin nhắn
+  // State limit tin nhắn & Loading
   const [msgLimit, setMsgLimit] = useState(20);
   const [showLoadingSpinner, setShowLoadingSpinner] = useState(false);
 
@@ -130,7 +130,7 @@ const ChatRoom = () => {
   }, [user]);
 
   // =========================================================================================
-  // 👇 2. LOGIC LẤY TIN NHẮN (ĐÃ FIX SCROLL)
+  // 👇 2. LOGIC LẤY TIN NHẮN
   // =========================================================================================
 
   // Reset khi đổi phòng
@@ -158,18 +158,15 @@ const ChatRoom = () => {
     let isInitialLoad = true;
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      // Đảo ngược mảng để tin nhắn mới nhất nằm dưới cùng
       const newMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).reverse();
       
       setMessages(newMessages);
       setShowLoadingSpinner(false); // Tắt spinner khi có dữ liệu
 
-      // Logic Âm thanh & Title (Chỉ chạy khi không phải load lần đầu)
       if (!isInitialLoad) { 
         snapshot.docChanges().forEach((change) => {
           if (change.type === "added") {
             const newMsg = change.doc.data();
-            // Nếu tin nhắn mới (không phải của mình) VÀ không phải do đang load history
             if (newMsg.uid !== user.uid && !isLoadingHistory.current) {
               audioRef.current.currentTime = 0; 
               audioRef.current.play().catch(e => console.log("Audio block:", e));
@@ -184,60 +181,38 @@ const ChatRoom = () => {
     return () => unsubscribe();
   }, [selectedRoom?.id, msgLimit]);
 
-  // 👇 HÀM XỬ LÝ SỰ KIỆN CUỘN (FIX VÒNG LẶP)
+  // 👇 HÀM XỬ LÝ SỰ KIỆN CUỘN
   const handleScroll = (e) => {
     const container = e.target;
-    
-    // Nếu lướt lên đỉnh (scrollTop = 0) VÀ chưa đang load
     if (container.scrollTop === 0 && !showLoadingSpinner) {
-      
-      // Nếu số lượng tin nhắn hiện tại ít hơn limit thì có nghĩa là đã hết tin nhắn trong DB
-      // Không load thêm nữa để tránh lỗi
       if (messages.length < msgLimit) return;
-
-      // 1. Bật cờ đang load history
       isLoadingHistory.current = true;
-      
-      // 2. Lưu chiều cao hiện tại để lát nữa tính toán vị trí
       prevScrollHeight.current = container.scrollHeight;
-      
-      // 3. Hiện spinner
       setShowLoadingSpinner(true);
-
-      // 4. Tăng limit (Gọi API)
-      // Thêm delay nhỏ để UX mượt hơn và tránh spam
       setTimeout(() => {
         setMsgLimit(prev => prev + 20);
       }, 500);
     }
   };
 
-  // 👇 HÀM ĐIỀU CHỈNH VỊ TRÍ CUỘN (SCROLL RESTORATION)
+  // 👇 HÀM ĐIỀU CHỈNH VỊ TRÍ CUỘN
   useLayoutEffect(() => {
     const container = chatContainerRef.current;
     if (!container) return;
 
-    // TRƯỜNG HỢP 1: Vừa tải xong tin nhắn cũ (Restoration)
     if (isLoadingHistory.current && prevScrollHeight.current !== null) {
       const newScrollHeight = container.scrollHeight;
       const diff = newScrollHeight - prevScrollHeight.current;
-      
-      // Nhảy ngay lập tức xuống vị trí cũ
       container.scrollTop = diff;
-      
-      // Reset cờ
       isLoadingHistory.current = false;
       prevScrollHeight.current = null;
     } 
-    // TRƯỜNG HỢP 2: Tin nhắn mới hoặc lần đầu vào phòng (Cuộn đáy)
     else {
-      // Chỉ cuộn xuống đáy nếu KHÔNG PHẢI đang xem lại tin cũ
-      // (Hoặc nếu là tin nhắn do chính mình gửi)
       dummyDiv.current?.scrollIntoView({ behavior: "auto" });
     }
-  }, [messages]); // Chạy mỗi khi danh sách tin nhắn thay đổi
+  }, [messages]);
 
-  // ... (CÁC HÀM XỬ LÝ KHÁC GIỮ NGUYÊN) ...
+  // ... (CÁC HÀM XỬ LÝ KHÁC) ...
   const handleScrollToMessage = (msgId) => {
     const element = document.getElementById(`msg-${msgId}`);
     if (element) {
@@ -268,6 +243,8 @@ const ChatRoom = () => {
   const handleRejectRequest = async (reqId) => { if(!confirm("Từ chối?")) return; try { await deleteDoc(doc(db, "friend_requests", reqId)); toast.info("Đã từ chối"); if(friendRequests.length <= 1) setShowModal(false); } catch (e) { toast.error("Lỗi"); } };
   const handleModalSubmit = async () => { if (!inputTarget.trim()) return toast.warning("Vui lòng nhập thông tin!"); setIsProcessing(true); const commonData = { createdAt: serverTimestamp(), updatedAt: serverTimestamp() }; try { if (modalMode === 'create_group') { await addDoc(collection(db, "chat_rooms"), { name: inputTarget, type: "group", members: [user.uid], createdBy: user.uid, ...commonData }); toast.success("Tạo nhóm thành công!"); } else if (modalMode === 'add_friend') { const snap = await getDocs(query(collection(db, "users"), where("email", "==", inputTarget.trim()))); if (snap.empty) { toast.error("Gmail không tồn tại!"); setIsProcessing(false); return; } const targetUser = snap.docs[0]; if (targetUser.id === user.uid) { toast.warning("Không thể tự kết bạn!"); setIsProcessing(false); return; } const existing = rooms.find(r => r.type === 'direct' && r.members.includes(targetUser.id)); if (existing) { toast.info("Đã là bạn bè!"); setIsProcessing(false); return; } const reqSnap = await getDocs(query(collection(db, "friend_requests"), where("fromUid", "==", user.uid), where("toUid", "==", targetUser.id))); if (!reqSnap.empty) { toast.warning("Đã gửi lời mời rồi!"); setIsProcessing(false); return; } await addDoc(collection(db, "friend_requests"), { fromUid: user.uid, fromName: user.displayName, fromEmail: user.email, toUid: targetUser.id, createdAt: serverTimestamp() }); toast.success("Đã gửi lời mời!"); } else if (modalMode === 'add_member') { const snap = await getDocs(query(collection(db, "users"), where("email", "==", inputTarget.trim()))); if (snap.empty) { toast.error("Gmail không tồn tại!"); setIsProcessing(false); return; } const newMem = snap.docs[0]; if (selectedRoom.members.includes(newMem.id)) { toast.warning("Đã có trong nhóm!"); setIsProcessing(false); return; } await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { members: arrayUnion(newMem.id), updatedAt: serverTimestamp() }); await addDoc(collection(db, "messages"), { text: `👋 Đã thêm ${newMem.data().displayName} vào nhóm.`, fileType: "system", uid: "SYSTEM", displayName: "Hệ thống", roomId: selectedRoom.id, createdAt: serverTimestamp() }); setSelectedRoom(prev => ({...prev, members: [...prev.members, newMem.id]})); toast.success("Đã thêm thành viên!"); } else if (modalMode === 'set_nickname') { const otherId = selectedRoom.members.find(id => id !== user.uid); if (otherId) { setMyNicknames(prev => ({...prev, [otherId]: inputTarget})); await setDoc(doc(db, "users", user.uid), { [`privateNicknames.${otherId}`]: inputTarget }, { merge: true }); toast.success("Đã lưu biệt danh!"); } else { toast.error("Lỗi: Không tìm thấy người dùng"); } } else if (modalMode === 'rename_group') { await updateDoc(doc(db, "chat_rooms", selectedRoom.id), { name: inputTarget, updatedAt: serverTimestamp() }); setSelectedRoom(prev => ({...prev, name: inputTarget})); toast.success("Đổi tên thành công!"); } setShowModal(false); setInputTarget(""); } catch (error) { console.error("Lỗi xử lý:", error); toast.error("Lỗi hệ thống: " + error.message); } finally { setIsProcessing(false); } };
   const getRoomName = (room) => { if (room.type === 'group') return room.name; const otherId = room.members.find(id => id !== user.uid); if (!otherId) return "Unknown"; if (myNicknames[otherId]) return myNicknames[otherId]; return userNames[otherId] || "Đang tải..."; };
+  
+  // Xác định quyền admin
   const isGroupAdmin = selectedRoom?.createdBy === user.uid;
   const idToDisplay = selectedRoom ? selectedRoom.id : user.uid;
 
@@ -424,7 +401,17 @@ const ChatRoom = () => {
         ) : <div className="no-room">Chọn phòng chat</div>}
       </div>
 
-      {showResources && selectedRoom && <div style={{width:320, borderLeft:'1px solid #ddd'}}><ChatResources roomId={selectedRoom.id}/></div>}
+      {showResources && selectedRoom && (
+        <div style={{width: 320, borderLeft: '1px solid #ddd'}}>
+          {/* 👇 FIX QUAN TRỌNG: Truyền đủ props để lưu file hoạt động */}
+          <ChatResources 
+            roomId={selectedRoom.id}
+            roomType={selectedRoom.type} 
+            isGroupAdmin={isGroupAdmin} 
+          />
+        </div>
+      )}
+
       {activeBoardId && (<Whiteboard boardId={activeBoardId} title={boardTitle} onClose={() => setActiveBoardId(null)} />)}
       
       {showModal && (
