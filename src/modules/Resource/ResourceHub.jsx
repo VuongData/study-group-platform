@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { db } from "../../services/firebase";
-import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, doc, getDoc } from "firebase/firestore"; // 👈 Thêm doc, getDoc
 import { 
   Folder, FileText, Image as ImageIcon, Download, 
   Search, Users, MessageCircle, Clock, Grid, List,
@@ -12,15 +12,19 @@ import "./ResourceHub.scss";
 const ResourceHub = () => {
   const { user } = useAuth();
   
+  // State
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [files, setFiles] = useState([]);
   const [activeTab, setActiveTab] = useState("all"); 
-  const [viewMode, setViewMode] = useState("grid");
+  const [viewMode, setViewMode] = useState("grid"); 
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  
+  // 👇 MỚI: State lưu tên người dùng để hiển thị (Map: uid -> displayName)
+  const [userNames, setUserNames] = useState({});
 
-  // 1. Lấy danh sách phòng (Giữ nguyên)
+  // 1. Lấy danh sách phòng chat của User
   useEffect(() => {
     if (!user) return;
     const q = query(
@@ -38,7 +42,47 @@ const ResourceHub = () => {
     return () => unsubscribe();
   }, [user]);
 
-  // 2. Lấy File (Giữ nguyên logic query messages)
+  // 👇 2. MỚI: Fetch Tên hiển thị cho các phòng Chat Riêng (Direct)
+  useEffect(() => {
+    if (!user || rooms.length === 0) return;
+
+    const fetchNames = async () => {
+      const missingIds = new Set();
+      
+      // Lọc ra các ID chưa có tên trong state
+      rooms.forEach(room => {
+        if (room.type !== 'group') {
+          const otherId = room.members.find(id => id !== user.uid);
+          if (otherId && !userNames[otherId]) missingIds.add(otherId);
+        }
+      });
+
+      if (missingIds.size === 0) return;
+
+      // Gọi Firestore lấy tên từng người
+      const newNames = {};
+      await Promise.all(Array.from(missingIds).map(async (uid) => {
+        try {
+          const snap = await getDoc(doc(db, "users", uid));
+          if (snap.exists()) {
+            newNames[uid] = snap.data().displayName;
+          } else {
+            newNames[uid] = "Người dùng ẩn";
+          }
+        } catch (e) {
+          console.error("Lỗi lấy tên:", e);
+          newNames[uid] = "Lỗi tải tên";
+        }
+      }));
+
+      // Cập nhật vào state
+      setUserNames(prev => ({ ...prev, ...newNames }));
+    };
+
+    fetchNames();
+  }, [rooms, user, userNames]); // Chạy lại khi danh sách phòng thay đổi
+
+  // 3. Lấy File từ phòng đã chọn
   useEffect(() => {
     if (!selectedRoom) return;
     setIsLoading(true);
@@ -64,16 +108,13 @@ const ResourceHub = () => {
     return () => unsubscribe();
   }, [selectedRoom]);
 
-  // 👇 MỚI: Hàm xác định trạng thái file (Hữu ích / Rác / Chờ)
+  // --- LOGIC XÁC ĐỊNH TRẠNG THÁI FILE ---
   const getFileStatus = (file) => {
-    // A. Nếu là nhóm -> Dùng reviewStatus chung
-    if (selectedRoom.type === 'group') {
+    if (selectedRoom?.type === 'group') {
       if (file.reviewStatus === 'approved') return 'approved';
       if (file.reviewStatus === 'rejected') return 'rejected';
       return 'pending';
-    } 
-    // B. Nếu là chat riêng -> Dùng personalStatus của mình
-    else {
+    } else {
       const myStatus = file.personalStatus ? file.personalStatus[user.uid] : null;
       if (myStatus === 'saved') return 'approved';
       if (myStatus === 'hidden') return 'rejected';
@@ -81,10 +122,12 @@ const ResourceHub = () => {
     }
   };
 
+  // 👇 CẬP NHẬT: Lấy tên từ state userNames
   const getRoomName = (room) => {
     if (room.type === 'group') return room.name;
     const otherId = room.members.find(id => id !== user.uid);
-    return `Chat riêng (${otherId?.slice(0, 5)}...)`;
+    // Nếu đã tải được tên thì hiện tên, chưa thì hiện tạm "Đang tải..." hoặc ID rút gọn
+    return userNames[otherId] || `Đang tải... (${otherId?.slice(0, 4)})`;
   };
 
   const filteredFiles = files.filter(f => {
@@ -100,6 +143,8 @@ const ResourceHub = () => {
 
   return (
     <div className="resource-hub-container">
+      
+      {/* SIDEBAR */}
       <div className="res-sidebar">
         <div className="res-header">
           <h3>🗂️ Kho Tài Liệu</h3>
@@ -116,6 +161,7 @@ const ResourceHub = () => {
                 {room.type === 'group' ? <Users size={18}/> : <MessageCircle size={18}/>}
               </div>
               <div className="info">
+                {/* Hiển thị tên đã xử lý */}
                 <span className="name">{getRoomName(room)}</span>
                 <span className="type">{room.type === 'group' ? 'Nhóm' : 'Cá nhân'}</span>
               </div>
@@ -124,6 +170,7 @@ const ResourceHub = () => {
         </div>
       </div>
 
+      {/* MAIN CONTENT */}
       <div className="res-main">
         {selectedRoom ? (
           <>
@@ -132,16 +179,23 @@ const ResourceHub = () => {
                 <h2>{getRoomName(selectedRoom)}</h2>
                 <span className="file-count">{files.length} tệp tin</span>
               </div>
+              
               <div className="actions-section">
                 <div className="search-box">
                   <Search size={16}/>
-                  <input placeholder="Tìm tên file..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}/>
+                  <input 
+                    placeholder="Tìm tên file..." 
+                    value={searchTerm} 
+                    onChange={e => setSearchTerm(e.target.value)}
+                  />
                 </div>
+                
                 <div className="filter-tabs">
                   <button className={activeTab==='all'?'active':''} onClick={()=>setActiveTab('all')}>Tất cả</button>
                   <button className={activeTab==='image'?'active':''} onClick={()=>setActiveTab('image')}>Ảnh</button>
                   <button className={activeTab==='document'?'active':''} onClick={()=>setActiveTab('document')}>Văn bản</button>
                 </div>
+
                 <div className="view-toggle">
                   <button className={viewMode==='grid'?'active':''} onClick={()=>setViewMode('grid')}><Grid size={18}/></button>
                   <button className={viewMode==='list'?'active':''} onClick={()=>setViewMode('list')}><List size={18}/></button>
@@ -153,16 +207,16 @@ const ResourceHub = () => {
               {isLoading ? (
                 <div className="loading">Đang tải tài liệu...</div>
               ) : filteredFiles.length === 0 ? (
-                <div className="empty-state"><Folder size={48} /><p>Không có tài liệu nào.</p></div>
+                <div className="empty-state">
+                  <Folder size={48} />
+                  <p>Không có tài liệu nào trong nhóm này.</p>
+                </div>
               ) : (
                 filteredFiles.map(file => {
-                  // 👇 Lấy trạng thái file
-                  const status = getFileStatus(file); 
+                  const status = getFileStatus(file);
 
                   return (
-                    <div key={file.id} className={`file-card status-${status}`}> {/* Thêm class status để CSS mờ đi nếu rejected */}
-                      
-                      {/* 👇 NHÃN TRẠNG THÁI (BADGE) */}
+                    <div key={file.id} className={`file-card status-${status}`}>
                       <div className={`status-badge ${status}`} title={status === 'approved' ? "Đã lưu" : status === 'rejected' ? "Đã bỏ qua" : "Chưa xử lý"}>
                         {status === 'approved' && <CheckCircle size={16} />}
                         {status === 'rejected' && <XCircle size={16} />}
@@ -170,20 +224,30 @@ const ResourceHub = () => {
                       </div>
 
                       <div className="file-preview" onClick={() => window.open(file.fileUrl, '_blank')}>
-                        {file.fileType === 'image' ? <img src={file.fileUrl} alt="preview" /> : <div className="doc-icon"><FileText size={40}/></div>}
+                        {file.fileType === 'image' ? (
+                          <img src={file.fileUrl} alt="preview" />
+                        ) : (
+                          <div className="doc-icon"><FileText size={40}/></div>
+                        )}
                       </div>
 
                       <div className="file-info">
                         <div className="top-row">
-                          <span className="file-name" title={file.fileName}>{file.fileName || "File không tên"}</span>
+                          <span className="file-name" title={file.fileName || "Ảnh"}>
+                            {file.fileName || (file.fileType === 'image' ? 'Hình ảnh' : 'Tài liệu')}
+                          </span>
                         </div>
                         <div className="meta-row">
-                          <span className="sender"><Clock size={12}/> {formatDate(file.createdAt)}</span>
+                          <span className="sender">
+                             <Clock size={12}/> {formatDate(file.createdAt)}
+                          </span>
                           <span className="uploader">bởi {file.displayName}</span>
                         </div>
                       </div>
                       
-                      <a href={file.fileUrl} target="_blank" rel="noreferrer" className="btn-download"><Download size={16}/></a>
+                      <a href={file.fileUrl} target="_blank" rel="noreferrer" className="btn-download" title="Tải xuống">
+                        <Download size={16}/>
+                      </a>
                     </div>
                   );
                 })
