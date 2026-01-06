@@ -1,19 +1,35 @@
 import { useState } from 'react';
 import Login from './Login';
 import Register from './Register';
+import ForgotPassword from './ForgotPassword'; // Import thêm file này
 
 const AuthPage = () => {
-  // false = Hiện Login, true = Hiện Register
-  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  // Thay vì true/false, ta dùng string để quản lý 3 trạng thái:
+  // 'login' | 'register' | 'forgot'
+  const [view, setView] = useState('login');
 
   return (
     <>
-      {isRegisterMode ? (
-        // Hiện form Đăng ký, truyền hàm để quay về Login
-        <Register onSwitchToLogin={() => setIsRegisterMode(false)} />
-      ) : (
-        // Hiện form Đăng nhập, truyền hàm để sang Đăng ký
-        <Login onSwitchToRegister={() => setIsRegisterMode(true)} />
+      {/* TRƯỜNG HỢP 1: ĐĂNG KÝ */}
+      {view === 'register' && (
+        <Register 
+          onSwitchToLogin={() => setView('login')} 
+        />
+      )}
+
+      {/* TRƯỜNG HỢP 2: QUÊN MẬT KHẨU */}
+      {view === 'forgot' && (
+        <ForgotPassword 
+          onBackToLogin={() => setView('login')} 
+        />
+      )}
+
+      {/* TRƯỜNG HỢP 3: ĐĂNG NHẬP (Mặc định) */}
+      {view === 'login' && (
+        <Login 
+          onSwitchToRegister={() => setView('register')}
+          onSwitchToForgot={() => setView('forgot')} // Truyền thêm hàm chuyển sang quên pass
+        />
       )}
     </>
   );

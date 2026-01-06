@@ -1,59 +1,54 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+// Bỏ import Link, import ArrowLeft
 import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../../services/firebase"; // Nhớ trỏ đúng đường dẫn firebase
+import { auth } from "../../services/firebase"; 
 import { toast } from "react-toastify";
 import { Mail, ArrowLeft, Loader2 } from "lucide-react";
-import "./Login.scss"; // Tận dụng luôn CSS của trang Login cho đẹp
+import "./Login.scss"; 
 
-const ForgotPassword = () => {
+// 👇 Nhận prop onBackToLogin
+const ForgotPassword = ({ onBackToLogin }) => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    if (!email) return toast.warning("Vui lòng nhập email của bạn!");
-
+    if (!email) return toast.warning("Vui lòng nhập email!");
     setLoading(true);
     try {
-      // Hàm này của Firebase sẽ gửi 1 email chứa link reset pass
       await sendPasswordResetEmail(auth, email);
+      toast.success("Đã gửi link! Kiểm tra email nhé.");
       
-      toast.success("Đã gửi link khôi phục! Hãy kiểm tra hộp thư đến (hoặc Spam).");
-      setEmail(""); // Xóa ô nhập cho sạch
+      // Gửi xong thì tự động quay về trang login cho tiện
+      setTimeout(() => {
+        onBackToLogin();
+      }, 3000);
+      
     } catch (error) {
       console.error(error);
-      if (error.code === 'auth/user-not-found') {
-        toast.error("Email này chưa đăng ký tài khoản nào!");
-      } else if (error.code === 'auth/invalid-email') {
-        toast.error("Email không hợp lệ!");
-      } else {
-        toast.error("Có lỗi xảy ra, vui lòng thử lại sau.");
-      }
+      toast.error("Lỗi: " + error.code);
     } finally {
       setLoading(false);
     }
   };
 
   return (
+    // Dùng chung class container với Login để lấy background
     <div className="login-lamp-container dark-room">
-      {/* Không cần hiện đèn ở trang này cho đỡ rối, hoặc giữ tùy bạn */}
-      
-      <div className="login-box" style={{ marginTop: '100px' }}> {/* Style inline chỉnh riêng cho trang này */}
+      {/* Dùng chung class login-box để lấy style cái hộp */}
+      <div className="login-box" style={{ marginTop: '280px' }}> 
         <div className="header">
           <h2>Quên mật khẩu?</h2>
-          <p>Nhập email để nhận đường dẫn đặt lại mật khẩu mới.</p>
+          <p>Nhập email để nhận link khôi phục.</p>
         </div>
 
         <form onSubmit={handleResetPassword}>
           <div className="input-group">
             <div className="icon"><Mail size={20}/></div>
             <input 
-              type="email" 
-              placeholder="Nhập email của bạn" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoFocus
+              type="email" placeholder="Email đăng ký" value={email}
+              onChange={(e) => setEmail(e.target.value)} autoFocus
+              style={{ paddingLeft: '50px' }} // Fix CSS inline cho nhanh
             />
           </div>
 
@@ -63,9 +58,17 @@ const ForgotPassword = () => {
         </form>
 
         <div className="footer">
-          <Link to="/auth" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', textDecoration: 'none', color: '#00f7ff' }}>
+          {/* 👇 Nút quay lại Login */}
+          <button 
+            onClick={onBackToLogin}
+            style={{ 
+              background: 'none', border: 'none', color: '#00f7ff', 
+              cursor: 'pointer', display: 'flex', alignItems: 'center', 
+              gap: '5px', margin: '0 auto', fontSize: '0.95rem'
+            }}
+          >
             <ArrowLeft size={16} /> Quay lại Đăng nhập
-          </Link>
+          </button>
         </div>
       </div>
     </div>
