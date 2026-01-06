@@ -1,17 +1,23 @@
 import { useState } from "react";
-import { User, Lock, Mail, ArrowRight, Loader2, CheckCircle } from "lucide-react"; 
+// Import các icons cần thiết
+import { User, Lock, Mail, ArrowRight, Loader2, CheckCircle, Eye, EyeOff } from "lucide-react"; 
 import { toast } from "react-toastify";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "../../services/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import "./Register.scss";
 
-// 👇 NHẬN PROP onSwitchToLogin TỪ TRANG CHA
+// Nhận props điều hướng từ cha
 const Register = ({ onSwitchToLogin }) => {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  
+  // State quản lý 2 ô mật khẩu riêng biệt
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
@@ -40,7 +46,7 @@ const Register = ({ onSwitchToLogin }) => {
       });
 
       toast.success("Đăng ký thành công! Đang đăng nhập...");
-      // Không cần navigate, hệ thống AuthContext sẽ tự nhận diện user mới và chuyển vào Dashboard
+      // Logic xử lý tiếp theo do AuthContext lo
 
     } catch (error) {
       console.error(error);
@@ -63,26 +69,47 @@ const Register = ({ onSwitchToLogin }) => {
 
       <div className="register-box">
         <div className="header"><h2>Tạo Tài Khoản</h2><p>Tham gia cùng chúng tôi!</p></div>
+        
         <form onSubmit={handleRegister}>
-          <div className="input-group"><div className="icon"><User size={20}/></div><input type="text" placeholder="Tên hiển thị" value={displayName} onChange={(e) => setDisplayName(e.target.value)} onFocus={() => setIsPasswordFocused(false)}/></div>
-          <div className="input-group"><div className="icon"><Mail size={20}/></div><input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} onFocus={() => setIsPasswordFocused(false)}/></div>
-          <div className="input-group"><div className="icon"><Lock size={20}/></div><input type="password" placeholder="Mật khẩu" value={password} onChange={(e) => setPassword(e.target.value)} onFocus={() => setIsPasswordFocused(true)} onBlur={() => setIsPasswordFocused(false)}/></div>
-          <div className="input-group"><div className="icon"><CheckCircle size={20}/></div><input type="password" placeholder="Xác nhận mật khẩu" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} onFocus={() => setIsPasswordFocused(true)} onBlur={() => setIsPasswordFocused(false)}/></div>
+          <div className="input-group">
+            <div className="icon"><User size={20}/></div>
+            <input type="text" placeholder="Tên hiển thị" value={displayName} onChange={(e) => setDisplayName(e.target.value)} onFocus={() => setIsPasswordFocused(false)}/>
+          </div>
+          <div className="input-group">
+            <div className="icon"><Mail size={20}/></div>
+            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} onFocus={() => setIsPasswordFocused(false)}/>
+          </div>
+          
+          {/* Ô Mật khẩu 1 */}
+          <div className="input-group">
+            <div className="icon"><Lock size={20}/></div>
+            <input 
+              type={showPassword ? "text" : "password"} 
+              placeholder="Mật khẩu" value={password} onChange={(e) => setPassword(e.target.value)} onFocus={() => setIsPasswordFocused(true)} onBlur={() => setIsPasswordFocused(false)}
+            />
+            <button type="button" className="btn-toggle-password" tabIndex="-1" onClick={() => setShowPassword(!showPassword)}>
+              {showPassword ? <EyeOff size={20}/> : <Eye size={20}/>}
+            </button>
+          </div>
+
+          {/* Ô Mật khẩu 2 (Xác nhận) */}
+          <div className="input-group">
+            <div className="icon"><CheckCircle size={20}/></div>
+            <input 
+              type={showConfirmPassword ? "text" : "password"} 
+              placeholder="Xác nhận mật khẩu" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} onFocus={() => setIsPasswordFocused(true)} onBlur={() => setIsPasswordFocused(false)}
+            />
+            <button type="button" className="btn-toggle-password" tabIndex="-1" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+              {showConfirmPassword ? <EyeOff size={20}/> : <Eye size={20}/>}
+            </button>
+          </div>
+
           <button type="submit" className="btn-register" disabled={loading}>{loading ? <Loader2 className="spin" size={20}/> : <>Đăng ký ngay <ArrowRight size={20}/></>}</button>
         </form>
 
-        {/* 👇 SỬA PHẦN NÀY: NÚT QUAY VỀ LOGIN */}
         <div className="footer">
           Đã có tài khoản? 
-          <button 
-            onClick={onSwitchToLogin} 
-            style={{ 
-               background: 'none', border: 'none', color: '#bd34fe', 
-               fontWeight: 'bold', cursor: 'pointer', marginLeft: '5px', fontSize: '0.9rem' 
-            }}
-          >
-            Đăng nhập
-          </button>
+          <button onClick={onSwitchToLogin}>Đăng nhập</button>
         </div>
       </div>
     </div>
