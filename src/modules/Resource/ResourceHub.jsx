@@ -4,23 +4,23 @@ import { db } from "../../services/firebase";
 import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import { 
   Folder, FileText, Image as ImageIcon, Download, 
-  Search, Users, MessageCircle, Clock, Grid, List 
+  Search, Users, MessageCircle, Clock, Grid, List,
+  CheckCircle, XCircle, HelpCircle
 } from "lucide-react";
 import "./ResourceHub.scss";
 
 const ResourceHub = () => {
   const { user } = useAuth();
   
-  // State
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [files, setFiles] = useState([]);
-  const [activeTab, setActiveTab] = useState("all"); // 'all', 'image', 'document'
-  const [viewMode, setViewMode] = useState("grid"); // 'grid', 'list'
+  const [activeTab, setActiveTab] = useState("all"); 
+  const [viewMode, setViewMode] = useState("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // 1. Lấy danh sách phòng chat của User
+  // 1. Lấy danh sách phòng (Giữ nguyên)
   useEffect(() => {
     if (!user) return;
     const q = query(
@@ -31,7 +31,6 @@ const ResourceHub = () => {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const roomList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setRooms(roomList);
-      // Mặc định chọn phòng đầu tiên
       if (roomList.length > 0 && !selectedRoom) {
         setSelectedRoom(roomList[0]);
       }
@@ -39,13 +38,11 @@ const ResourceHub = () => {
     return () => unsubscribe();
   }, [user]);
 
-  // 2. Lấy File từ phòng đã chọn
+  // 2. Lấy File (Giữ nguyên logic query messages)
   useEffect(() => {
     if (!selectedRoom) return;
     setIsLoading(true);
 
-    // Query messages có fileUrl trong phòng này
-    // Lưu ý: Cần index (roomId + createdAt) trong Firestore nếu dữ liệu lớn
     const q = query(
       collection(db, "messages"),
       where("roomId", "==", selectedRoom.id),
@@ -56,7 +53,6 @@ const ResourceHub = () => {
       const fileMsgs = [];
       snapshot.forEach(doc => {
         const data = doc.data();
-        // Chỉ lấy tin nhắn có file
         if (data.fileUrl) {
           fileMsgs.push({ id: doc.id, ...data });
         }
@@ -68,7 +64,23 @@ const ResourceHub = () => {
     return () => unsubscribe();
   }, [selectedRoom]);
 
-  // Helpers
+  // 👇 MỚI: Hàm xác định trạng thái file (Hữu ích / Rác / Chờ)
+  const getFileStatus = (file) => {
+    // A. Nếu là nhóm -> Dùng reviewStatus chung
+    if (selectedRoom.type === 'group') {
+      if (file.reviewStatus === 'approved') return 'approved';
+      if (file.reviewStatus === 'rejected') return 'rejected';
+      return 'pending';
+    } 
+    // B. Nếu là chat riêng -> Dùng personalStatus của mình
+    else {
+      const myStatus = file.personalStatus ? file.personalStatus[user.uid] : null;
+      if (myStatus === 'saved') return 'approved';
+      if (myStatus === 'hidden') return 'rejected';
+      return 'pending';
+    }
+  };
+
   const getRoomName = (room) => {
     if (room.type === 'group') return room.name;
     const otherId = room.members.find(id => id !== user.uid);
@@ -88,8 +100,6 @@ const ResourceHub = () => {
 
   return (
     <div className="resource-hub-container">
-      
-      {/* SIDEBAR: DANH SÁCH NHÓM */}
       <div className="res-sidebar">
         <div className="res-header">
           <h3>🗂️ Kho Tài Liệu</h3>
@@ -114,33 +124,24 @@ const ResourceHub = () => {
         </div>
       </div>
 
-      {/* MAIN CONTENT: FILE GRID */}
       <div className="res-main">
         {selectedRoom ? (
           <>
-            {/* HEADER TOOLBAR */}
             <div className="main-toolbar">
               <div className="title-section">
                 <h2>{getRoomName(selectedRoom)}</h2>
                 <span className="file-count">{files.length} tệp tin</span>
               </div>
-              
               <div className="actions-section">
                 <div className="search-box">
                   <Search size={16}/>
-                  <input 
-                    placeholder="Tìm tên file..." 
-                    value={searchTerm} 
-                    onChange={e => setSearchTerm(e.target.value)}
-                  />
+                  <input placeholder="Tìm tên file..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}/>
                 </div>
-                
                 <div className="filter-tabs">
                   <button className={activeTab==='all'?'active':''} onClick={()=>setActiveTab('all')}>Tất cả</button>
                   <button className={activeTab==='image'?'active':''} onClick={()=>setActiveTab('image')}>Ảnh</button>
                   <button className={activeTab==='document'?'active':''} onClick={()=>setActiveTab('document')}>Văn bản</button>
                 </div>
-
                 <div className="view-toggle">
                   <button className={viewMode==='grid'?'active':''} onClick={()=>setViewMode('grid')}><Grid size={18}/></button>
                   <button className={viewMode==='list'?'active':''} onClick={()=>setViewMode('list')}><List size={18}/></button>
@@ -148,48 +149,44 @@ const ResourceHub = () => {
               </div>
             </div>
 
-            {/* FILE DISPLAY AREA */}
             <div className={`file-content-area ${viewMode}`}>
               {isLoading ? (
                 <div className="loading">Đang tải tài liệu...</div>
               ) : filteredFiles.length === 0 ? (
-                <div className="empty-state">
-                  <Folder size={48} />
-                  <p>Không có tài liệu nào trong nhóm này.</p>
-                </div>
+                <div className="empty-state"><Folder size={48} /><p>Không có tài liệu nào.</p></div>
               ) : (
-                filteredFiles.map(file => (
-                  <div key={file.id} className="file-card">
-                    {/* PREVIEW */}
-                    <div className="file-preview" onClick={() => window.open(file.fileUrl, '_blank')}>
-                      {file.fileType === 'image' ? (
-                        <img src={file.fileUrl} alt="preview" />
-                      ) : (
-                        <div className="doc-icon"><FileText size={40}/></div>
-                      )}
-                    </div>
+                filteredFiles.map(file => {
+                  // 👇 Lấy trạng thái file
+                  const status = getFileStatus(file); 
 
-                    {/* INFO */}
-                    <div className="file-info">
-                      <div className="top-row">
-                        <span className="file-name" title={file.fileName || "Ảnh"}>
-                          {file.fileName || (file.fileType === 'image' ? 'Hình ảnh' : 'Tài liệu')}
-                        </span>
+                  return (
+                    <div key={file.id} className={`file-card status-${status}`}> {/* Thêm class status để CSS mờ đi nếu rejected */}
+                      
+                      {/* 👇 NHÃN TRẠNG THÁI (BADGE) */}
+                      <div className={`status-badge ${status}`} title={status === 'approved' ? "Đã lưu" : status === 'rejected' ? "Đã bỏ qua" : "Chưa xử lý"}>
+                        {status === 'approved' && <CheckCircle size={16} />}
+                        {status === 'rejected' && <XCircle size={16} />}
+                        {status === 'pending' && <HelpCircle size={16} />}
                       </div>
-                      <div className="meta-row">
-                        <span className="sender">
-                           <Clock size={12}/> {formatDate(file.createdAt)}
-                        </span>
-                        <span className="uploader">bởi {file.displayName}</span>
+
+                      <div className="file-preview" onClick={() => window.open(file.fileUrl, '_blank')}>
+                        {file.fileType === 'image' ? <img src={file.fileUrl} alt="preview" /> : <div className="doc-icon"><FileText size={40}/></div>}
                       </div>
+
+                      <div className="file-info">
+                        <div className="top-row">
+                          <span className="file-name" title={file.fileName}>{file.fileName || "File không tên"}</span>
+                        </div>
+                        <div className="meta-row">
+                          <span className="sender"><Clock size={12}/> {formatDate(file.createdAt)}</span>
+                          <span className="uploader">bởi {file.displayName}</span>
+                        </div>
+                      </div>
+                      
+                      <a href={file.fileUrl} target="_blank" rel="noreferrer" className="btn-download"><Download size={16}/></a>
                     </div>
-                    
-                    {/* DOWNLOAD BUTTON */}
-                    <a href={file.fileUrl} target="_blank" rel="noreferrer" className="btn-download" title="Tải xuống">
-                      <Download size={16}/>
-                    </a>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </>

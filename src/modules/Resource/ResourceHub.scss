@@ -6,10 +6,10 @@ $primary: #2563eb;
 $bg-main: #f8fafc;
 $border: #e2e8f0;
 
-/* --- MÀU SIDEBAR MỚI --- */
+/* --- MÀU SIDEBAR --- */
 $sidebar-bg: #1e293b;      
 $sidebar-text: #94a3b8;    
-$active-bg: #f8fafc;       /* Trùng màu nền Main ResourceHub */
+$active-bg: #f8fafc;       
 $active-text: #2563eb;     
 $curve-size: 50px;         
 
@@ -21,46 +21,36 @@ $curve-size: 50px;
   background: #fff;
   overflow: hidden;
 
-  /* --- SIDEBAR (CURVED STYLE) --- */
+  /* --- SIDEBAR --- */
   .res-sidebar {
     width: 280px;
-    background: $sidebar-bg; /* Nền tối */
+    background: $sidebar-bg;
     border-right: none;
-    display: flex;
-    flex-direction: column;
-    padding: 20px 0 20px 10px; /* Padding trái */
+    display: flex; flex-direction: column;
+    padding: 20px 0 20px 10px;
 
     .res-header {
       padding-right: 20px; 
       border-bottom: 1px solid rgba(255,255,255,0.1);
       padding-bottom: 20px;
-      
       h3 { margin: 0; color: white; display: flex; align-items: center; gap: 8px; font-size: 1.1rem; }
       .subtitle { margin: 5px 0 0; font-size: 0.8rem; color: $sidebar-text; }
     }
 
     .room-list {
-      flex: 1;
-      overflow-y: auto;
-      padding-right: 0; /* Không padding phải */
-      margin-top: 10px;
+      flex: 1; overflow-y: auto; padding-right: 0; margin-top: 10px;
       display: flex; flex-direction: column; gap: 5px;
 
       .room-item {
-        position: relative;
-        display: flex; align-items: center; gap: 12px;
+        position: relative; display: flex; align-items: center; gap: 12px;
         padding: 12px 20px;
-        border-top-left-radius: 30px;
-        border-bottom-left-radius: 30px;
-        cursor: pointer;
-        transition: 0.3s;
-        margin-left: 10px;
+        border-top-left-radius: 30px; border-bottom-left-radius: 30px;
+        cursor: pointer; transition: 0.3s; margin-left: 10px;
 
         .icon {
           width: 36px; height: 36px;
           background: rgba(255,255,255,0.1); color: white;
-          border-radius: 50%;
-          display: flex; align-items: center; justify-content: center;
+          border-radius: 50%; display: flex; align-items: center; justify-content: center;
           transition: 0.2s;
         }
 
@@ -70,63 +60,30 @@ $curve-size: 50px;
           .type { font-size: 0.75rem; color: $sidebar-text; }
         }
 
-        /* Hover */
         &:hover:not(.active) { background: rgba(255,255,255,0.05); }
 
-        /* --- ACTIVE CURVED EFFECT --- */
         &.active {
-          background: $active-bg; /* Trùng màu nền nội dung chính */
-          z-index: 10;
-          
+          background: $active-bg; z-index: 10;
           .icon { background: $primary; color: white; }
           .info .name { color: $primary; font-weight: 700; }
           .info .type { color: $sidebar-text; }
 
-          /* Curve Top */
-          &::before {
-            content: ''; position: absolute;
-            top: -$curve-size; right: 0;
-            width: $curve-size; height: $curve-size;
-            background: transparent;
-            border-radius: 50%;
-            box-shadow: 25px 25px 0 0 $active-bg; 
-            pointer-events: none;
-          }
-
-          /* Curve Bottom */
-          &::after {
-            content: ''; position: absolute;
-            bottom: -$curve-size; right: 0;
-            width: $curve-size; height: $curve-size;
-            background: transparent;
-            border-radius: 50%;
-            box-shadow: 25px -25px 0 0 $active-bg;
-            pointer-events: none;
-          }
+          &::before { content: ''; position: absolute; top: -$curve-size; right: 0; width: $curve-size; height: $curve-size; background: transparent; border-radius: 50%; box-shadow: 25px 25px 0 0 $active-bg; pointer-events: none; }
+          &::after { content: ''; position: absolute; bottom: -$curve-size; right: 0; width: $curve-size; height: $curve-size; background: transparent; border-radius: 50%; box-shadow: 25px -25px 0 0 $active-bg; pointer-events: none; }
         }
       }
     }
   }
 
-  /* --- MAIN CONTENT (Giữ nguyên, chỉ cần khớp màu nền với active sidebar) --- */
+  /* --- MAIN CONTENT --- */
   .res-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: $bg-main; /* #f8fafc */
+    flex: 1; display: flex; flex-direction: column; background: $bg-main;
 
-    .no-select {
-      display: flex; align-items: center; justify-content: center;
-      height: 100%; color: #94a3b8; font-size: 1.2rem;
-    }
+    .no-select { display: flex; align-items: center; justify-content: center; height: 100%; color: #94a3b8; font-size: 1.2rem; }
 
     .main-toolbar {
-      background: #fff;
-      padding: 15px 25px;
-      border-bottom: 1px solid $border;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
+      background: #fff; padding: 15px 25px; border-bottom: 1px solid $border;
+      display: flex; flex-direction: column; gap: 15px;
 
       .title-section {
         h2 { margin: 0; font-size: 1.25rem; color: #0f172a; }
@@ -164,9 +121,7 @@ $curve-size: 50px;
     }
 
     .file-content-area {
-      flex: 1;
-      padding: 25px;
-      overflow-y: auto;
+      flex: 1; padding: 25px; overflow-y: auto;
 
       .loading, .empty-state {
         text-align: center; color: #94a3b8; margin-top: 50px;
@@ -175,19 +130,34 @@ $curve-size: 50px;
 
       /* GRID VIEW */
       &.grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 20px;
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;
 
         .file-card {
           background: #fff; border: 1px solid $border; border-radius: 12px;
           overflow: hidden; transition: transform 0.2s, box-shadow 0.2s;
-          position: relative;
+          position: relative; /* Quan trọng cho Badge */
           
           &:hover { 
-            transform: translateY(-3px); 
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); 
+            transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); 
             .btn-download { opacity: 1; }
+          }
+
+          /* STYLE CHO FILE RÁC (REJECTED) */
+          &.status-rejected {
+            opacity: 0.6; background: #f1f5f9;
+            .file-preview { filter: grayscale(100%); }
+          }
+
+          /* BADGE GÓC TRÁI */
+          .status-badge {
+            position: absolute; top: 10px; left: 10px; z-index: 5;
+            padding: 4px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+
+            &.approved { color: #22c55e; border: 1px solid #dcfce7; background: #f0fdf4; }
+            &.rejected { color: #ef4444; border: 1px solid #fee2e2; background: #fef2f2; }
+            &.pending { color: #f59e0b; border: 1px solid #fef3c7; background: #fffbeb; }
           }
 
           .file-preview {
@@ -199,10 +169,7 @@ $curve-size: 50px;
           .file-info {
             padding: 12px;
             .file-name { display: block; font-weight: 500; font-size: 0.9rem; color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px; }
-            .meta-row { 
-               display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #94a3b8;
-               .sender { display: flex; align-items: center; gap: 4px; }
-            }
+            .meta-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #94a3b8; .sender { display: flex; align-items: center; gap: 4px; } }
           }
 
           .btn-download {
@@ -222,6 +189,16 @@ $curve-size: 50px;
         .file-card {
           display: flex; align-items: center; gap: 15px;
           background: #fff; padding: 10px 15px; border-radius: 8px; border: 1px solid $border;
+          position: relative;
+
+          &.status-rejected { opacity: 0.6; background: #f8fafc; }
+
+          .status-badge {
+            margin-right: 10px; display: flex; align-items: center;
+            &.approved { color: #22c55e; }
+            &.rejected { color: #ef4444; }
+            &.pending { color: #f59e0b; }
+          }
           
           .file-preview {
             width: 40px; height: 40px; border-radius: 6px; overflow: hidden; background: #f1f5f9; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
