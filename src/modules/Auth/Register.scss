@@ -8,10 +8,14 @@ $text-white: #ffffff;
 $text-gray: #a0aec0;
 
 .register-lamp-container {
-  min-height: 100vh;
+  /* 👇 FIX SCROLL */
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+
   display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
   background-color: $bg-dark; font-family: 'Poppins', sans-serif;
-  position: relative; overflow: hidden;
+  position: relative;
   padding-top: 0;
 
   &::before {
@@ -20,9 +24,8 @@ $text-gray: #a0aec0;
     pointer-events: none;
   }
 
-  /* --- LAMP ART (Giống Login) --- */
   .lamp-wrapper {
-    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
     display: flex; flex-direction: column; align-items: center; z-index: 10;
     transition: all 0.5s ease;
 
@@ -53,34 +56,33 @@ $text-gray: #a0aec0;
     }
   }
 
-  /* --- REGISTER BOX --- */
   .register-box {
-    /* 👇 Đồng bộ với Login: Đẩy xuống 280px */
-    margin-top: 280px; 
+    /* 👇 CHỈNH TỈ LỆ ĐỒNG BỘ LOGIN */
+    margin-top: 220px; 
     
-    width: 440px; padding: 45px 40px;
+    width: 420px; padding: 35px 35px;
     background: rgba(30, 41, 59, 0.85); 
-    border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px;
     backdrop-filter: blur(12px); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     z-index: 5; animation: slideUp 0.8s ease-out;
 
     .header {
-      text-align: center; margin-bottom: 30px;
-      h2 { margin: 0; color: $text-white; font-size: 2rem; font-weight: 700; }
-      p { margin: 8px 0 0; color: $text-gray; font-size: 0.95rem; }
+      text-align: center; margin-bottom: 25px;
+      h2 { margin: 0; color: $text-white; font-size: 1.8rem; font-weight: 700; }
+      p { margin: 5px 0 0; color: $text-gray; font-size: 0.9rem; }
     }
 
     form {
-      display: flex; flex-direction: column; gap: 18px;
+      display: flex; flex-direction: column; gap: 15px; /* Giảm gap để form ngắn lại */
 
       .input-group {
         position: relative; display: flex; align-items: center;
-        .icon { position: absolute; left: 18px; z-index: 2; color: $text-gray; pointer-events: none; transition: 0.3s; }
+        .icon { position: absolute; left: 15px; z-index: 2; color: $text-gray; pointer-events: none; transition: 0.3s; }
         
         input {
-          width: 100%; padding: 14px 14px 14px 50px; padding-right: 45px;
+          width: 100%; padding: 12px 12px 12px 45px; padding-right: 40px;
           background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 12px; color: $text-white; font-size: 1rem; outline: none; transition: all 0.3s;
+          border-radius: 12px; color: $text-white; font-size: 0.95rem; outline: none; transition: all 0.3s;
           &::placeholder { color: rgba(255,255,255,0.25); }
           &:focus {
             border-color: $neon-purple; box-shadow: 0 0 0 4px rgba(189, 52, 254, 0.1);
@@ -88,9 +90,8 @@ $text-gray: #a0aec0;
             & + .icon { color: $neon-purple; }
           }
         }
-
         .btn-toggle-password {
-          position: absolute; right: 15px; background: none; border: none;
+          position: absolute; right: 12px; background: none; border: none;
           color: $text-gray; cursor: pointer; display: flex; align-items: center;
           padding: 5px; z-index: 3; transition: color 0.3s;
           &:hover { color: $neon-purple; }
@@ -99,9 +100,9 @@ $text-gray: #a0aec0;
 
       .btn-register {
         background: linear-gradient(135deg, #bd34fe, #4158d0);
-        color: #fff; font-weight: 700; padding: 16px; border: none; border-radius: 12px;
-        cursor: pointer; font-size: 1.05rem; display: flex; align-items: center; justify-content: center; gap: 8px;
-        transition: all 0.3s ease; margin-top: 15px;
+        color: #fff; font-weight: 700; padding: 14px; border: none; border-radius: 12px;
+        cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;
+        transition: all 0.3s ease; margin-top: 10px;
         box-shadow: 0 4px 15px rgba(189, 52, 254, 0.3);
         &:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(189, 52, 254, 0.5); }
         &:disabled { opacity: 0.7; cursor: not-allowed; }
@@ -110,7 +111,7 @@ $text-gray: #a0aec0;
     }
 
     .footer {
-      text-align: center; margin-top: 25px; color: $text-gray; font-size: 0.95rem;
+      text-align: center; margin-top: 20px; color: $text-gray; font-size: 0.9rem;
       button { 
         background: none; border: none; font-family: inherit; font-size: inherit;
         color: $neon-purple; font-weight: 600; cursor: pointer; margin-left: 5px;
@@ -119,9 +120,24 @@ $text-gray: #a0aec0;
       }
     }
   }
+  
+  /* 👇 RESPONSIVE SCALE: Tự động thu nhỏ khi màn hình thấp */
+  @media (max-height: 900px) {
+    .lamp-wrapper { top: -30px; transform: translateX(-50%) scale(0.9); }
+    .register-box { margin-top: 180px; transform: scale(0.9); transform-origin: top center; }
+  }
+
+  @media (max-height: 700px) {
+    .lamp-wrapper { top: -40px; transform: translateX(-50%) scale(0.8); }
+    .register-box { margin-top: 140px; transform: scale(0.8); transform-origin: top center; }
+  }
 }
 
 @keyframes blink { 0%, 96%, 100% { height: 14px; } 98% { height: 2px; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes spin { 100% { transform: rotate(360deg); } }
-@media (max-width: 480px) { .register-box { width: 92%; padding: 30px 20px; margin-top: 240px; } .lamp-wrapper { transform: translateX(-50%) scale(0.8); top: -10px; } }
+@media (max-width: 480px) { 
+    .register-lamp-container { height: 100vh; overflow-y: auto; }
+    .register-box { width: 92%; padding: 30px 20px; margin-top: 200px; transform: none; } 
+    .lamp-wrapper { transform: translateX(-50%) scale(0.7); top: -20px; } 
+}

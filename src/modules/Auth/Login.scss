@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
-/* --- BIẾN MÀU SẮC (Color Variables) --- */
+/* --- BIẾN MÀU --- */
 $bg-dark: #1a1b26;        
 $bg-super-dark: #0f0f13; 
 $neon-green: #00f7ff;     
@@ -10,51 +10,47 @@ $text-white: #ffffff;
 $text-gray: #a0aec0;
 
 .login-lamp-container {
-  min-height: 100vh;
+  /* 👇 KHÓA CHIỀU CAO: Để không bao giờ có thanh cuộn */
+  height: 100vh; 
+  width: 100vw;
+  overflow: hidden; /* Cắt bỏ phần thừa nếu có */
+  
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* Dùng flex-start để căn từ trên xuống thay vì center */
-  justify-content: flex-start; 
+  justify-content: flex-start; /* Căn từ trên xuống */
+  
   background-color: $bg-dark;
   font-family: 'Poppins', sans-serif;
   position: relative;
-  overflow: hidden; /* Ngăn scroll bar nếu tia sáng dài quá */
   transition: background-color 0.5s ease;
-  
-  /* Padding trên cùng nhỏ để chừa chỗ cho dây đèn bắt đầu từ trần */
   padding-top: 0; 
 
   &.dark-room {
     background-color: $bg-super-dark;
     .login-box {
-      background: rgba(15, 20, 30, 0.95); /* Tối hơn chút khi tắt đèn */
+      background: rgba(15, 20, 30, 0.95);
       border-color: rgba(255,255,255,0.02);
       box-shadow: none;
     }
-    /* Tắt nền gradient khi tắt đèn */
     &::before { opacity: 0; }
   }
 
-  /* Hiệu ứng nền ambient */
   &::before {
     content: ''; position: absolute; width: 100%; height: 100%;
     background: radial-gradient(circle at 50% 20%, rgba(0, 247, 255, 0.08), transparent 60%);
     pointer-events: none; transition: opacity 0.5s;
   }
 
-  /* --- LAMP ART (Chiếc đèn) --- */
+  /* --- LAMP ART --- */
   .lamp-wrapper {
-    position: absolute; 
-    top: 0; /* Treo sát trần */
+    position: absolute; top: -20px; /* Kéo đèn lên sát trần hơn chút */
     left: 50%; transform: translateX(-50%);
     display: flex; flex-direction: column; align-items: center; z-index: 10;
     transition: all 0.5s ease;
 
-    /* Dây đèn */
     .wire { width: 4px; height: 100px; background: $wire-color; position: relative; z-index: 1; }
 
-    /* Chụp đèn */
     .lamp-head {
       width: 140px; height: 100px; background: $lamp-color;
       border-radius: 50px 50px 10px 10px; position: relative; z-index: 2;
@@ -64,28 +60,18 @@ $text-gray: #a0aec0;
 
       .lamp-face {
         position: relative; width: 100%; height: 100%;
-        .eye {
-          position: absolute; top: 45px; width: 14px; height: 14px;
-          background: #1a202c; border-radius: 50%; animation: blink 4s infinite;
-          &.left { left: 40px; } &.right { right: 40px; }
-        }
-        .mouth {
-          position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
-          width: 24px; height: 12px; background: #1a202c;
-          border-radius: 0 0 24px 24px; transition: 0.3s;
-        }
+        .eye { position: absolute; top: 45px; width: 14px; height: 14px; background: #1a202c; border-radius: 50%; animation: blink 4s infinite; &.left { left: 40px; } &.right { right: 40px; } }
+        .mouth { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); width: 24px; height: 12px; background: #1a202c; border-radius: 0 0 24px 24px; transition: 0.3s; }
       }
 
-      /* Tia sáng */
       .light-beam {
         position: absolute; top: 90px; left: 50%; transform: translateX(-50%);
-        width: 350px; height: 800px; /* Dài hơn để phủ xuống form */
+        width: 350px; height: 800px;
         background: linear-gradient(to bottom, rgba(255, 255, 255, 0.25), transparent 70%);
         clip-path: polygon(35% 0, 65% 0, 100% 100%, 0% 100%);
         pointer-events: none; opacity: 1; transition: opacity 0.3s ease; z-index: 0;
       }
 
-      /* Dây kéo công tắc */
       .pull-string {
         position: absolute; top: 90px; right: 25px; cursor: pointer;
         display: flex; flex-direction: column; align-items: center;
@@ -97,52 +83,50 @@ $text-gray: #a0aec0;
       }
     }
 
-    /* Trạng thái tắt đèn */
     &.lamp-off .lamp-head {
       background: #2d3748; box-shadow: none;
       .light-beam { opacity: 0; }
       .lamp-face { .eye { background: #1a202c; height: 3px; border-radius: 0; animation: none; } .mouth { width: 10px; height: 10px; border-radius: 50%; } }
     }
 
-    /* Trạng thái nhập password (đèn mờ đi) */
     &.focus-password:not(.lamp-off) .lamp-head {
       .light-beam { opacity: 0.1; }
       .lamp-face { .eye { height: 4px; border-radius: 0; } .mouth { width: 12px; height: 12px; border-radius: 50%; bottom: 20px; } }
     }
   }
 
-  /* --- LOGIN BOX (FORM) --- */
+  /* --- LOGIN BOX --- */
   .login-box {
-    /* 👇 QUAN TRỌNG: Đẩy box xuống 280px để đèn nằm lơ lửng TRÊN chữ Welcome */
-    margin-top: 280px; 
+    /* 👇 CHỈNH TỈ LỆ: Giảm margin xuống chút cho cân đối */
+    margin-top: 220px; 
     
-    width: 420px; padding: 45px 40px;
+    width: 400px; /* Giảm width chút cho gọn */
+    padding: 35px 35px; /* Giảm padding */
     background: rgba(30, 41, 59, 0.8); 
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 24px; 
+    border-radius: 20px; 
     backdrop-filter: blur(12px);
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); 
     z-index: 5; 
     animation: slideUp 0.8s ease-out; transition: background 0.5s;
 
     .header {
-      text-align: center; margin-bottom: 35px;
-      h2 { margin: 0; color: $text-white; font-size: 2.2rem; font-weight: 700; letter-spacing: 0.5px; }
-      p { margin: 8px 0 0; color: $text-gray; font-size: 0.95rem; }
+      text-align: center; margin-bottom: 25px;
+      h2 { margin: 0; color: $text-white; font-size: 2rem; font-weight: 700; }
+      p { margin: 5px 0 0; color: $text-gray; font-size: 0.9rem; }
     }
 
     form {
-      display: flex; flex-direction: column; gap: 20px;
+      display: flex; flex-direction: column; gap: 18px; /* Giảm gap */
       
       .input-group {
         position: relative; display: flex; align-items: center;
-        
-        .icon { position: absolute; left: 18px; z-index: 2; color: $text-gray; pointer-events: none; transition: 0.3s; }
+        .icon { position: absolute; left: 15px; z-index: 2; color: $text-gray; pointer-events: none; transition: 0.3s; }
         
         input {
-          width: 100%; padding: 16px 16px 16px 50px; padding-right: 45px;
+          width: 100%; padding: 14px 14px 14px 45px; padding-right: 40px;
           background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 12px; color: $text-white; font-size: 1rem; outline: none; transition: all 0.3s;
+          border-radius: 12px; color: $text-white; font-size: 0.95rem; outline: none; transition: all 0.3s;
           &::placeholder { color: rgba(255,255,255,0.25); }
           &:focus {
             border-color: $neon-green; box-shadow: 0 0 0 4px rgba(0, 247, 255, 0.1);
@@ -150,25 +134,21 @@ $text-gray: #a0aec0;
             & + .icon { color: $neon-green; }
           }
         }
-
         .btn-toggle-password {
-          position: absolute; right: 15px; background: none; border: none;
+          position: absolute; right: 12px; background: none; border: none;
           color: $text-gray; cursor: pointer; display: flex; align-items: center;
           padding: 5px; z-index: 3; transition: color 0.3s;
           &:hover { color: $neon-green; }
         }
       }
 
-      .forgot-pass { 
-        text-align: right; 
-        a { color: $text-gray; font-size: 0.9rem; text-decoration: none; transition: 0.3s; &:hover { color: $neon-green; } } 
-      }
+      .forgot-pass { text-align: right; margin-top: -5px; }
 
       .btn-login {
         background: linear-gradient(135deg, #00f7ff, #0099ff); color: #0f172a;
-        font-weight: 700; padding: 16px; border: none; border-radius: 12px;
-        cursor: pointer; font-size: 1.05rem; display: flex; align-items: center; justify-content: center; gap: 8px;
-        transition: all 0.3s ease; margin-top: 10px;
+        font-weight: 700; padding: 14px; border: none; border-radius: 12px;
+        cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;
+        transition: all 0.3s ease; margin-top: 5px;
         box-shadow: 0 4px 15px rgba(0, 247, 255, 0.3);
         &:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 247, 255, 0.5); }
         &:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
@@ -177,41 +157,51 @@ $text-gray: #a0aec0;
     }
 
     .divider {
-      display: flex; align-items: center; text-align: center; margin: 25px 0; color: $text-gray; font-size: 0.85rem;
+      display: flex; align-items: center; text-align: center; margin: 20px 0; color: $text-gray; font-size: 0.85rem;
       &::before, &::after { content: ''; flex: 1; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-      span { padding: 0 15px; }
+      span { padding: 0 10px; }
     }
 
-    .social-login {
-      display: flex; flex-direction: column;
-      .btn-social {
-        width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px;
-        padding: 14px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px;
-        background: rgba(255, 255, 255, 0.03); color: $text-white; font-weight: 500; cursor: pointer; transition: 0.3s;
-        &:hover { background: rgba(255, 255, 255, 0.08); transform: translateY(-2px); }
-      }
+    .social-login .btn-social {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px;
+      padding: 12px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03); color: $text-white; font-weight: 500; cursor: pointer; transition: 0.3s;
+      &:hover { background: rgba(255, 255, 255, 0.08); transform: translateY(-2px); }
     }
 
     .footer {
-      text-align: center; margin-top: 30px; color: $text-gray; font-size: 0.95rem;
+      text-align: center; margin-top: 25px; color: $text-gray; font-size: 0.9rem;
       button { 
         background: none; border: none; font-family: inherit; font-size: inherit;
         color: $neon-green; font-weight: 600; cursor: pointer; margin-left: 5px; 
-        transition: 0.3s;
-        &:hover { color: #fff; text-shadow: 0 0 10px $neon-green; } 
+        transition: 0.3s; &:hover { color: #fff; text-shadow: 0 0 10px $neon-green; } 
       }
     }
   }
+
+  /* 👇 QUAN TRỌNG: RESPONSIVE CHO LAPTOP (MÀN HÌNH THẤP) */
+  @media (max-height: 900px) {
+    /* Thu nhỏ toàn bộ giao diện xuống 90% */
+    .lamp-wrapper { top: -30px; transform: translateX(-50%) scale(0.9); }
+    .login-box { margin-top: 180px; transform: scale(0.9); transform-origin: top center; }
+  }
+
+  @media (max-height: 700px) {
+    /* Thu nhỏ mạnh hơn cho màn hình bé tí */
+    .lamp-wrapper { top: -40px; transform: translateX(-50%) scale(0.8); }
+    .login-box { margin-top: 140px; transform: scale(0.8); transform-origin: top center; }
+  }
 }
 
-/* Animations */
+/* Animations giữ nguyên */
 @keyframes blink { 0%, 96%, 100% { height: 14px; } 98% { height: 2px; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes spin { 100% { transform: rotate(360deg); } }
 @keyframes pullDown { 0% { transform: translateY(0); } 50% { transform: translateY(20px); } 100% { transform: translateY(0); } }
 
-/* Mobile Responsive */
+/* Mobile */
 @media (max-width: 480px) { 
-  .login-box { width: 92%; padding: 30px 20px; margin-top: 240px; } 
-  .lamp-wrapper { transform: translateX(-50%) scale(0.8); top: -10px; } 
+  .login-lamp-container { height: 100vh; overflow-y: auto; } /* Mobile thì cho scroll */
+  .login-box { width: 92%; padding: 30px 20px; margin-top: 200px; transform: none; } 
+  .lamp-wrapper { transform: translateX(-50%) scale(0.7); top: -20px; } 
 }
