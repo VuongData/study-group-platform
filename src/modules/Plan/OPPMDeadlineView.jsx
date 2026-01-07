@@ -31,7 +31,7 @@ const OPPMDeadlineView = ({ currentRoom }) => {
     } catch (err) { toast.error("Lỗi cập nhật"); }
   };
 
-  // 👇 LOGIC MỚI: Toggle Status (Chỉ owner mới được đổi trạng thái Done/Pending)
+  // Toggle Status (Chỉ chủ phòng chat(owner) mới được đổi trạng thái Done/Pending)
   const toggleStatus = async (task) => {
     // 1. Kiểm tra quyền
     if (task.owner !== user.displayName) {

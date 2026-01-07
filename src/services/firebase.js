@@ -13,8 +13,7 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-// Log ra để chắc chắn nó đã nhận (Sau này xóa dòng này đi)
-console.log("🔥 Firebase Config đã nhận:", firebaseConfig.apiKey);
+console.log("Firebase Config đã nhận:", firebaseConfig.apiKey);
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);

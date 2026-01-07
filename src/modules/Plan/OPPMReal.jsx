@@ -52,7 +52,7 @@ const OPPMReal = () => {
     return currentWeek >= task.startWeek && currentWeek <= endWeek;
   };
 
-  // --- LOGIC MỚI: TÍNH TOÁN TIẾN ĐỘ TUẦN (ALGORITHM) ---
+  // --- TÍNH TOÁN TIẾN ĐỘ TUẦN (ALGORITHM) ---
   const getWeeklyStatus = (week) => {
     // 1. Tìm tất cả task ĐANG CHẠY trong tuần này
     const activeTasks = tasks.filter(t => isActiveWeek(t, week));
@@ -133,7 +133,7 @@ const OPPMReal = () => {
               </tr>
             ))}
 
-            {/* --- HÀNG TỔNG KẾT THÔNG MINH (SMART SUMMARY ROW) --- */}
+            {/* --- HÀNG TỔNG KẾT  --- */}
             <tr className="summary-row">
               <td colSpan={2} style={{textAlign: 'right', fontWeight: 'bold', color: '#555'}}>
                 📊 Tổng kết tuần:

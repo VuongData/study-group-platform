@@ -5,9 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 /* --- IMPORT CÁC MODULE --- */
-// 👇 QUAN TRỌNG: Chỉ import AuthPage, không import Login/Register lẻ tẻ ở đây nữa
 import AuthPage from './modules/Auth/AuthPage'; 
-
 import Dashboard from './modules/Dashboard/Dashboard';
 import ChatRoom from './modules/Chat/ChatRoom';
 import OPPMManager from './modules/Plan/OPPMManager';
@@ -16,7 +14,7 @@ import VideoRoom from './modules/Meeting/VideoRoom';
 import AIAssistant from './modules/AI/AIAssistant';
 
 /* ========================================================= */
-/* 🛡️ CÁC COMPONENT BẢO VỆ ROUTE (GUARDS)                 */
+/* 🛡️ CÁC COMPONENT BẢO VỆ ROUTE                            */
 /* ========================================================= */
 
 // 1. ProtectedRoute: Chỉ cho phép người ĐÃ đăng nhập
@@ -35,7 +33,7 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
-// 3. Logic ẩn hiện AI Assistant
+// 3. Ẩn hiện AI Assistant
 const LayoutWithAI = () => {
   const location = useLocation();
   const isHidden = location.pathname.startsWith("/chat") || location.pathname.startsWith("/video-call");
@@ -43,7 +41,7 @@ const LayoutWithAI = () => {
 }
 
 /* ========================================================= */
-/* 🚀 MAIN APP                                               */
+/* MAIN APP                                               */
 /* ========================================================= */
 
 function App() {
@@ -57,7 +55,7 @@ function App() {
           {/* KHU VỰC PUBLIC (Khách)                                  */}
           {/* ========================================================= */}
           
-          {/* 👇 Route duy nhất xử lý Login/Register/Forgot Pass */}
+          {/* Route xử lý Login/Register/Forgot Pass */}
           <Route path="/auth" element={
             <PublicRoute><AuthPage /></PublicRoute>
           } />
@@ -78,7 +76,6 @@ function App() {
           <Route path="/video-call" element={<ProtectedRoute><VideoRoom /></ProtectedRoute>} />
           <Route path="/video-call/:roomId" element={<ProtectedRoute><VideoRoom /></ProtectedRoute>} />
           
-          {/* Route Catch-all: Gõ linh tinh thì về Auth */}
           <Route path="*" element={<Navigate to="/auth" replace />} />
         </Routes>
 

@@ -68,7 +68,7 @@ $text-gray: #64748b;
         height: 100%; background: $success; transition: width 0.5s ease;
         /* Force in màu cho thanh progress */
         -webkit-print-color-adjust: exact; 
-        print-color-adjust: exact; /* ✅ Đã thêm dòng chuẩn */
+        print-color-adjust: exact;
       }
     }
     .note { font-size: 0.75rem; color: $text-gray; margin-top: 5px; font-style: italic; }

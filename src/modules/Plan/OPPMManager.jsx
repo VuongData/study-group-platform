@@ -34,7 +34,7 @@ const OPPMManager = () => {
   const deadlineAudio = useRef(new Audio(deadlineSoundFile));
 
   // =========================================================================================
-  // 👇 0. LOGIC TAB TITLE NOTIFICATION (MỚI)
+  //  0. LOGIC TAB TITLE NOTIFICATION 
   // =========================================================================================
   useEffect(() => {
     const originalTitle = document.title; 
@@ -77,7 +77,7 @@ const OPPMManager = () => {
     fetchMembers(); setAssignee(""); 
   }, [selectedRoom]);
 
-  // 👇 3. LOGIC DEADLINE NOTIFICATION
+  // 2. LOGIC DEADLINE NOTIFICATION
   useEffect(() => {
     if (!user?.displayName) return;
 
@@ -94,16 +94,16 @@ const OPPMManager = () => {
       if (!isInitialLoad) {
         snapshot.docChanges().forEach((change) => {
           if (change.type === "added") {
-            // 1. Phát âm thanh
+            // 2.a. Phát âm thanh
             deadlineAudio.current.currentTime = 0;
             deadlineAudio.current.play().catch(e => console.log(e));
             
-            // 2. 👇 Đổi Title nếu đang ở tab khác
+            // 2.b. Đổi Title nếu đang ở tab khác
             if (document.hidden) {
               document.title = "🔔 Bạn có thông báo mới!";
             }
 
-            // Hiện Toast
+            // 2.c. Hiện Toast
             const task = change.doc.data();
             toast.info(`📅 Deadline mới: "${task.title}"`, { autoClose: 5000, icon: "⏰" });
           }

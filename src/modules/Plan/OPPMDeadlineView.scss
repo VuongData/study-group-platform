@@ -16,7 +16,7 @@ $border: #e2e8f0;
   background: #fff;
   min-height: 100%;
 
-  /* --- PHẦN 1: KHU VỰC CHỜ DUYỆT --- */
+  /* --- 1. KHU VỰC CHỜ DUYỆT --- */
   .approval-section {
     background: #fffbeb;
     border: 1px solid #fcd34d;
@@ -85,7 +85,7 @@ $border: #e2e8f0;
     }
   }
 
-  /* --- PHẦN 2: DANH SÁCH TASK --- */
+  /* --- 2. DANH SÁCH TASK --- */
   .approved-lists {
     display: flex; flex-direction: column; gap: 20px;
 
@@ -108,7 +108,7 @@ $border: #e2e8f0;
         margin-bottom: 8px;
         transition: all 0.2s;
 
-        /* 👇 STYLE QUAN TRỌNG: Disable khi không phải owner */
+        /* Disable khi không phải owner */
         &.disabled-card {
           background: #f8fafc; /* Xám nhạt */
           border-style: dashed;

@@ -27,13 +27,11 @@ const OPPMMatrixView = ({ currentRoom }) => {
     return () => unsubscribe();
   }, [currentRoom]);
 
-  // 2. 👇 MỚI: Fetch Config (Ngày dự án & Mục tiêu) từ Firebase
+  // 2. Fetch Config (Ngày dự án & Mục tiêu) từ Firebase
   useEffect(() => {
     if (!currentRoom?.id) return;
-    
-    // Lắng nghe thay đổi của file cấu hình phòng này
+    // Xem sự thay đổi của file cấu hình phòng này
     const configRef = doc(db, "oppm_configs", currentRoom.id);
-    
     const unsubscribe = onSnapshot(configRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -46,7 +44,7 @@ const OPPMMatrixView = ({ currentRoom }) => {
     return () => unsubscribe();
   }, [currentRoom]);
 
-  // 3. 👇 MỚI: Hàm lưu Config lên Firebase
+  // 3. Hàm lưu Config lên Firebase
   const saveConfig = async (field, value) => {
     try {
       // Dùng setDoc với { merge: true } để tạo mới nếu chưa có, hoặc cập nhật nếu đã có
@@ -66,9 +64,7 @@ const OPPMMatrixView = ({ currentRoom }) => {
     await updateDoc(doc(db, "oppm_tasks", taskId), { [`obj_${index}`]: !task[`obj_${index}`] });
   };
 
-  // =================================================================================
-  // 🧠 LOGIC TÍNH TOÁN 20 CỘT TỰ ĐỘNG (Giữ nguyên)
-  // =================================================================================
+  
   const timeSlices = useMemo(() => {
     const start = new Date(projStartDate).getTime();
     const end = new Date(projEndDate).getTime();

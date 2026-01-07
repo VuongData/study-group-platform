@@ -34,15 +34,10 @@ const Whiteboard = ({ boardId, onClose, title }) => {
   // --- 1. REAL-TIME SYNC ---
   useEffect(() => {
     if (!boardId) return;
-    
-    // 👇 FIX: Bỏ orderBy("createdAt") để tránh lỗi thiếu Index của Firebase
-    // Chúng ta sẽ sắp xếp ở client (bên dưới)
     const q = query(collection(db, "whiteboards", boardId, "elements"));
-    
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedElements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
-      // Sắp xếp thủ công theo thời gian để nét vẽ sau đè lên nét trước
       fetchedElements.sort((a, b) => {
         const t1 = a.createdAt?.seconds || 0;
         const t2 = b.createdAt?.seconds || 0;
@@ -60,7 +55,7 @@ const Whiteboard = ({ boardId, onClose, title }) => {
   // --- 2. DRAWING HANDLERS ---
   const handleMouseDown = (e) => {
     if (isTyping) {
-      handleTextSubmit(); // Nếu đang gõ text mà click ra ngoài -> Lưu text
+      handleTextSubmit(); // Nếu gõ text mà click ra ngoài -> Lưu text
       return;
     }
 
@@ -88,11 +83,10 @@ const Whiteboard = ({ boardId, onClose, title }) => {
 
   const handleMouseMove = (e) => {
     if (!isDrawing.current || !currentLine) return;
-    
+
     const stage = e.target.getStage();
     const point = stage.getPointerPosition();
-    
-    // Cập nhật nét vẽ tạm thời (mượt mà)
+    // Cập nhật nét vẽ tạm thời 
     setCurrentLine(prev => ({
       ...prev,
       points: prev.points.concat([point.x, point.y])
@@ -103,7 +97,7 @@ const Whiteboard = ({ boardId, onClose, title }) => {
     if (!isDrawing.current || !currentLine) return;
     isDrawing.current = false;
 
-    // 👇 OPTIMISTIC UPDATE: Đẩy nét vẽ vào mảng hiển thị NGAY LẬP TỨC
+    // OPTIMISTIC UPDATE: Đẩy nét vẽ vào mảng hiển thị NGAY LẬP TỨC
     // Để người dùng thấy nét vẽ không bị mất trong lúc chờ Server phản hồi
     const tempElement = { ...currentLine, createdAt: { seconds: Date.now()/1000 } };
     setElements(prev => [...prev, tempElement]); 
@@ -159,7 +153,7 @@ const Whiteboard = ({ boardId, onClose, title }) => {
       const snap = await getDocs(collection(db, "whiteboards", boardId, "elements"));
       snap.forEach(doc => batch.delete(doc.ref));
       await batch.commit();
-      setElements([]); // Xóa local ngay cho mượt
+      setElements([]); // Xóa local ngay 
     } catch (error) {
       console.error("Lỗi xóa bảng:", error);
     }

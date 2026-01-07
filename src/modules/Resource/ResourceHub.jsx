@@ -20,9 +20,7 @@ const ResourceHub = () => {
   const [viewMode, setViewMode] = useState("grid"); 
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  
-  // 👇 MỚI: State lưu tên người dùng để hiển thị (Map: uid -> displayName)
-  const [userNames, setUserNames] = useState({});
+  const [userNames, setUserNames] = useState({}); // State lưu tên người dùng để hiển thị (Map: uid -> displayName)
 
   // 1. Lấy danh sách phòng chat của User
   useEffect(() => {
@@ -42,7 +40,7 @@ const ResourceHub = () => {
     return () => unsubscribe();
   }, [user]);
 
-  // 👇 2. MỚI: Fetch Tên hiển thị cho các phòng Chat Riêng (Direct)
+  // 2. Fetch Tên hiển thị cho các phòng Chat Riêng (Direct)
   useEffect(() => {
     if (!user || rooms.length === 0) return;
 
@@ -122,7 +120,7 @@ const ResourceHub = () => {
     }
   };
 
-  // 👇 CẬP NHẬT: Lấy tên từ state userNames
+  // 4.  Lấy tên từ state userNames
   const getRoomName = (room) => {
     if (room.type === 'group') return room.name;
     const otherId = room.members.find(id => id !== user.uid);
