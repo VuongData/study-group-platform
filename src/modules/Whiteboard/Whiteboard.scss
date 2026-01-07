@@ -35,10 +35,7 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.15); /* Bóng đậm hơn chút cho nổi */
     border: 1px solid #e2e8f0;
     display: flex; align-items: center; 
-    
-    /* 👇 FIX LỖI 1: Tăng khoảng cách để không bị đè nút */
     gap: 20px; 
-    
     z-index: 100;
 
     .divider { width: 1px; height: 24px; background: #cbd5e1; }
@@ -46,7 +43,7 @@
     .group {
       display: flex; align-items: center; gap: 8px;
 
-      /* Các nút công cụ (Bút, Tẩy...) */
+      /* Các nút công cụ (Bút, Tẩy) */
       button {
         width: 36px; height: 36px; /* Nút to hơn xíu cho dễ bấm */
         border: none; background: transparent; border-radius: 8px; 
@@ -70,7 +67,6 @@
         }
       }
 
-      /* 👇 FIX LỖI 2 & 3: Cụm điều chỉnh độ lớn (Size Control) */
       .size-control {
         display: flex; align-items: center; gap: 8px;
         background: #f8fafc; /* Nền xám nhạt để tách biệt */
@@ -93,7 +89,7 @@
           font-family: 'Inter', sans-serif;
           font-size: 0.9rem;
           font-weight: 700;
-          color: #334155; /* 👉 Màu chữ đậm để không bị chìm */
+          color: #334155; 
           min-width: 20px; /* Cố định chiều rộng để không bị nhảy layout */
           text-align: center;
         }
